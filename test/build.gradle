@@ -1,0 +1,52 @@
+buildscript {
+    ext.kotlin_version = '1.0.5'
+
+    repositories {
+        jcenter()
+        mavenLocal()
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-frontend:0.0.1-SNAPSHOT"
+    }
+}
+
+group = 'org.jetbrains.kotlin'
+version = '0.0.1-SNAPSHOT'
+
+apply plugin: 'org.jetbrains.kotlin.frontend'
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+//    compile "org.jetbrains.kotlin:kotlin-js-library:$kotlin_version"
+}
+
+kotlinFrontend {
+    npm {
+        dependency("kotlin", "1.1.0-dev-4546")
+	dependency("style-loader")
+
+        devDependency("karma")
+        devDependency("webpack")
+        devDependency("uglify-js")
+        devDependency("webpack-dev-server")
+    }
+
+    webpack {
+	//port = 9090
+        entry = "./test"
+        contentPath = file('src/main/web')
+    }
+}
+
+compileKotlin2Js {
+    kotlinOptions.metaInfo = true
+    kotlinOptions.outputFile = "$project.buildDir.path/js/${project.name}.js"
+    kotlinOptions.sourceMap = true
+    kotlinOptions.moduleKind = 'commonjs'
+    kotlinOptions.main = "call"
+}
+
