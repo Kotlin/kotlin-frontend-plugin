@@ -1,5 +1,5 @@
 buildscript {
-    ext.kotlin_version = '1.0.5'
+    ext.kotlin_version = '1.0.5-2'
 
     repositories {
         jcenter()
@@ -21,12 +21,12 @@ repositories {
 }
 
 dependencies {
-//    compile "org.jetbrains.kotlin:kotlin-js-library:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-js-library:$kotlin_version"
 }
 
 kotlinFrontend {
     npm {
-        dependency("kotlin", "1.1.0-dev-4546")
+        //dependency("kotlin", "1.1.0-dev-4546")
 	dependency("style-loader")
 
         devDependency("karma")
