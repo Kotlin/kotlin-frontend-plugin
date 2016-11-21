@@ -2,6 +2,7 @@ package org.jetbrains.kotlin.gradle.frontend
 
 import org.gradle.api.*
 import org.jetbrains.kotlin.gradle.frontend.npm.*
+import org.jetbrains.kotlin.gradle.frontend.rollup.*
 import org.jetbrains.kotlin.gradle.frontend.webpack.*
 
 class FrontendPlugin : Plugin<Project> {
@@ -10,13 +11,19 @@ class FrontendPlugin : Plugin<Project> {
         project.pluginManager.withPlugin("kotlin2js") { kotlinPlugin ->
             val kotlin2js = project.tasks.getByPath("compileKotlin2Js")
 
-            project.extensions.create("kotlinFrontend", KotlinFrontendExtension::class.java)
+            project.extensions.create("kotlinFrontend", KotlinFrontendExtension::class.java).apply {
+                moduleName = project.name
+            }
+
             val packages = project.tasks.create("packages").apply {
                 group = "build"
                 description = "Gather and install all JS dependencies (npm)"
             }
 
-            for (manager in listOf<PackageManager>(NpmPackageManager(project))) {
+            val managers = listOf<PackageManager>(NpmPackageManager(project))
+            val packageManager: PackageManager = managers.first()
+
+            for (manager in managers) {
                 manager.apply(packages)
             }
 
@@ -34,8 +41,8 @@ class FrontendPlugin : Plugin<Project> {
                 description = "Stops dev-server running in background if running"
             }
 
-            for (bundler in listOf(WebPackBundler(project))) {
-                bundler.apply(bundle, run, stop)
+            for (bundler in listOf(WebPackBundler(project), RollupBundler(project))) {
+                bundler.apply(packageManager, bundle, run, stop)
             }
 
             kotlin2js.dependsOn(packages)

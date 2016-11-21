@@ -10,7 +10,12 @@ import java.io.*
  */
 class WebPackBundler(val project: Project) : Bundler {
 
-    override fun apply(bundleTask: Task, runTask: Task, stopTask: Task) {
+    override fun apply(packageManager: PackageManager, bundleTask: Task, runTask: Task, stopTask: Task) {
+        packageManager.require(
+                listOf("webpack", "webpack-dev-server")
+                        .map { Dependency(it, "*", Dependency.DevelopmentScope) }
+        )
+
         project.extensions.create("webpack", WebPackExtension::class.java)
 
         val config = project.tasks.create("webpack-config", GenerateWebPackConfigTask::class.java)
@@ -29,6 +34,7 @@ class WebPackBundler(val project: Project) : Bundler {
     }
 
     companion object {
+        @Deprecated("Move to common utils")
         fun kotlinOutput(project: Project): File {
             return project.tasks.filterIsInstance<KotlinJsCompile>()
                     .filter { !it.name.contains("test", ignoreCase = true) }

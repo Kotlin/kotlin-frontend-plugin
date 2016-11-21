@@ -34,7 +34,7 @@ class LinesView(val linesHolder: Element, val formRoot: Element) {
 
     fun addLine(lineText: String) {
         document.createElement("p").apply {
-            textContent = " + " + lineText
+            textContent = " . " + lineText
 
             linesHolder.appendChild(this)
         }

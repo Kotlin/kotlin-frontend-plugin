@@ -7,4 +7,10 @@ import org.gradle.api.*
 */
 interface PackageManager {
     fun apply(containerTask: Task)
+    fun require(dependencies: List<Dependency>)
+
+    companion object {
+        val DevelopmentScope = "development"
+        val RuntimeScope = "runtime"
+    }
 }

@@ -1,25 +1,26 @@
 package org.jetbrains.kotlin.gradle.frontend.npm
 
 import org.gradle.api.tasks.*
+import org.jetbrains.kotlin.gradle.frontend.*
 import java.util.*
 
 /**
  * @author Sergey Mashkov
  */
 open class NpmExtension {
-    @Input
-    val dependencies: MutableList<Pair<String, String>> = ArrayList()
+    @Nested
+    val dependencies: MutableList<Dependency> = ArrayList()
 
-    @Input
-    val developmentDependencies: MutableList<Pair<String, String>> = ArrayList()
+    @Nested
+    val developmentDependencies: MutableList<Dependency> = ArrayList()
 
     @JvmOverloads
     fun dependency(name: String, version: String = "*") {
-        dependencies.add(name to version)
+        dependencies.add(Dependency(name, version, Dependency.RuntimeScope))
     }
 
     @JvmOverloads
     fun devDependency(name: String, version: String = "*") {
-        developmentDependencies.add(name to version)
+        developmentDependencies.add(Dependency(name, version, Dependency.DevelopmentScope))
     }
 }

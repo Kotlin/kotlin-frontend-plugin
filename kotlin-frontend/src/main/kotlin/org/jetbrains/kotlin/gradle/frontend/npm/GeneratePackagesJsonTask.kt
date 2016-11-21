@@ -3,13 +3,19 @@ package org.jetbrains.kotlin.gradle.frontend.npm
 import groovy.json.*
 import org.gradle.api.*
 import org.gradle.api.tasks.*
-import org.jetbrains.kotlin.utils.*
+import org.jetbrains.kotlin.gradle.frontend.*
 import java.io.*
 
 /**
  * @author Sergey Mashkov
  */
 open class GeneratePackagesJsonTask : DefaultTask() {
+    @Internal
+    lateinit var dependenciesProvider: () -> List<Dependency>
+
+    @get:Nested
+    val toolsDependencies: List<Dependency> by lazy { dependenciesProvider() }
+
     @get:InputFiles
     val unpackResults: List<File>
         get() = project.tasks.filterIsInstance<UnpackGradleDependenciesTask>().map { it.resultFile }
@@ -28,21 +34,23 @@ open class GeneratePackagesJsonTask : DefaultTask() {
         logger.info("Configuring npm")
 
         val dependencies = npm.dependencies + (project.tasks.filterIsInstance<UnpackGradleDependenciesTask>().map { task ->
-            task.resultNames?.toList() ?: task.resultFile.readLines()
+            task.resultNames?.map { Dependency(it.first, it.second, Dependency.RuntimeScope) } ?: task.resultFile.readLines()
                     .map { it.split("=").map(String::trim) }
                     .filter { it.size == 2 }
-                    .map { it[0] to it[1] }
-        }).flatten()
+                    .map { Dependency(it[0], it[1], Dependency.RuntimeScope) }
+        }).flatten() + toolsDependencies.filter { it.scope == Dependency.RuntimeScope }
+
+        val devDependencies = npm.developmentDependencies + toolsDependencies.filter { it.scope == Dependency.DevelopmentScope }
 
         if (logger.isDebugEnabled) {
-            logger.debug(dependencies.joinToString(prefix = "Dependencies:\n", separator = "\n") { "${it.first}: ${it.second}" })
+            logger.debug(dependencies.joinToString(prefix = "Dependencies:\n", separator = "\n") { "${it.name}: ${it.versionOrUri}" })
         }
 
         val packagesJson = mapOf(
                 "name" to (project.name ?: "noname"),
                 "description" to "simple description",
-                "dependencies" to dependencies.associateBy({ it.first }, { it.second }),
-                "devDependencies" to npm.developmentDependencies.associateBy({ it.first }, { it.second })
+                "dependencies" to dependencies.associateBy({ it.name }, { it.versionOrUri }),
+                "devDependencies" to devDependencies.associateBy({ it.name }, { it.versionOrUri })
         )
 
         val number = "\\d+$".toRegex()

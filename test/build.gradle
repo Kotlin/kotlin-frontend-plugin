@@ -25,20 +25,22 @@ dependencies {
 }
 
 kotlinFrontend {
+    moduleName = "yo"
+
     npm {
         //dependency("kotlin", "1.1.0-dev-4546")
-	dependency("style-loader")
+        dependency("style-loader")
 
         devDependency("karma")
-        devDependency("webpack")
-        devDependency("uglify-js")
-        devDependency("webpack-dev-server")
     }
 
     webpack {
 	//port = 9090
         entry = "./test"
         contentPath = file('src/main/web')
+    }
+    
+    rollup {
     }
 }
 

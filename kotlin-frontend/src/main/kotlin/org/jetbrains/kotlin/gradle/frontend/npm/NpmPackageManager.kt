@@ -10,6 +10,12 @@ class NpmPackageManager(val project: Project) : PackageManager {
     private val packageJsonFile: File
         get() = project.buildDir.resolve("package.json")
 
+    private val requiredDependencies = mutableListOf<Dependency>()
+
+    override fun require(dependencies: List<Dependency>) {
+        requiredDependencies.addAll(dependencies)
+    }
+
     override fun apply(containerTask: Task) {
         project.extensions.create("npm", NpmExtension::class.java)
 
@@ -25,6 +31,7 @@ class NpmPackageManager(val project: Project) : PackageManager {
 
         val unpack = project.tasks.create("npm-preunpack", UnpackGradleDependenciesTask::class.java)
         val configure = project.tasks.create("npm-configure", GeneratePackagesJsonTask::class.java) { task ->
+            task.dependenciesProvider = { requiredDependencies }
             task.packageJsonFile = packageJsonFile
         }
         val install = project.tasks.create("npm-install", NpmInstallTask::class.java) { task ->
