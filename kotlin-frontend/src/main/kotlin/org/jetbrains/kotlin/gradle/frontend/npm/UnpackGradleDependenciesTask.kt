@@ -2,6 +2,7 @@ package org.jetbrains.kotlin.gradle.frontend.npm
 
 import groovy.json.*
 import org.gradle.api.*
+import org.gradle.api.artifacts.*
 import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.preprocessor.*
 import org.jetbrains.kotlin.utils.*
@@ -10,18 +11,20 @@ import java.io.*
 /**
  * @author Sergey Mashkov
  */
-open class UnpackGradleDependencies : DefaultTask() {
-    @Input
-    val compileConfiguration = project.configurations.getByName("compile")!!
+open class UnpackGradleDependenciesTask : DefaultTask() {
+    @get:Input
+    val compileConfiguration: Configuration
+        get() = project.configurations.getByName("compile")!!
 
     @OutputFile
-    val resultFile = project.buildDir.resolve(".unpack.txt")
+    val resultFile = unpackFile(project)
 
     @Internal
-    var resultNames = mutableListOf<Pair<String, String>>()
+    var resultNames: MutableList<Pair<String, String>>? = null
 
     @TaskAction
     fun unpackLibraries() {
+        resultNames = mutableListOf()
         val out = project.buildDir.resolve("node_modules")
 
         out.mkdirsOrFail()
@@ -47,20 +50,21 @@ open class UnpackGradleDependencies : DefaultTask() {
                         val packageJson = mapOf(
                                 "name" to name,
                                 "version" to artifact.moduleVersion.id.version,
-                                "main" to "$name.js"
+                                "main" to "$name.js",
+                                "_source" to "gradle"
                         )
 
                         outDir.resolve("package.json").bufferedWriter().use { out ->
                             out.appendln(JsonBuilder(packageJson).toPrettyString())
                         }
 
-                        resultNames.add(name to outDir.toURI().toASCIIString())
+                        resultNames?.add(name to outDir.toURI().toASCIIString())
                     } else {
-                        resultNames.add(name to artifact.file.toURI().toASCIIString())
+                        resultNames?.add(name to artifact.file.toURI().toASCIIString())
                     }
                 }
 
-        resultFile.bufferedWriter().use { out -> resultNames.joinTo(out, separator = "\n", postfix = "\n") { "${it.first} = ${it.second}" } }
+        resultFile.bufferedWriter().use { out -> resultNames?.joinTo(out, separator = "\n", postfix = "\n") { "${it.first} = ${it.second}" } }
     }
 
     private val moduleNamePattern = """\s*//\s*Kotlin\.kotlin_module_metadata\(\s*\d+\s*,\s*("[^"]+")""".toRegex()
@@ -70,5 +74,9 @@ open class UnpackGradleDependencies : DefaultTask() {
                 .mapNotNull { moduleNamePattern.find(it.readText())?.groupValues?.get(1) }
                 .mapNotNull { JsonSlurper().parseText(it)?.toString() }
                 .singleOrNull()
+    }
+
+    companion object {
+        fun unpackFile(project: Project) = project.buildDir.resolve(".unpack.txt")
     }
 }

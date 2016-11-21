@@ -14,12 +14,11 @@ open class GenerateWebPackConfigTask : DefaultTask() {
     val configsDir: File
         get() = project.projectDir.resolve("webpack.config.d")
 
-    @get:InputDirectory
-    val contextDir: File
-        get() = WebPackBundler.kotlinOutput(project).parentFile
+    @get:Input
+    val contextDir by lazy { WebPackBundler.kotlinOutput(project).parentFile.path!! }
 
-    @Nested
-    val webPackConfig = project.extensions.findByType(WebPackExtension::class.java)!!
+    @get:Nested
+    val webPackConfig by lazy { project.extensions.findByType(WebPackExtension::class.java)!! }
 
     @OutputFile
     val webPackConfigFile: File = project.buildDir.resolve("webpack.config.js")
@@ -29,7 +28,7 @@ open class GenerateWebPackConfigTask : DefaultTask() {
         val bundleDir = handleFile(project, webPackConfig.bundleDirectory)
 
         val json = mapOf(
-                "context" to contextDir.path,
+                "context" to contextDir,
                 "entry" to (webPackConfig.entry ?: ""),
                 "output" to mapOf(
                         "path" to bundleDir.absolutePath,

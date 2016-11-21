@@ -54,6 +54,10 @@ open class NpmIndexTask : DefaultTask() {
                         }
                     }
                     .distinct()
+                    .filter { it.resolve("package.json").let { packageJson ->
+                        !packageJson.exists() || (JsonSlurper().parse(packageJson) as Map<*, *>)["_source"] != "gradle"
+                        true
+                    } }
                     .joinToLines(out) { it.path }
         }
     }

@@ -10,13 +10,12 @@ import java.io.*
  */
 open class WebPackBundleTask : DefaultTask() {
     @get:InputDirectory
-    val inputDir: File
-        get() = WebPackBundler.kotlinOutput(project).parentFile
+    val inputDir by lazy { WebPackBundler.kotlinOutput(project).parentFile }
 
     @get:Internal
     val webPackConfig by lazy { project.extensions.getByType(WebPackExtension::class.java)!! }
 
-    @Input
+    @InputFile
     val webPackConfigFile = project.buildDir.resolve("webpack.config.js")
 
     @get:OutputDirectory
