@@ -40,9 +40,11 @@ var devServer = new WebpackDevServer(
                 target: RunConfig.proxyUrl,
                 secure: false,
                 bypass: function(req, res, proxyOptions) {
-                    var file = path.join(RunConfig.contentPath, req.path);
-                    if (fs.existsSync(file)) {
-                        return req.path;
+                    if (RunConfig.contentPath) {
+                        var file = path.join(RunConfig.contentPath, req.path);
+                        if (fs.existsSync(file)) {
+                            return req.path;
+                        }
                     }
                 }
             } : null
