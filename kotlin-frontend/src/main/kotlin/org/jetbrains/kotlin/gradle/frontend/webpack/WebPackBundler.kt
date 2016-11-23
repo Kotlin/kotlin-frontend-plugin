@@ -20,8 +20,8 @@ class WebPackBundler(val project: Project) : Bundler {
 
         val config = project.tasks.create("webpack-config", GenerateWebPackConfigTask::class.java)
         val bundle = project.tasks.create("webpack-bundle", WebPackBundleTask::class.java)
-        val run = project.tasks.create("webpack-run", WebPackRunTask::class.java)
-        val stop = project.tasks.create("webpack-stop", WebPackStopTask::class.java)
+        val run = project.tasks.create("webpack-run", WebPackRunTask::class.java) { t -> t.start = true }
+        val stop = project.tasks.create("webpack-stop", WebPackRunTask::class.java) { t -> t.start = false }
 
         bundle.dependsOn(config)
         run.dependsOn(config)

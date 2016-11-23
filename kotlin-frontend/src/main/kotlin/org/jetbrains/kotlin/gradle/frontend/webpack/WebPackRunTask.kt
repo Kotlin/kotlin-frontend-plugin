@@ -1,45 +1,68 @@
 package org.jetbrains.kotlin.gradle.frontend.webpack
 
-import net.rubygrapefruit.platform.*
+import groovy.json.*
 import org.codehaus.groovy.runtime.*
 import org.gradle.api.*
 import org.gradle.api.tasks.*
+import org.jetbrains.kotlin.gradle.frontend.servers.*
 import java.io.*
 import java.net.*
 import java.nio.file.attribute.*
 import java.security.*
-import java.util.concurrent.*
 
 /**
  * @author Sergey Mashkov
  */
-open class WebPackRunTask : DefaultTask() {
+open class WebPackRunTask : AbstractStartStopTask<Int>() {
+    var start: Boolean = true
+    private val config by lazy { project.extensions.getByType(WebPackExtension::class.java)!! }
+
+    override val identifier = "webpack-dev-server"
+    override fun checkIsRunning(stopInfo: Int?) = stopInfo != null && Companion.checkIsRunning(stopInfo)
+
     val webPackConfigFile = project.buildDir.resolve("webpack.config.js")
     val devServerLauncherFile = project.buildDir.resolve(DevServerLauncherFileName)
+    val devServerLog = project.buildDir.resolve("webpack-dev-server.log")
+    val lastHashesFile = project.buildDir.resolve(".webpack-last-hashes.txt")
+
+    val hashes by lazy { hashOf(devServerLauncherFile, webPackConfigFile) } // TODO get all the hashes of all included configs
+
+    init {
+        doLast {
+            lastHashesFile.writeText(hashes.entries.sortedBy { it.key }.joinToString(separator = "\n", postfix = "\n") { "${it.key}\t${it.value}" })
+        }
+    }
 
     @TaskAction
-    fun run() {
-        val config = project.extensions.getByType(WebPackExtension::class.java)!!
-        val port = config.port
+    fun main() {
+        if (start) {
+            doStart()
+        } else {
+            doStop()
+        }
+    }
 
+    override fun beforeStart(): Int? {
         val launcherFileTemplate = javaClass.classLoader.getResourceAsStream("kotlin/webpack/webpack-dev-server-launcher.js")?.reader()?.readText() ?: throw GradleException("No dev-server launcher template found")
 
-        devServerLauncherFile.writeText(launcherFileTemplate.replace("require('\$RunConfig\$')", """
-        {
-            port: $port,
-            shutDownPath: '$ShutDownPath',
-            webPackConfig: '${webPackConfigFile.absolutePath}',
-            contentPath: '${config.contentPath.absolutePath}'
-        }
-        """.trimIndent()))
+        devServerLauncherFile.writeText(launcherFileTemplate.replace("require('\$RunConfig\$')", JsonBuilder(mapOf(
+                "port" to config.port,
+                "shutDownPath" to ShutDownPath,
+                "webPackConfig" to webPackConfigFile.absolutePath,
+                "contentPath" to config.contentPath.absolutePath
+        )).toPrettyString()))
 
         val newPermissions = java.nio.file.Files.getPosixFilePermissions(devServerLauncherFile.toPath()) + PosixFilePermission.OWNER_EXECUTE
         java.nio.file.Files.setPosixFilePermissions(devServerLauncherFile.toPath(), newPermissions)
 
-        val hashes = hashOf(devServerLauncherFile, webPackConfigFile)
-        // TODO get all the hashes of all included configs
+        return config.port
+    }
 
-        val lastHashesFile = project.buildDir.resolve(".webpack-last-hashes.txt")
+    override fun needRestart(oldState: Int?, newState: Int?): Boolean {
+        if (oldState != newState) {
+            return true
+        }
+
         val lastHashes = lastHashesFile.let {
             if (it.canRead()) it.readLines()
                     .map(String::trim)
@@ -49,65 +72,46 @@ open class WebPackRunTask : DefaultTask() {
             else emptyMap()
         }
 
-        if (checkIsRunning(port) || readLastPort(lastPortFile(project))?.let { checkIsRunning(it) } ?: false) {
-            if (hashesChanged(lastHashes, hashes)) {
-                logger.warn("webpack/dev server configuration changed: need to restart")
-                tryStop()
-            }
-        }
+        return hashesChanged(lastHashes, hashes)
+    }
 
-        if (checkIsRunning(port)) {
-            logger.warn("dev server is already running on port $port")
-            return
-        }
-
-        logger.info("starting server on port $port")
-
-        val launcher = Native.get(ProcessLauncher::class.java)!!
-        val devServerLog = project.buildDir.resolve("webpack-dev-server.log")
-        val pb = ProcessBuilder("/bin/sh", "-c", devServerLauncherFile.absolutePath)
+    override fun builder(): ProcessBuilder {
+        return ProcessBuilder("node", devServerLauncherFile.absolutePath)
                 .redirectErrorStream(true)
                 .redirectOutput(devServerLog)
-
-        val process = launcher.start(pb)
-
-        for (i in 1..10) {
-            if (checkIsRunning(port)) {
-                break
-            }
-            if (process.waitFor(500, TimeUnit.MILLISECONDS)) {
-                break
-            }
-        }
-
-        if (!checkIsRunning(port)) {
-            if (process.isAlive) {
-                process.destroyForcibly()
-
-                logger.error("webpack-dev-server didn't listen port $port so has been killed, see $devServerLog")
-            } else {
-                logger.error("webpack-dev-server exited with exit code ${process.exitValue()}, see $devServerLog")
-            }
-
-            throw GradleException("webpack-dev-server startup failed")
-        }
-
-        project.buildDir.resolve(DevServerPortFileName).writeText(port.toString())
-        lastHashesFile.writeText(hashes.entries.sortedBy { it.key }.joinToString(separator = "\n", postfix = "\n") { "${it.key}\t${it.value}" })
     }
 
-    private fun tryStop() {
-        WebPackStopTask.shutdown(project, logger)
+    override fun readState(file: File): Int = file.readText().trim().toInt()
+    override fun writeState(file: File, state: Int) {
+        file.writeText("$state\n")
     }
 
-    private fun hashOf(vararg files: File) = files.associateBy({ it.name }, { it.sha1() })
-    private fun File.sha1() = EncodingGroovyMethods.encodeHex(MessageDigest.getInstance("SHA1").digest(readBytes())).toString()
+    override fun stop(state: Int?) {
+        if (state != null) {
+            try {
+                URL("http://localhost:$state${WebPackRunTask.ShutDownPath}").readText()
+            } catch (e: IOException) {
+                logger.info("Couldn't stop server on port $state")
+            }
+        }
+    }
 
-    private fun hashesChanged(oldHashes: Map<String, String>, newHashes: Map<String, String>): Boolean {
-        return oldHashes != newHashes
+    override fun notRunningThenKilledMessage() {
+        logger.error("webpack-dev-server didn't listen port so has been killed, see $devServerLog")
+    }
+
+    override fun notRunningExitCodeMessage(exitCode: Int) {
+        logger.error("webpack-dev-server exited with exit code $exitCode, see $devServerLog")
     }
 
     companion object {
+        private fun hashOf(vararg files: File) = files.associateBy({ it.name }, { it.sha1() })
+        private fun File.sha1() = EncodingGroovyMethods.encodeHex(MessageDigest.getInstance("SHA1").digest(readBytes())).toString()
+
+        private fun hashesChanged(oldHashes: Map<String, String>, newHashes: Map<String, String>): Boolean {
+            return oldHashes != newHashes
+        }
+
         val DevServerPortFileName = "dev-server-port.txt"
         val DevServerLauncherFileName = "webpack-dev-server-run.js"
         val ShutDownPath = "/webpack/dev/server/shutdown"
