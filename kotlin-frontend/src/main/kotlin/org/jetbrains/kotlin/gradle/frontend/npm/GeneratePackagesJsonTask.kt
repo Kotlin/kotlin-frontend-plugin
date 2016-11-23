@@ -20,7 +20,7 @@ open class GeneratePackagesJsonTask : DefaultTask() {
     val unpackResults: List<File>
         get() = project.tasks.filterIsInstance<UnpackGradleDependenciesTask>().map { it.resultFile }
 
-    @InputDirectory
+//    @InputDirectory
     val configPartsDir = project.projectDir.resolve("package.json.d")
 
     @Nested
@@ -28,6 +28,12 @@ open class GeneratePackagesJsonTask : DefaultTask() {
 
     @OutputFile
     lateinit var packageJsonFile: File
+
+    init {
+        if (configPartsDir.exists()) {
+            inputs.dir(configPartsDir)
+        }
+    }
 
     @TaskAction
     fun generate() {

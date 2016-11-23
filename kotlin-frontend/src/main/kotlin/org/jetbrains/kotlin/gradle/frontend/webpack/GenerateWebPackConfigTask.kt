@@ -10,7 +10,7 @@ import java.io.*
  * @author Sergey Mashkov
  */
 open class GenerateWebPackConfigTask : DefaultTask() {
-    @get:InputDirectory
+//    @get:InputDirectory
     val configsDir: File
         get() = project.projectDir.resolve("webpack.config.d")
 
@@ -22,6 +22,12 @@ open class GenerateWebPackConfigTask : DefaultTask() {
 
     @OutputFile
     val webPackConfigFile: File = project.buildDir.resolve("webpack.config.js")
+
+    init {
+        if (configsDir.exists()) {
+            inputs.dir(configsDir)
+        }
+    }
 
     @TaskAction
     fun generateConfig() {
