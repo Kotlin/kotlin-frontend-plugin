@@ -21,7 +21,7 @@ abstract class AbstractStartStopTask<S : Any> : DefaultTask() {
     protected abstract fun readState(file: File): S
     protected abstract fun writeState(file: File, state: S)
 
-    protected open fun notRunningThenKilledMessage(): Unit = logger.error("$identifier: ${notRunningThenKilledMessage()} so has been killed")
+    protected open fun notRunningThenKilledMessage(): Unit = logger.error("$identifier: not actually running so has been killed")
     protected open fun notRunningExitCodeMessage(exitCode: Int): Unit = logger.error("$identifier: exited with exit code $exitCode")
 
     protected open val stateFile: File

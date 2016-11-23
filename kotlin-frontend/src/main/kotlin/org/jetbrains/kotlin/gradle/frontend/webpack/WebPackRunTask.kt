@@ -15,17 +15,22 @@ import java.security.*
  */
 open class WebPackRunTask : AbstractStartStopTask<Int>() {
     var start: Boolean = true
+
+    @get:Nested
     private val config by lazy { project.extensions.getByType(WebPackExtension::class.java)!! }
 
-    override val identifier = "webpack-dev-server"
-    override fun checkIsRunning(stopInfo: Int?) = stopInfo != null && Companion.checkIsRunning(stopInfo)
-
+    @InputFile
     val webPackConfigFile = project.buildDir.resolve("webpack.config.js")
+
     val devServerLauncherFile = project.buildDir.resolve(DevServerLauncherFileName)
+
     val devServerLog = project.buildDir.resolve("webpack-dev-server.log")
     val lastHashesFile = project.buildDir.resolve(".webpack-last-hashes.txt")
 
     val hashes by lazy { hashOf(devServerLauncherFile, webPackConfigFile) } // TODO get all the hashes of all included configs
+
+    override val identifier = "webpack-dev-server"
+    override fun checkIsRunning(stopInfo: Int?) = stopInfo != null && Companion.checkIsRunning(stopInfo)
 
     init {
         doLast {
