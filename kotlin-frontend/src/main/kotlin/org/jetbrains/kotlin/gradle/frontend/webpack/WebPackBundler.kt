@@ -11,29 +11,34 @@ import java.io.*
 class WebPackBundler(val project: Project) : Bundler {
 
     override fun apply(packageManager: PackageManager, bundleTask: Task, runTask: Task, stopTask: Task) {
-        packageManager.require(
-                listOf("webpack", "webpack-dev-server")
-                        .map { Dependency(it, "*", Dependency.DevelopmentScope) }
-        )
+        val webpack = project.extensions.create("webpack", WebPackExtension::class.java)
 
-        project.extensions.create("webpack", WebPackExtension::class.java)
+        project.afterEvaluate {
+            if (hasWebPack(webpack)) {
+                packageManager.require(
+                        listOf("webpack", "webpack-dev-server")
+                                .map { Dependency(it, "*", Dependency.DevelopmentScope) }
+                )
 
-        val config = project.tasks.create("webpack-config", GenerateWebPackConfigTask::class.java)
-        val bundle = project.tasks.create("webpack-bundle", WebPackBundleTask::class.java)
-        val run = project.tasks.create("webpack-run", WebPackRunTask::class.java) { t -> t.start = true }
-        val stop = project.tasks.create("webpack-stop", WebPackRunTask::class.java) { t -> t.start = false }
+                val config = project.tasks.create("webpack-config", GenerateWebPackConfigTask::class.java)
+                val bundle = project.tasks.create("webpack-bundle", WebPackBundleTask::class.java) { t ->
+                    t.description = "Bundles all scripts and resources with webpack"
+                    t.group = WebPackGroup
+                }
 
-        bundle.dependsOn(config)
-        run.dependsOn(config)
+                bundle.dependsOn(config)
 
-        bundleTask.dependsOn(bundle)
-        runTask.dependsOn(run)
-        stopTask.dependsOn(stop)
-
-        project.tasks.getByName("clean").dependsOn(stop)
+                bundleTask.dependsOn(bundle)
+            }
+        }
     }
 
     companion object {
+        val WebPackGroup = "webpack"
+        fun hasWebPack(webPackExtension: WebPackExtension): Boolean {
+            return webPackExtension.entry != null
+        }
+
         @Deprecated("Move to common utils")
         fun kotlinOutput(project: Project): File {
             return project.tasks.filterIsInstance<KotlinJsCompile>()

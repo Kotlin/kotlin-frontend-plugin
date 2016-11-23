@@ -1,6 +1,7 @@
 package org.jetbrains.kotlin.gradle.frontend
 
 import org.gradle.api.*
+import org.jetbrains.kotlin.gradle.frontend.ktor.*
 import org.jetbrains.kotlin.gradle.frontend.npm.*
 import org.jetbrains.kotlin.gradle.frontend.rollup.*
 import org.jetbrains.kotlin.gradle.frontend.webpack.*
@@ -41,8 +42,12 @@ class FrontendPlugin : Plugin<Project> {
                 description = "Stops dev-server running in background if running"
             }
 
-            for (bundler in listOf(WebPackBundler(project), RollupBundler(project))) {
+            for (bundler in listOf<Bundler>(WebPackBundler(project), RollupBundler(project))) {
                 bundler.apply(packageManager, bundle, run, stop)
+            }
+
+            for (runner in listOf(WebPackLauncher, KtorLauncher)) {
+                runner.apply(project, run, stop)
             }
 
             kotlin2js.dependsOn(packages)
@@ -52,7 +57,8 @@ class FrontendPlugin : Plugin<Project> {
 
             run.dependsOn(packages, kotlin2js)
 
-            project.tasks.getByPath("build").dependsOn(bundle)
+            project.tasks.getByPath("assemble").dependsOn(bundle)
+            project.tasks.getByName("clean").dependsOn(stop)
         }
     }
 }

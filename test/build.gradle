@@ -29,7 +29,7 @@ kotlinFrontend {
 
     npm {
         //dependency("kotlin", "1.1.0-dev-4546")
-        dependency("style-loader")
+        dependency "style-loader"
 
         devDependency("karma")
     }
@@ -41,6 +41,7 @@ kotlinFrontend {
     }
     
     rollup {
+        enabled = true
     }
 }
 

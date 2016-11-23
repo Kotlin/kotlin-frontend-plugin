@@ -17,34 +17,53 @@ class NpmPackageManager(val project: Project) : PackageManager {
     }
 
     override fun apply(containerTask: Task) {
-        project.extensions.create("npm", NpmExtension::class.java)
+        val npm = project.extensions.create("npm", NpmExtension::class.java)
 
-        project.configurations.getByName("compile").dependencies.add(DefaultSelfResolvingDependency(object: AbstractFileCollection() {
-            override fun getFiles(): MutableSet<File> {
-                return project.tasks.filterIsInstance<NpmDependenciesTask>().flatMap { it.results }.toMutableSet()
+        project.afterEvaluate {
+            if (npm.dependencies.isNotEmpty() || npm.developmentDependencies.isNotEmpty() || project.projectDir.resolve("package.json.d").exists() || requiredDependencies.isNotEmpty()) {
+                project.configurations.getByName("compile").dependencies.add(DefaultSelfResolvingDependency(object : AbstractFileCollection() {
+                    override fun getFiles(): MutableSet<File> {
+                        return project.tasks.filterIsInstance<NpmDependenciesTask>().flatMap { it.results }.toMutableSet()
+                    }
+
+                    override fun getDisplayName(): String {
+                        return "npm-dependencies"
+                    }
+                }))
+
+                val unpack = project.tasks.create("npm-preunpack", UnpackGradleDependenciesTask::class.java)
+                val configure = project.tasks.create("npm-configure", GeneratePackagesJsonTask::class.java) { task ->
+                    task.description = "Generate package.json and prepare for npm"
+                    task.group = NpmGroup
+
+                    task.dependenciesProvider = { requiredDependencies }
+                    task.packageJsonFile = packageJsonFile
+                }
+                val install = project.tasks.create("npm-install", NpmInstallTask::class.java) { task ->
+                    task.description = "Install npm packages"
+                    task.group = NpmGroup
+
+                    task.packageJsonFile = packageJsonFile
+                }
+                val index = project.tasks.create("npm-index", NpmIndexTask::class.java)
+                val setup = project.tasks.create("npm-deps", NpmDependenciesTask::class.java)
+                val npmAll = project.tasks.create("npm") { task ->
+                    task.description = "Configure npm and install packages"
+                    task.group = NpmGroup
+                }
+
+                configure.dependsOn(unpack)
+                install.dependsOn(configure)
+                index.dependsOn(install)
+                setup.dependsOn(index)
+                npmAll.dependsOn(setup)
+
+                containerTask.dependsOn(npmAll)
             }
-
-            override fun getDisplayName(): String {
-                return "npm-dependencies"
-            }
-        }))
-
-        val unpack = project.tasks.create("npm-preunpack", UnpackGradleDependenciesTask::class.java)
-        val configure = project.tasks.create("npm-configure", GeneratePackagesJsonTask::class.java) { task ->
-            task.dependenciesProvider = { requiredDependencies }
-            task.packageJsonFile = packageJsonFile
         }
-        val install = project.tasks.create("npm-install", NpmInstallTask::class.java) { task ->
-            task.packageJsonFile = packageJsonFile
-        }
-        val index = project.tasks.create("npm-index", NpmIndexTask::class.java)
-        val setup = project.tasks.create("npm-deps", NpmDependenciesTask::class.java)
+    }
 
-        configure.dependsOn(unpack)
-        install.dependsOn(configure)
-        index.dependsOn(install)
-        setup.dependsOn(index)
-
-        containerTask.dependsOn(setup)
+    companion object {
+        val NpmGroup = "NPM"
     }
 }
