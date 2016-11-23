@@ -45,6 +45,11 @@ abstract class AbstractStartStopTask<S : Any> : DefaultTask() {
 
         val launcher = Native.get(ProcessLauncher::class.java)!!
         val builder = builder()
+
+        if (logger.isDebugEnabled) {
+            logger.debug("Running ${builder.command().joinToString(" ")}")
+        }
+
         val process = launcher.start(builder)
 
         for (i in 1..10) {
