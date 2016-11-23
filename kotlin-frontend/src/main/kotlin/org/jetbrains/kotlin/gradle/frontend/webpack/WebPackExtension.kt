@@ -16,6 +16,9 @@ open class WebPackExtension {
     @Input
     var port: Int = 8088
 
+    @Input
+    var proxyUrl: String? = null
+
     /**
      * a file or a path
      */

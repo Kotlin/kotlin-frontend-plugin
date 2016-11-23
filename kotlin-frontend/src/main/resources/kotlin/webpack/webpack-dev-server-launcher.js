@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+var path = require('path');
+var fs = require('fs');
 var webpack = require('webpack');
 var WebpackDevServer = require('webpack-dev-server');
 
@@ -32,6 +34,18 @@ var devServer = new WebpackDevServer(
                 res.json({ shutdown: 'ok' });
                 devServer.close();
             });
+        },
+        proxy: {
+            "**" : (RunConfig.contentPath) ? {
+                target: RunConfig.proxyUrl,
+                secure: false,
+                bypass: function(req, res, proxyOptions) {
+                    var file = path.join(RunConfig.contentPath, req.path);
+                    if (fs.existsSync(file)) {
+                        return req.path;
+                    }
+                }
+            } : null
         }
     }
 );

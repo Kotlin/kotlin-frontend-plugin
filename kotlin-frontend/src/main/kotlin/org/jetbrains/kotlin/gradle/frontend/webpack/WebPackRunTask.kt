@@ -50,12 +50,15 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
     override fun beforeStart(): Int? {
         val launcherFileTemplate = javaClass.classLoader.getResourceAsStream("kotlin/webpack/webpack-dev-server-launcher.js")?.reader()?.readText() ?: throw GradleException("No dev-server launcher template found")
 
-        devServerLauncherFile.writeText(launcherFileTemplate.replace("require('\$RunConfig\$')", JsonBuilder(mapOf(
-                "port" to config.port,
-                "shutDownPath" to ShutDownPath,
-                "webPackConfig" to webPackConfigFile.absolutePath,
-                "contentPath" to config.contentPath.absolutePath
-        )).toPrettyString()))
+        devServerLauncherFile.writeText(
+                launcherFileTemplate
+                        .replace("require('\$RunConfig\$')", JsonBuilder(mapOf(
+                                "port" to config.port,
+                                "shutDownPath" to ShutDownPath,
+                                "webPackConfig" to webPackConfigFile.absolutePath,
+                                "contentPath" to config.contentPath.absolutePath,
+                                "proxyUrl" to config.proxyUrl
+                        )).toPrettyString()))
 
         val newPermissions = java.nio.file.Files.getPosixFilePermissions(devServerLauncherFile.toPath()) + PosixFilePermission.OWNER_EXECUTE
         java.nio.file.Files.setPosixFilePermissions(devServerLauncherFile.toPath(), newPermissions)
