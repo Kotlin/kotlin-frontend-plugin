@@ -21,14 +21,25 @@ object WebPackLauncher : Launcher {
                     t.group = WebPackBundler.WebPackGroup
                 }
 
-                project.tasks.whenTaskAdded { task ->
-                    if (task.name == "webpack-config") {
-                        run.dependsOn(task)
-                    }
+                project.withTask("webpack-config") { task ->
+                    run.dependsOn(task)
                 }
 
                 startTask.dependsOn(run)
                 stopTask.dependsOn(stop)
+            }
+        }
+    }
+
+    private fun Project.withTask(name: String, block: (Task) -> Unit) {
+        val existing = project.tasks.findByName(name)
+        if (existing != null) {
+            block(existing)
+        } else {
+            project.tasks.whenTaskAdded { task ->
+                if (task.name == name) {
+                    block(task)
+                }
             }
         }
     }
