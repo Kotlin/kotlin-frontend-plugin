@@ -13,8 +13,9 @@ open class KtorStartStopTask : AbstractStartStopTask<Int>() {
     @Input
     var start: Boolean = true
 
-    @Input
-    var port: Int = 8080
+    @get:Input
+    val port: Int
+        get() = project.extensions.getByType(KtorExtension::class.java).port ?: throw IllegalArgumentException("ktor port not configured")
 
     @Input
     var shutdownPath = "/ktor/application/shutdown"
@@ -43,6 +44,7 @@ open class KtorStartStopTask : AbstractStartStopTask<Int>() {
                         )
                         .distinct().joinToString(File.pathSeparator) { it.absolutePath }
                         + listOf(
+                        "-Dktor.deployment.port=$port",
                         "-Dktor.deployment.autoreload=true",
                         "-Dktor.deployment.shutdown.url=$shutdownPath",
                         mainClass)

@@ -8,12 +8,28 @@ import org.jetbrains.kotlin.gradle.frontend.*
  */
 object KtorLauncher : Launcher {
     override fun apply(project: Project, startTask: Task, stopTask: Task) {
-        val ktorRun = project.tasks.create("ktor-run", KtorStartStopTask::class.java)
-        val ktorStop = project.tasks.create("ktor-stop", KtorStartStopTask::class.java) { t -> t.start = false }
+        val ktor = project.extensions.create("ktor", KtorExtension::class.java)
 
-        ktorRun.dependsOn(project.tasks.getByName("build"))
+        project.afterEvaluate {
+            if (ktor.port != null) {
+                val ktorRun = project.tasks.create("ktor-run", KtorStartStopTask::class.java) { t ->
+                    t.description = "Run ktor server"
+                    t.group = KtorGroup
+                }
 
-        startTask.dependsOn(ktorRun)
-        stopTask.dependsOn(ktorStop)
+                val ktorStop = project.tasks.create("ktor-stop", KtorStartStopTask::class.java) { t ->
+                    t.start = false
+                    t.description = "Stop ktor server"
+                    t.group = KtorGroup
+                }
+
+                ktorRun.dependsOn(project.tasks.getByName("assemble"))
+
+                startTask.dependsOn(ktorRun)
+                stopTask.dependsOn(ktorStop)
+            }
+        }
     }
+
+    val KtorGroup = "KTor"
 }
