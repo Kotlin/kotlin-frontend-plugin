@@ -1,0 +1,3 @@
+rootProject.name = 'full-stack-example'
+include 'server-side'
+include 'frontend'

@@ -1,0 +1,42 @@
+group 'org.jetbrains.kotlin.examples'
+version '1.0-SNAPSHOT'
+
+buildscript {
+    ext.kotlin_version = '1.0.5-2'
+
+    repositories {
+        jcenter()
+        mavenLocal()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "org.jetbrains.kotlin:kotlin-frontend:0.0.1-SNAPSHOT"
+    }
+}
+
+subprojects { p ->
+    p.buildscript {
+        ext.kotlin_version = '1.0.5-2'
+
+        repositories {
+            jcenter()
+            mavenLocal()
+        }
+        dependencies {
+            classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+            classpath "org.jetbrains.kotlin:kotlin-frontend:0.0.1-SNAPSHOT"
+        }
+    }
+
+    p.repositories {
+        mavenLocal()
+        jcenter()
+        maven { url "http://dl.bintray.com/kotlin/ktor" }
+    }
+}
+
+repositories {
+    jcenter()
+    maven { url "http://dl.bintray.com/kotlin/ktor" }
+}
+
