@@ -23,6 +23,7 @@ abstract class AbstractStartStopTask<S : Any> : DefaultTask() {
 
     protected open fun notRunningThenKilledMessage(): Unit = logger.error("$identifier: not actually running so has been killed")
     protected open fun notRunningExitCodeMessage(exitCode: Int): Unit = logger.error("$identifier: exited with exit code $exitCode")
+    protected open fun serverLog(): File = project.buildDir.resolve("$identifier.log")
 
     protected open val stateFile: File
         get() = project.buildDir.resolve(".run-$identifier.txt")
@@ -45,6 +46,8 @@ abstract class AbstractStartStopTask<S : Any> : DefaultTask() {
 
         val launcher = Native.get(ProcessLauncher::class.java)!!
         val builder = builder()
+                .redirectErrorStream(true)
+                .redirectOutput(serverLog())
 
         if (logger.isDebugEnabled) {
             logger.debug("Running ${builder.command().joinToString(" ")}")
