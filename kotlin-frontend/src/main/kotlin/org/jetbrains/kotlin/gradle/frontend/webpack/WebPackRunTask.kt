@@ -83,10 +83,10 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
         return hashesChanged(lastHashes, hashes)
     }
 
+    override fun serverLog() = devServerLog
+
     override fun builder(): ProcessBuilder {
-        return ProcessBuilder("node", devServerLauncherFile.absolutePath)
-                .redirectErrorStream(true)
-                .redirectOutput(devServerLog)
+        return ProcessBuilder("node", devServerLauncherFile.absolutePath).directory(project.buildDir)
     }
 
     override fun readState(file: File): Int = file.readText().trim().toInt()
@@ -113,19 +113,15 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
     }
 
     companion object {
-        private fun hashOf(vararg files: File) = files.associateBy({ it.name }, { it.sha1() })
+        private fun hashOf(vararg files: File) = files.filter(File::canRead).associateBy({ it.name }, { it.sha1() })
         private fun File.sha1() = EncodingGroovyMethods.encodeHex(MessageDigest.getInstance("SHA1").digest(readBytes())).toString()
 
         private fun hashesChanged(oldHashes: Map<String, String>, newHashes: Map<String, String>): Boolean {
             return oldHashes != newHashes
         }
 
-        val DevServerPortFileName = "dev-server-port.txt"
         val DevServerLauncherFileName = "webpack-dev-server-run.js"
         val ShutDownPath = "/webpack/dev/server/shutdown"
-
-        fun lastPortFile(project: Project) = project.buildDir.resolve(WebPackRunTask.DevServerPortFileName)
-        fun readLastPort(portFile: File) = if (portFile.canRead()) portFile.readText().trim().toInt() else null
 
         fun checkIsRunning(port: Int): Boolean {
             try {
