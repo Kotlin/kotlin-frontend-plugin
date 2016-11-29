@@ -22,6 +22,9 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
     @InputFile
     val webPackConfigFile = project.buildDir.resolve("webpack.config.js")
 
+    @Internal
+    private var logPosition = 0L
+
     val devServerLauncherFile = project.buildDir.resolve(DevServerLauncherFileName)
 
     val devServerLog = project.buildDir.resolve("webpack-dev-server.log")
@@ -33,8 +36,14 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
     override fun checkIsRunning(stopInfo: Int?) = stopInfo != null && Companion.checkIsRunning(stopInfo)
 
     init {
+        project.afterEvaluate {
+            checkLogFilePosition()
+        }
+        checkLogFilePosition()
+
         doLast {
             lastHashesFile.writeText(hashes.entries.sortedBy { it.key }.joinToString(separator = "\n", postfix = "\n") { "${it.key}\t${it.value}" })
+            dumpLog()
         }
     }
 
@@ -112,6 +121,46 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
         logger.error("webpack-dev-server exited with exit code $exitCode, see $devServerLog")
     }
 
+    private fun checkLogFilePosition() {
+        try {
+            // it is important to execute it BEFORE any task run because we need to remember file position
+            // before any changes detected
+            logPosition = Math.max(logPosition, serverLog().length())
+        } catch (ignore: IOException) {
+        }
+    }
+
+    private fun dumpLog() {
+        try {
+            val file = serverLog()
+            var lastSize = logPosition
+            var lastCheck = System.currentTimeMillis()
+
+            while (true) {
+                val size = file.length()
+                if (size != lastSize) {
+                    lastCheck = System.currentTimeMillis()
+
+                    file.inputStream().use { s ->
+                        s.skip(lastSize)
+
+                        val bytesCount = size - lastSize
+                        val bytes = s.readFully(bytesCount.toInt())
+                        System.out.write(bytes)
+                        System.out.flush()
+                    }
+
+                    lastSize = size
+                } else if (System.currentTimeMillis() - lastCheck > 350) {
+                    break
+                }
+
+                Thread.sleep(75)
+            }
+        } catch (ignore: IOException) {
+        }
+    }
+
     companion object {
         private fun hashOf(vararg files: File) = files.filter(File::canRead).associateBy({ it.name }, { it.sha1() })
         private fun File.sha1() = EncodingGroovyMethods.encodeHex(MessageDigest.getInstance("SHA1").digest(readBytes())).toString()
@@ -130,6 +179,22 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
             } catch (e: IOException) {
                 return false
             }
+        }
+
+        private fun InputStream.readFully(size: Int): ByteArray {
+            val buffer = ByteArray(size)
+            var read = 0
+
+            do {
+                val rc = read(buffer, read, size - read)
+                if (rc == -1) {
+                    throw IOException("Unexpected EOF")
+                }
+
+                read += rc
+            } while (read < size)
+
+            return buffer
         }
     }
 }
