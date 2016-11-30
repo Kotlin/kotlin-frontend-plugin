@@ -66,7 +66,7 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
                                 "shutDownPath" to ShutDownPath,
                                 "webPackConfig" to webPackConfigFile.absolutePath,
                                 "contentPath" to config.contentPath.absolutePath,
-                                "proxyUrl" to config.proxyUrl
+                                "proxyUrl" to config.proxyUrl.let { if (it.isBlank()) null else it }
                         )).toPrettyString()))
 
         val newPermissions = java.nio.file.Files.getPosixFilePermissions(devServerLauncherFile.toPath()) + PosixFilePermission.OWNER_EXECUTE
