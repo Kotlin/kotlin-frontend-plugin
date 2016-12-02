@@ -31,7 +31,7 @@ open class GeneratePackagesJsonTask : DefaultTask() {
 
     init {
         if (configPartsDir.exists()) {
-            inputs.dir(configPartsDir)
+            (inputs as TaskInputs).dir(configPartsDir)
         }
     }
 

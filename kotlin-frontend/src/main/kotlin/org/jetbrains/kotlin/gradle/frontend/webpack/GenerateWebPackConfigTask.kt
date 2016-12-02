@@ -25,7 +25,7 @@ open class GenerateWebPackConfigTask : DefaultTask() {
 
     init {
         if (configsDir.exists()) {
-            inputs.dir(configsDir)
+            (inputs as TaskInputs).dir(configsDir)
         }
     }
 
