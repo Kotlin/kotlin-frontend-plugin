@@ -22,6 +22,9 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
     @Internal
     var resultNames: MutableList<Pair<String, String>>? = null
 
+    @Nested
+    val npm: NpmExtension = project.extensions.findByType(NpmExtension::class.java)
+
     @TaskAction
     fun unpackLibraries() {
         resultNames = mutableListOf()
@@ -47,9 +50,10 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
                         outDir.mkdirsOrFail()
 
                         project.tasks.create("npm-unpack-$name", Copy::class.java).from(project.zipTree(artifact.file)).into(outDir).execute()
+                        val version = npm.versionReplacements.singleOrNull { it.name == artifact.name }?.versionOrUri
                         val packageJson = mapOf(
                                 "name" to name,
-                                "version" to artifact.moduleVersion.id.version,
+                                "version" to (version ?: artifact.moduleVersion.id.version),
                                 "main" to "$name.js",
                                 "_source" to "gradle"
                         )

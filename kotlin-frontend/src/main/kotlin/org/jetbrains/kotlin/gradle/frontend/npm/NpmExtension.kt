@@ -12,11 +12,18 @@ open class NpmExtension {
     val dependencies: MutableList<Dependency> = ArrayList()
 
     @Nested
+    val versionReplacements: MutableList<Dependency> = ArrayList()
+
+    @Nested
     val developmentDependencies: MutableList<Dependency> = ArrayList()
 
     @JvmOverloads
     fun dependency(name: String, version: String = "*") {
         dependencies.add(Dependency(name, version, Dependency.RuntimeScope))
+    }
+
+    fun replaceVersion(name: String, version: String) {
+        versionReplacements.add(Dependency(name, version, Dependency.RuntimeScope))
     }
 
     @JvmOverloads
