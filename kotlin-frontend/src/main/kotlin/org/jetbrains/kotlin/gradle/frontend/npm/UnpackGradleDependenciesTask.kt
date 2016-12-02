@@ -46,7 +46,7 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
                         val outDir = out.resolve(name)
                         outDir.mkdirsOrFail()
 
-                        project.tasks.create("npm-unpack-name", Copy::class.java).from(project.zipTree(artifact.file)).into(outDir).execute()
+                        project.tasks.create("npm-unpack-$name", Copy::class.java).from(project.zipTree(artifact.file)).into(outDir).execute()
                         val packageJson = mapOf(
                                 "name" to name,
                                 "version" to artifact.moduleVersion.id.version,
