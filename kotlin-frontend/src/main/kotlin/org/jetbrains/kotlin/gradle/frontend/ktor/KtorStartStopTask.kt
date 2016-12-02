@@ -44,7 +44,7 @@ open class KtorStartStopTask : AbstractStartStopTask<Int>() {
 
     override fun builder(): ProcessBuilder {
         return ProcessBuilder(
-                listOf("/usr/java/latest/bin/java", "-cp")
+                listOf("java", "-cp")
                         + (project.configurations.flatMap { it.files.filter { it.canRead() && it.extension == "jar" } }
                         + project.convention.findPlugin(JavaPluginConvention::class.java).sourceSets.getByName("main").output.toList()
                         )
