@@ -5,6 +5,7 @@ import org.gradle.api.*
 import org.gradle.api.artifacts.*
 import org.gradle.api.initialization.*
 import org.gradle.api.invocation.*
+import org.jetbrains.kotlin.gradle.frontend.karma.*
 import org.jetbrains.kotlin.gradle.frontend.ktor.*
 import org.jetbrains.kotlin.gradle.frontend.npm.*
 import org.jetbrains.kotlin.gradle.frontend.rollup.*
@@ -15,6 +16,8 @@ class FrontendPlugin : Plugin<Project> {
         project.pluginManager.apply("kotlin2js")
         project.pluginManager.withPlugin("kotlin2js") { kotlinPlugin ->
             val kotlin2js = project.tasks.getByPath("compileKotlin2Js")
+            val testKotlin2js = project.tasks.getByPath("compileTestKotlin2Js")
+            testKotlin2js.dependsOn(kotlin2js)
 
             project.extensions.create("kotlinFrontend", KotlinFrontendExtension::class.java).apply {
                 moduleName = project.name
@@ -50,11 +53,12 @@ class FrontendPlugin : Plugin<Project> {
                 bundler.apply(packageManager, bundle, run, stop)
             }
 
-            for (runner in listOf(WebPackLauncher, KtorLauncher)) {
-                runner.apply(project, run, stop)
+            for (runner in listOf(WebPackLauncher, KtorLauncher, KarmaLauncher)) {
+                runner.apply(packageManager, project, run, stop)
             }
 
             kotlin2js.dependsOn(packages)
+            testKotlin2js.dependsOn(packages)
 
             bundle.dependsOn(packages)
             bundle.dependsOn(kotlin2js)

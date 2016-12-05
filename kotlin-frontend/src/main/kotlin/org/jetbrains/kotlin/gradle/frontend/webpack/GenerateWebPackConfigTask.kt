@@ -4,6 +4,7 @@ import groovy.json.*
 import groovy.lang.*
 import org.gradle.api.*
 import org.gradle.api.tasks.*
+import org.jetbrains.kotlin.gradle.frontend.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
 import java.io.*
 
@@ -16,13 +17,16 @@ open class GenerateWebPackConfigTask : DefaultTask() {
         get() = project.projectDir.resolve("webpack.config.d")
 
     @get:Input
-    val contextDir by lazy { kotlinOutput(project).parentFile.path!! }
+    val contextDir by lazy { kotlinOutput(project).parentFile.absolutePath!! }
 
     @get:Nested
     val webPackConfig by lazy { project.extensions.findByType(WebPackExtension::class.java)!! }
 
     @OutputFile
     val webPackConfigFile: File = project.buildDir.resolve("webpack.config.js")
+
+    @get:Input
+    val bundleName: String by lazy { project.extensions.findByType(KotlinFrontendExtension::class.java).moduleName }
 
     init {
         if (configsDir.exists()) {
@@ -33,10 +37,15 @@ open class GenerateWebPackConfigTask : DefaultTask() {
     @TaskAction
     fun generateConfig() {
         val bundleDir = handleFile(project, webPackConfig.bundleDirectory)
+        val resolveRoots = mutableListOf(
+                contextDir
+        )
 
-        val json = mapOf(
+        val json = linkedMapOf(
                 "context" to contextDir,
-                "entry" to (webPackConfig.entry ?: ""),
+                "entry" to mapOf(
+                        bundleName to (webPackConfig.entry ?: "")
+                ),
                 "output" to mapOf(
                         "path" to bundleDir.absolutePath,
                         "filename" to "[name].bundle.js",
@@ -45,6 +54,9 @@ open class GenerateWebPackConfigTask : DefaultTask() {
                 ),
                 "module" to mapOf(
                         "loaders" to emptyList<Any>()
+                ),
+                "resolve" to mapOf(
+                        "root" to resolveRoots
                 ),
                 "plugins" to listOf<Any>()
         )

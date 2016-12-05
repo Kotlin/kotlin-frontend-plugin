@@ -2,12 +2,14 @@ package org.jetbrains.kotlin.gradle.frontend.webpack
 
 import org.gradle.api.*
 import org.jetbrains.kotlin.gradle.frontend.*
+import org.jetbrains.kotlin.gradle.frontend.util.*
+import kotlin.reflect.*
 
 /**
  * @author Sergey Mashkov
  */
 object WebPackLauncher : Launcher {
-    override fun apply(project: Project, startTask: Task, stopTask: Task) {
+    override fun apply(packageManager: PackageManager, project: Project, startTask: Task, stopTask: Task) {
         project.afterEvaluate {
             if (WebPackBundler.hasWebPack(project.extensions.getByType(WebPackExtension::class.java))) {
                 val run = project.tasks.create("webpack-run", WebPackRunTask::class.java) { t ->
@@ -21,25 +23,12 @@ object WebPackLauncher : Launcher {
                     t.group = WebPackBundler.WebPackGroup
                 }
 
-                project.withTask("webpack-config") { task ->
+                project.withTask(GenerateWebPackConfigTask::class) { task ->
                     run.dependsOn(task)
                 }
 
                 startTask.dependsOn(run)
                 stopTask.dependsOn(stop)
-            }
-        }
-    }
-
-    private fun Project.withTask(name: String, block: (Task) -> Unit) {
-        val existing = project.tasks.findByName(name)
-        if (existing != null) {
-            block(existing)
-        } else {
-            project.tasks.whenTaskAdded { task ->
-                if (task.name == name) {
-                    block(task)
-                }
             }
         }
     }

@@ -50,6 +50,15 @@ compileKotlin2Js {
     kotlinOptions.outputFile = "$project.buildDir.path/js/${project.name}.js"
     kotlinOptions.sourceMap = true
     kotlinOptions.moduleKind = 'commonjs'
+    kotlinOptions.main = "noCall"
+}
+
+compileTestKotlin2Js {
+    kotlinOptions.metaInfo = true
+    kotlinOptions.outputFile = "$project.buildDir.path/js-tests/${project.name}-tests.js"
+    kotlinOptions.sourceMap = true
+    kotlinOptions.moduleKind = 'commonjs'
+//    kotlinOptions.moduleName = project.name + "-test"
     kotlinOptions.main = "call"
 }
 

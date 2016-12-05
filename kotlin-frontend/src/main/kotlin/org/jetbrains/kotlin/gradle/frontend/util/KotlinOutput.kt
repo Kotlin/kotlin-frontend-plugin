@@ -4,9 +4,12 @@ import org.gradle.api.*
 import org.jetbrains.kotlin.gradle.dsl.*
 import java.io.*
 
-fun kotlinOutput(project: Project): File {
+fun kotlinOutput(project: Project) = kotlinOutput(project) { !it.name.contains("test", ignoreCase = true) }
+fun kotlinTestOutput(project: Project) = kotlinOutput(project) { it.name.contains("test", ignoreCase = true) }
+
+private inline fun kotlinOutput(project: Project, predicate: (t: KotlinJsCompile) -> Boolean): File {
     return project.tasks.filterIsInstance<KotlinJsCompile>()
-            .filter { !it.name.contains("test", ignoreCase = true) }
+            .filter(predicate)
             .mapNotNull { it.kotlinOptions.outputFile }
             .map { project.file(it) }
             .distinct()
