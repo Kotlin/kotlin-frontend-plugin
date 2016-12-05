@@ -14,6 +14,9 @@ open class WebPackExtension {
     var contentPath: File = File("")
 
     @Input
+    var publicPath: String = "/"
+
+    @Input
     var port: Int = 8088
 
     @Input

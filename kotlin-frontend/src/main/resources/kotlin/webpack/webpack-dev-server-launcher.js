@@ -27,6 +27,7 @@ config.devServer.inline = true;
 var devServer = new WebpackDevServer(
     webpack(config),
     {
+        publicPath: RunConfig.publicPath,
         contentBase: RunConfig.contentPath,
         hot: true,
         setup: function(app) {
