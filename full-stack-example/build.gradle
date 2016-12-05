@@ -15,19 +15,6 @@ buildscript {
 }
 
 subprojects { p ->
-    p.buildscript {
-        ext.kotlin_version = '1.0.5-2'
-
-        repositories {
-            jcenter()
-            mavenLocal()
-        }
-        dependencies {
-            classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-            classpath "org.jetbrains.kotlin:kotlin-frontend:0.0.1-SNAPSHOT"
-        }
-    }
-
     p.repositories {
         mavenLocal()
         jcenter()
