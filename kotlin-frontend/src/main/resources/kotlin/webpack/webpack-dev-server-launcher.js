@@ -36,7 +36,7 @@ var devServer = new WebpackDevServer(
                 devServer.close();
             });
         },
-        proxy: (RunConfig.contentPath && RunConfig.proxyUrl) ? {
+        proxy: (RunConfig.proxyUrl) ? {
             "**" : {
                 target: RunConfig.proxyUrl,
                 secure: false,

@@ -69,7 +69,7 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
                                 "port" to config.port,
                                 "shutDownPath" to ShutDownPath,
                                 "webPackConfig" to webPackConfigFile.absolutePath,
-                                "contentPath" to config.contentPath.absolutePath,
+                                "contentPath" to config.contentPath?.absolutePath,
                                 "proxyUrl" to config.proxyUrl.let { if (it.isBlank()) null else it },
                                 "publicPath" to config.publicPath
                         )).toPrettyString()))

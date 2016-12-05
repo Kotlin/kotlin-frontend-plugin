@@ -11,7 +11,7 @@ open class WebPackExtension {
     var entry: String? = null // TODO need to be structural
 
     @Internal
-    var contentPath: File = File("")
+    var contentPath: File? = null
 
     @Input
     var publicPath: String = "/"
