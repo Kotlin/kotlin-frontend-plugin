@@ -36,8 +36,8 @@ var devServer = new WebpackDevServer(
                 devServer.close();
             });
         },
-        proxy: {
-            "**" : (RunConfig.contentPath) ? {
+        proxy: (RunConfig.contentPath && RunConfig.proxyUrl) ? {
+            "**" : {
                 target: RunConfig.proxyUrl,
                 secure: false,
                 bypass: function(req, res, proxyOptions) {
@@ -48,8 +48,8 @@ var devServer = new WebpackDevServer(
                         }
                     }
                 }
-            } : null
-        }
+            }
+        } : null
     }
 );
 devServer.listen(RunConfig.port, 'localhost');

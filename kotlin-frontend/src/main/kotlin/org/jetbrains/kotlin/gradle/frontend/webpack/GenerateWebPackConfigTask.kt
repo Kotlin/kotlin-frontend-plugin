@@ -39,7 +39,8 @@ open class GenerateWebPackConfigTask : DefaultTask() {
                 "output" to mapOf(
                         "path" to bundleDir.absolutePath,
                         "filename" to "[name].bundle.js",
-                        "chunkFilename" to "[id].bundle.js"
+                        "chunkFilename" to "[id].bundle.js",
+                        "publicPath" to webPackConfig.publicPath
                 ),
                 "module" to mapOf(
                         "loaders" to emptyList<Any>()
