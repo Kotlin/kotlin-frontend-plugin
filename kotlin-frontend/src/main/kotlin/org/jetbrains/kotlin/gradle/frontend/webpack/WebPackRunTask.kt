@@ -7,6 +7,7 @@ import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.gradle.frontend.servers.*
 import java.io.*
 import java.net.*
+import java.nio.file.*
 import java.nio.file.attribute.*
 import java.security.*
 
@@ -24,6 +25,9 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
 
     @Internal
     private var logPosition = 0L
+
+    @Internal
+    private var logCreationDate = 0L
 
     val devServerLauncherFile = project.buildDir.resolve(DevServerLauncherFileName)
 
@@ -126,33 +130,48 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
         try {
             // it is important to execute it BEFORE any task run because we need to remember file position
             // before any changes detected
-            logPosition = Math.max(logPosition, serverLog().length())
+            val attrs = Files.readAttributes(serverLog().toPath(), BasicFileAttributes::class.java)
+
+            logCreationDate = attrs.creationTime().toMillis()
+            logPosition = Math.max(logPosition, attrs.size())
         } catch (ignore: IOException) {
         }
     }
 
     private fun dumpLog() {
         try {
-            val file = serverLog()
+            val file = serverLog().toPath()
+            var lastCreationDate = logCreationDate
             var lastSize = logPosition
             var lastCheck = System.currentTimeMillis()
 
             while (true) {
-                val size = file.length()
-                if (size != lastSize) {
+                val attributes = Files.readAttributes(file, BasicFileAttributes::class.java)
+                val size = attributes.size()
+                val date = attributes.creationTime().toMillis()
+
+                if (size != lastSize || date != lastCreationDate) {
                     lastCheck = System.currentTimeMillis()
 
-                    file.inputStream().use { s ->
-                        s.skip(lastSize)
+                    Files.newInputStream(file).use { s ->
+                        val bytesCount = if (date == lastCreationDate && size >= lastSize) {
+                            if (s.skip(lastSize) != lastSize) {
+                                0   // truncated during read
+                            } else {
+                                size - lastSize
+                            }
+                        } else {
+                            size
+                        }
 
-                        val bytesCount = size - lastSize
                         val bytes = s.readFully(bytesCount.toInt())
-                        System.out.write(bytes)
-                        System.out.flush()
+                        System.err.write(bytes)
+                        System.err.flush()
                     }
 
                     lastSize = size
-                } else if (System.currentTimeMillis() - lastCheck > 350) {
+                    lastCreationDate = date
+                } else if (System.currentTimeMillis() - lastCheck > 1000) {
                     break
                 }
 

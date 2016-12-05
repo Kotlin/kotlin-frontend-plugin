@@ -43,6 +43,7 @@ abstract class AbstractStartStopTask<S : Any> : DefaultTask() {
         }
 
         stateFile.delete()
+        serverLog().delete()
 
         val launcher = Native.get(ProcessLauncher::class.java)!!
         val builder = builder()
