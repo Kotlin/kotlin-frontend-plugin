@@ -1,9 +1,7 @@
 package org.jetbrains.kotlin.gradle.frontend.webpack
 
 import org.gradle.api.*
-import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.frontend.*
-import java.io.*
 
 /**
  * @author Sergey Mashkov
@@ -37,29 +35,6 @@ class WebPackBundler(val project: Project) : Bundler {
         val WebPackGroup = "webpack"
         fun hasWebPack(webPackExtension: WebPackExtension): Boolean {
             return webPackExtension.entry != null
-        }
-
-        @Deprecated("Move to common utils")
-        fun kotlinOutput(project: Project): File {
-            return project.tasks.filterIsInstance<KotlinJsCompile>()
-                    .filter { !it.name.contains("test", ignoreCase = true) }
-                    .mapNotNull { it.kotlinOptions.outputFile }
-                    .map { project.file(it) }
-                    .distinct()
-                    .singleOrNull()
-                    ?.ensureParentDir()
-                    ?: throw GradleException("Only one kotlin output directory supported by frontend plugin.")
-        }
-
-        private fun File.ensureParentDir(): File = apply { parentFile.ensureDir() }
-
-        private fun File.ensureDir(): File = apply {
-            if (mkdirs() && !exists()) {
-                throw IOException("Failed to create directory $this")
-            }
-            if (!isDirectory) {
-                throw IOException("Path is not a directory: $this")
-            }
         }
     }
 }

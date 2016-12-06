@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.gradle.frontend.rollup
 import org.gradle.api.*
 import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.gradle.frontend.*
-import org.jetbrains.kotlin.gradle.frontend.webpack.*
+import org.jetbrains.kotlin.gradle.frontend.util.*
 
 /**
  * Author: Sergey Mashkov
@@ -19,7 +19,7 @@ open class GenerateRollupConfigTask : DefaultTask() {
     val config by lazy { project.extensions.getByType(RollupExtension::class.java)!! }
 
     @get:Input
-    val bundleFrom by lazy { WebPackBundler.kotlinOutput(project).absolutePath!! }
+    val bundleFrom by lazy { kotlinOutput(project).absolutePath!! }
 
     @get:Input
     val destination by lazy { project.buildDir.resolve("bundle").resolve("$moduleName.bundle.js").absolutePath!! }

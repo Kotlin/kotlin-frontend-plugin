@@ -4,7 +4,6 @@ import org.gradle.api.*
 import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.gradle.frontend.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
-import org.jetbrains.kotlin.gradle.frontend.webpack.*
 
 /**
  * Author: Sergey Mashkov
@@ -20,7 +19,7 @@ open class RollupBundleTask : DefaultTask() {
     val config by lazy { project.extensions.getByType(RollupExtension::class.java) }
 
     @get:InputFile
-    val kotlinJs by lazy { WebPackBundler.kotlinOutput(project) }
+    val kotlinJs by lazy { kotlinOutput(project) }
 
     @get:OutputFile
     val destination by lazy { project.buildDir.resolve("bundle").resolve("$moduleName.bundle.js") }

@@ -4,6 +4,7 @@ import groovy.json.*
 import groovy.lang.*
 import org.gradle.api.*
 import org.gradle.api.tasks.*
+import org.jetbrains.kotlin.gradle.frontend.util.*
 import java.io.*
 
 /**
@@ -15,7 +16,7 @@ open class GenerateWebPackConfigTask : DefaultTask() {
         get() = project.projectDir.resolve("webpack.config.d")
 
     @get:Input
-    val contextDir by lazy { WebPackBundler.kotlinOutput(project).parentFile.path!! }
+    val contextDir by lazy { kotlinOutput(project).parentFile.path!! }
 
     @get:Nested
     val webPackConfig by lazy { project.extensions.findByType(WebPackExtension::class.java)!! }

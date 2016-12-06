@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.gradle.frontend.util.*
  */
 open class WebPackBundleTask : DefaultTask() {
     @get:InputDirectory
-    val inputDir by lazy { WebPackBundler.kotlinOutput(project).parentFile }
+    val inputDir by lazy { kotlinOutput(project).parentFile }
 
     @get:Internal
     val webPackConfig by lazy { project.extensions.getByType(WebPackExtension::class.java)!! }
