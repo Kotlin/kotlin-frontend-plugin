@@ -20,7 +20,6 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
     @get:Nested
     private val config by lazy { project.extensions.getByType(WebPackExtension::class.java)!! }
 
-    @InputFile
     val webPackConfigFile = project.buildDir.resolve("webpack.config.js")
 
     @Internal
@@ -44,6 +43,10 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
             checkLogFilePosition()
         }
         checkLogFilePosition()
+
+        if (webPackConfigFile.canRead()) {
+            inputs.file(webPackConfigFile)
+        }
 
         doLast {
             lastHashesFile.writeText(hashes.entries.sortedBy { it.key }.joinToString(separator = "\n", postfix = "\n") { "${it.key}\t${it.value}" })

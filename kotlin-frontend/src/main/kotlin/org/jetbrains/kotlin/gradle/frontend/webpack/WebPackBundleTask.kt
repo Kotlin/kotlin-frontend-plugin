@@ -1,9 +1,8 @@
 package org.jetbrains.kotlin.gradle.frontend.webpack
 
-import net.rubygrapefruit.platform.*
 import org.gradle.api.*
 import org.gradle.api.tasks.*
-import java.io.*
+import org.jetbrains.kotlin.gradle.frontend.util.*
 
 /**
  * @author Sergey Mashkov
@@ -23,15 +22,8 @@ open class WebPackBundleTask : DefaultTask() {
 
     @TaskAction
     fun buildBundle() {
-        val process = Native.get(ProcessLauncher::class.java).start(
                 ProcessBuilder("node", project.buildDir.resolve("node_modules/webpack/bin/webpack.js").absolutePath, "--config", webPackConfigFile.absolutePath)
-                        .inheritIO()
                         .directory(project.buildDir)
-        )
-
-        if (process.waitFor() != 0) {
-            logger.error("webpack failed to bundle project, exit code ${process.exitValue()}")
-            throw GradleException("bundle failed")
-        }
+                        .startWithRedirectOnFail(project)
     }
 }

@@ -1,8 +1,8 @@
 package org.jetbrains.kotlin.gradle.frontend.npm
 
-import net.rubygrapefruit.platform.*
 import org.gradle.api.*
 import org.gradle.api.tasks.*
+import org.jetbrains.kotlin.gradle.frontend.util.*
 import java.io.*
 
 /**
@@ -19,14 +19,9 @@ open class NpmInstallTask : DefaultTask() {
     fun processInstallation() {
         logger.info("Running npm install")
 
-        val pb = ProcessBuilder("npm", "install")
+        ProcessBuilder("npm", "install")
                 .directory(project.buildDir)
                 .redirectErrorStream(true)
-                .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-
-        val process = Native.get(ProcessLauncher::class.java).start(pb)
-        if (process.waitFor() != 0) {
-            throw GradleException("npm install failed")
-        }
+                .startWithRedirectOnFail(project)
     }
 }
