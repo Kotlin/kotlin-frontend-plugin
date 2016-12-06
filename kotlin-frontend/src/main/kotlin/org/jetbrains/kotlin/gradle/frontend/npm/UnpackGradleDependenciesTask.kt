@@ -51,9 +51,11 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
 
                         project.tasks.create("npm-unpack-$name", Copy::class.java).from(project.zipTree(artifact.file)).into(outDir).execute()
                         val version = npm.versionReplacements.singleOrNull { it.name == artifact.name }?.versionOrUri
+                            ?: fixVersion(artifact.moduleVersion.id.version)
+
                         val packageJson = mapOf(
                                 "name" to name,
-                                "version" to (version ?: artifact.moduleVersion.id.version),
+                                "version" to version,
                                 "main" to "$name.js",
                                 "_source" to "gradle"
                         )
@@ -78,6 +80,32 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
                 .mapNotNull { moduleNamePattern.find(it.readText())?.groupValues?.get(1) }
                 .mapNotNull { JsonSlurper().parseText(it)?.toString() }
                 .singleOrNull()
+    }
+
+    private fun fixVersion(version: String?) = buildString {
+        val parts = version?.split("[._\\-+]+".toRegex()).orEmpty()
+        val numericParts = parts.takeWhile { it.all(Char::isDigit) }.take(3)
+        val majorMinorPatch = numericParts.padEnd(3, "0")
+
+        majorMinorPatch.joinTo(this, ".")
+
+        val remaining = parts.drop(numericParts.size)
+        if (remaining.isNotEmpty()) {
+            remaining.joinTo(this, ".", prefix = "-") { it.replace("[^0-9A-Za-z-]+".toRegex(), "-") }
+        }
+    }
+
+    private fun <T> List<T>.padEnd(size: Int, value: T): List<T> {
+        if (this.size >= size) {
+            return this
+        }
+
+        val result = toMutableList()
+        while (result.size < size) {
+            result.add(value)
+        }
+
+        return result
     }
 
     companion object {
