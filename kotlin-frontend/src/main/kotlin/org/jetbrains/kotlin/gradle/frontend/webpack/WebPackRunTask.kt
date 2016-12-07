@@ -6,6 +6,7 @@ import org.gradle.api.*
 import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.gradle.frontend.*
 import org.jetbrains.kotlin.gradle.frontend.servers.*
+import org.jetbrains.kotlin.preprocessor.*
 import java.io.*
 import java.net.*
 import java.nio.file.*
@@ -50,6 +51,7 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
         }
 
         doLast {
+            lastHashesFile.parentFile.mkdirsOrFail()
             lastHashesFile.writeText(hashes.entries.sortedBy { it.key }.joinToString(separator = "\n", postfix = "\n") { "${it.key}\t${it.value}" })
             dumpLog()
         }
