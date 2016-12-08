@@ -1,5 +1,6 @@
 package org.jetbrains.kotlin.gradle.frontend.rollup
 
+import groovy.json.*
 import org.gradle.api.*
 import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.gradle.frontend.*
@@ -32,8 +33,8 @@ open class GenerateRollupConfigTask : DefaultTask() {
             import commonjs from 'rollup-plugin-commonjs';
 
             export default {
-                entry: '$bundleFrom',
-                dest: '$destination',
+                entry: ${JsonOutput.toJson(bundleFrom)},
+                dest: ${JsonOutput.toJson(destination)},
                 format: 'iife',
                 moduleName: '$moduleName',
                 //sourceMap: 'inline',

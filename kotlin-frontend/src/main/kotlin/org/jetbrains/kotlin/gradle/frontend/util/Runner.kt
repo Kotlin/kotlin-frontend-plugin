@@ -8,7 +8,30 @@ import java.nio.*
 import java.util.concurrent.*
 
 fun ProcessBuilder.startWithRedirectOnFail(project: Project, exec: Executor = DummyExecutor): java.lang.Process {
-    val process = Native.get(ProcessLauncher::class.java).start(this)!!
+    val cmd = command().toList()
+    val process = Native.get(ProcessLauncher::class.java).let { l ->
+        try {
+            l.start(this)!!
+        } catch(e: Exception) {
+            val c = cmd.toMutableList()
+            if (c[0].endsWith(".exe")) {
+                throw e
+            }
+
+            c[0] = c[0] + ".exe"
+            try {
+                l.start(command(c))!!
+            } catch (e2: Throwable) {
+                val c2 = cmd.toMutableList()
+                c2.add(0, "cmd.exe")
+                c2.add(1, "/c")
+                c2[2] = c2[2] + ".cmd"
+
+                println(c2.joinToString(" "))
+                l.start(command(c2))!!
+            }
+        }
+    }
     val out = if (project.logger.isInfoEnabled) System.out else NullOutputStream
     val buffered = OutputStreamWithBuffer(out, 1024)
 

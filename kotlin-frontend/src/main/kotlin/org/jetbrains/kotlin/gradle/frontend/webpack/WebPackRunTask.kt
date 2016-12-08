@@ -77,8 +77,11 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
                                 "publicPath" to config.publicPath
                         )).toPrettyString()))
 
-        val newPermissions = java.nio.file.Files.getPosixFilePermissions(devServerLauncherFile.toPath()) + PosixFilePermission.OWNER_EXECUTE
-        java.nio.file.Files.setPosixFilePermissions(devServerLauncherFile.toPath(), newPermissions)
+        try {
+            val newPermissions = java.nio.file.Files.getPosixFilePermissions(devServerLauncherFile.toPath()) + PosixFilePermission.OWNER_EXECUTE
+            java.nio.file.Files.setPosixFilePermissions(devServerLauncherFile.toPath(), newPermissions)
+        } catch (ignore: UnsupportedOperationException) {
+        }
 
         return config.port
     }

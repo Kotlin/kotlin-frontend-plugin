@@ -64,9 +64,9 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
                             out.appendln(JsonBuilder(packageJson).toPrettyString())
                         }
 
-                        resultNames?.add(name to outDir.toURI().toASCIIString())
+                        resultNames?.add(name to outDir.toLocalURI())
                     } else {
-                        resultNames?.add(name to artifact.file.toURI().toASCIIString())
+                        resultNames?.add(name to artifact.file.toLocalURI())
                     }
                 }
 
@@ -107,6 +107,8 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
 
         return result
     }
+
+    private fun File.toLocalURI() = toURI().toASCIIString().replaceFirst("file:/", "file://")
 
     companion object {
         fun unpackFile(project: Project) = project.buildDir.resolve(".unpack.txt")
