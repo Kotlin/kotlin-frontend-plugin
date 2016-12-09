@@ -1,6 +1,7 @@
 package test.hello
 
 import kotlin.browser.*
+import kotlin.dom.*
 
 fun main(args: Array<String>) {
     var application: ApplicationBase? = null
@@ -22,14 +23,18 @@ fun main(args: Array<String>) {
         application = null
         document.addEventListener("DOMContentLoaded", { e -> application = start(state) })
     }
-
-    println("ok...")
 }
 
-fun start(state: dynamic): ApplicationBase {
-    val application = MainApplication()
-    application.start(state?.appState ?: emptyMap())
+fun start(state: dynamic): ApplicationBase? {
+    if (document.body?.hasClass("testApp") ?: false) {
+        val application = MainApplication()
 
-    return application
+        @Suppress("UnsafeCastFromDynamic")
+        application.start(state?.appState ?: emptyMap())
+
+        return application
+    } else {
+        return null
+    }
 }
 
