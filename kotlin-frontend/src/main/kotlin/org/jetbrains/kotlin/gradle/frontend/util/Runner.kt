@@ -1,6 +1,7 @@
 package org.jetbrains.kotlin.gradle.frontend.util
 
 import net.rubygrapefruit.platform.*
+import org.apache.tools.ant.taskdefs.condition.*
 import org.gradle.api.*
 import org.jetbrains.kotlin.utils.*
 import java.io.*
@@ -13,6 +14,10 @@ fun ProcessBuilder.startWithRedirectOnFail(project: Project, exec: Executor = Du
         try {
             l.start(this)!!
         } catch(e: Exception) {
+            if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
+                throw e
+            }
+
             val c = cmd.toMutableList()
             if (c[0].endsWith(".exe")) {
                 throw e
@@ -27,7 +32,6 @@ fun ProcessBuilder.startWithRedirectOnFail(project: Project, exec: Executor = Du
                 c2.add(1, "/c")
                 c2[2] = c2[2] + ".cmd"
 
-                println(c2.joinToString(" "))
                 l.start(command(c2))!!
             }
         }
