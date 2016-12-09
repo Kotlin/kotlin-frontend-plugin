@@ -1,6 +1,10 @@
 package org.jetbrains.kotlin.gradle.frontend
 
+import org.gradle.*
 import org.gradle.api.*
+import org.gradle.api.artifacts.*
+import org.gradle.api.initialization.*
+import org.gradle.api.invocation.*
 import org.jetbrains.kotlin.gradle.frontend.ktor.*
 import org.jetbrains.kotlin.gradle.frontend.npm.*
 import org.jetbrains.kotlin.gradle.frontend.rollup.*
@@ -59,6 +63,38 @@ class FrontendPlugin : Plugin<Project> {
 
             project.tasks.getByPath("assemble").dependsOn(bundle)
             project.tasks.getByName("clean").dependsOn(stop)
+
+            var resolutionTriggered = false
+            project.gradle.addListener(object : DependencyResolutionListener {
+                override fun beforeResolve(dependencies: ResolvableDependencies?) {
+                    resolutionTriggered = true
+                }
+
+                override fun afterResolve(dependencies: ResolvableDependencies?) {
+                }
+            })
+
+            project.gradle.addBuildListener(object : BuildListener {
+                override fun settingsEvaluated(p0: Settings?) {
+                }
+
+                override fun buildFinished(p0: BuildResult?) {
+                    if (resolutionTriggered) {
+                        managers.forEach { m ->
+                            m.install(project)
+                        }
+                    }
+                }
+
+                override fun projectsLoaded(p0: Gradle?) {
+                }
+
+                override fun buildStarted(p0: Gradle?) {
+                }
+
+                override fun projectsEvaluated(p0: Gradle?) {
+                }
+            })
         }
     }
 }

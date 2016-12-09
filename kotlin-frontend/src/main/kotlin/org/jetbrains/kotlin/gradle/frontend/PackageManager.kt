@@ -8,6 +8,7 @@ import org.gradle.api.*
 interface PackageManager {
     fun apply(containerTask: Task)
     fun require(dependencies: List<Dependency>)
+    fun install(project: Project)
 
     companion object {
         val DevelopmentScope = "development"

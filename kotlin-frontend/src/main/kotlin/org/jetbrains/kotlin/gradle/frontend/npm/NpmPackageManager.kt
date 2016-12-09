@@ -16,6 +16,20 @@ class NpmPackageManager(val project: Project) : PackageManager {
         requiredDependencies.addAll(dependencies)
     }
 
+    override fun install(project: Project) {
+        listOf(UnpackGradleDependenciesTask::class.java,
+                GeneratePackagesJsonTask::class.java,
+                NpmInstallTask::class.java,
+                NpmIndexTask::class.java,
+                NpmDependenciesTask::class.java
+        ).flatMap { project.tasks.withType(it) }
+                .filterNot { it.state.executed || it.state.skipped || it.state.upToDate }
+                .forEach { t ->
+                    t.logger.lifecycle(":${t.name} (configure)")
+                    t.execute()
+                }
+    }
+
     override fun apply(containerTask: Task) {
         val npm = project.extensions.create("npm", NpmExtension::class.java)
 
