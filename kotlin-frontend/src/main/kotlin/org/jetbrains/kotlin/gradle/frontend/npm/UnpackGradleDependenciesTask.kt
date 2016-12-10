@@ -4,6 +4,7 @@ import groovy.json.*
 import org.gradle.api.*
 import org.gradle.api.artifacts.*
 import org.gradle.api.tasks.*
+import org.jetbrains.kotlin.gradle.frontend.util.*
 import org.jetbrains.kotlin.preprocessor.*
 import org.jetbrains.kotlin.utils.*
 import java.io.*
@@ -107,8 +108,6 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
 
         return result
     }
-
-    private fun File.toLocalURI() = toURI().toASCIIString().replaceFirst("file:/", "file://")
 
     companion object {
         fun unpackFile(project: Project) = project.buildDir.resolve(".unpack.txt")

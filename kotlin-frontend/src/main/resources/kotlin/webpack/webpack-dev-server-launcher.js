@@ -25,6 +25,14 @@ if (!config.devServer) {
     config.devServer = {};
 }
 
+if (RunConfig.sourceMap) {
+    config.module.preLoaders.push({
+        test: /\.js$/,
+        loader: 'source-map-loader'
+    });
+    config.devtool = "eval-source-map";
+}
+
 config.devServer.inline = true;
 
 

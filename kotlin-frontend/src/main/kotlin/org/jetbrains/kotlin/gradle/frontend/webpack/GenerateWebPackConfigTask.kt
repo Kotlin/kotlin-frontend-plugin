@@ -28,6 +28,9 @@ open class GenerateWebPackConfigTask : DefaultTask() {
     @get:Input
     val bundleName: String by lazy { project.extensions.findByType(KotlinFrontendExtension::class.java).moduleName }
 
+    @get:Input
+    val sourceMapsEnabled: Boolean by lazy { project.extensions.findByType(KotlinFrontendExtension::class.java).sourceMaps }
+
     init {
         if (configsDir.exists()) {
             (inputs as TaskInputs).dir(configsDir)
@@ -53,6 +56,7 @@ open class GenerateWebPackConfigTask : DefaultTask() {
                         "publicPath" to webPackConfig.publicPath
                 ),
                 "module" to mapOf(
+                        "preLoaders" to emptyList<Any>(),
                         "loaders" to emptyList<Any>()
                 ),
                 "resolve" to mapOf(

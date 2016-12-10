@@ -4,6 +4,7 @@ import groovy.json.*
 import org.codehaus.groovy.runtime.*
 import org.gradle.api.*
 import org.gradle.api.tasks.*
+import org.jetbrains.kotlin.gradle.frontend.*
 import org.jetbrains.kotlin.gradle.frontend.servers.*
 import java.io.*
 import java.net.*
@@ -74,7 +75,8 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
                                 "webPackConfig" to webPackConfigFile.absolutePath,
                                 "contentPath" to config.contentPath?.absolutePath,
                                 "proxyUrl" to config.proxyUrl.let { if (it.isBlank()) null else it },
-                                "publicPath" to config.publicPath
+                                "publicPath" to config.publicPath,
+                                "sourceMap" to project.extensions.getByType(KotlinFrontendExtension::class.java).sourceMaps
                         )).toPrettyString()))
 
         try {

@@ -17,6 +17,9 @@ class WebPackBundler(val project: Project) : Bundler {
                         listOf("webpack", "webpack-dev-server")
                                 .map { Dependency(it, "*", Dependency.DevelopmentScope) }
                 )
+                if (project.extensions.getByType(KotlinFrontendExtension::class.java).sourceMaps) {
+                    packageManager.require("source-map-loader")
+                }
 
                 val config = project.tasks.create("webpack-config", GenerateWebPackConfigTask::class.java)
                 val bundle = project.tasks.create("webpack-bundle", WebPackBundleTask::class.java) { t ->
