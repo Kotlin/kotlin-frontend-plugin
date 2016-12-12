@@ -72,7 +72,8 @@ open class KarmaStartStopTask : AbstractStartStopTask<Int>() {
             )
         }
         if (sourceMaps) {
-            preprocessors.add("sourcemaps")
+            preprocessors.add("sourcemap")
+            plugins.add("karma-sourcemap-loader")
         }
         if (extension.enableWebPack) {
             project.tasks.withType(GenerateWebPackConfigTask::class.java).single().let { webpackTask ->
@@ -107,6 +108,7 @@ open class KarmaStartStopTask : AbstractStartStopTask<Int>() {
     fun run() {
         if (start) {
             doStart()
+            project.logger.lifecycle("karma started, open http://localhost:${extension.port}/ in your browser to run tests and see report")
         } else {
             doStop()
         }

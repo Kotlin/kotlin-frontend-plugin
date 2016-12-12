@@ -4,18 +4,22 @@ import org.gradle.api.*
 import org.jetbrains.kotlin.gradle.dsl.*
 import java.io.*
 
-fun kotlinOutput(project: Project) = kotlinOutput(project) { !it.name.contains("test", ignoreCase = true) }
-fun kotlinTestOutput(project: Project) = kotlinOutput(project) { it.name.contains("test", ignoreCase = true) }
+fun kotlinOutput(project: Project) = kotlinOutput(project, "compileKotlin2Js") { !it.name.contains("test", ignoreCase = true) }
+fun kotlinTestOutput(project: Project) = kotlinOutput(project, "compileTestKotlin2Js") { it.name.contains("test", ignoreCase = true) }
 
-private inline fun kotlinOutput(project: Project, predicate: (t: KotlinJsCompile) -> Boolean): File {
-    return project.tasks.filterIsInstance<KotlinJsCompile>()
+private inline fun kotlinOutput(project: Project, nameForMessage: String, predicate: (t: KotlinJsCompile) -> Boolean): File {
+    val tasks = project.tasks.filterIsInstance<KotlinJsCompile>()
             .filter(predicate)
-            .mapNotNull { it.kotlinOptions.outputFile }
+
+    val outputs = tasks.mapNotNull { it.kotlinOptions.outputFile }
             .map { project.file(it) }
             .distinct()
-            .singleOrNull()
-            ?.ensureParentDir()
-            ?: throw GradleException("Only one kotlin output directory supported by frontend plugin.")
+
+    when (outputs.size) {
+        0 -> throw GradleException("It should be at least one $nameForMessage configured properly (should have output specified)")
+        1 -> return outputs[0].ensureParentDir()
+        else -> throw GradleException("Only one configured $nameForMessage is supported")
+    }
 }
 
 private fun File.ensureParentDir(): File = apply { parentFile.ensureDir() }

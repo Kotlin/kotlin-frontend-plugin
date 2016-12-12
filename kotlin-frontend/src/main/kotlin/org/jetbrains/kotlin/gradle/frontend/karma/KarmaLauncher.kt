@@ -1,6 +1,7 @@
 package org.jetbrains.kotlin.gradle.frontend.karma
 
 import org.gradle.api.*
+import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.frontend.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
 import org.jetbrains.kotlin.gradle.frontend.webpack.*
@@ -10,7 +11,12 @@ object KarmaLauncher : Launcher {
         val karma = project.extensions.create("karma", KarmaExtension::class.java)
         val compileTestKotlin = project.tasks.getByPath("compileTestKotlin2Js")
 
-        val karmaStart = project.tasks.create("karma-start", KarmaStartStopTask::class.java) { it.start = true }
+        val karmaStart = project.tasks.create("karma-start", KarmaStartStopTask::class.java) {
+            it.start = true
+            it.onlyIf {
+                project.tasks.filterIsInstance<KotlinJsCompile>().count { it.name.contains("test", ignoreCase = true) && it.kotlinOptions.outputFile != null } > 0
+            }
+        }
         val karmaStop = project.tasks.create("karma-stop", KarmaStartStopTask::class.java) { it.start = false }
 
         project.tasks.getByName("test").dependsOn(karmaStart)
@@ -41,6 +47,10 @@ object KarmaLauncher : Launcher {
 
                     karma.enableWebPack = true
                     karmaStart.dependsOn(task)
+                }
+
+                if (project.extensions.getByType(KotlinFrontendExtension::class.java).sourceMaps) {
+                    require("karma-sourcemap-loader")
                 }
             }
         }
