@@ -1,14 +1,17 @@
 package org.jetbrains.kotlin.gradle.frontend.webpack
 
+import org.gradle.api.*
 import org.gradle.api.tasks.*
+import org.jetbrains.kotlin.gradle.frontend.config.*
 import java.io.*
 
-/**
- * @author Sergey Mashkov
- */
-open class WebPackExtension {
-    @Input
-    var entry: String? = null // TODO need to be structural
+open class WebPackExtension(project: Project) : BundleConfig {
+    override val bundlerId: String
+        get() = "webpack"
+
+    override var bundleName = project.name!!
+
+    override var sourceMapEnabled: SourceMapType = SourceMapType.DISABLED
 
     @Internal
     var contentPath: File? = null
@@ -21,10 +24,4 @@ open class WebPackExtension {
 
     @Input
     var proxyUrl: String = ""
-
-    /**
-     * a file or a path
-     */
-    @Input
-    var bundleDirectory: Any = "bundle"
 }

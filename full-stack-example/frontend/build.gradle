@@ -25,8 +25,6 @@ dependencies {
 }
 
 kotlinFrontend {
-    moduleName = "yo"
-
     npm {
         //dependency("kotlin", "1.1.0-dev-4546")
         dependency "style-loader"
@@ -34,15 +32,10 @@ kotlinFrontend {
         devDependency("karma")
     }
 
-    webpack {
-	//port = 9090
-        entry = "./frontend"
+    webpackBundle {
+    	bundleName = "main"
         contentPath = file('src/main/web')
         proxyUrl = "http://localhost:9090"
-    }
-    
-    rollup {
-        enabled = true
     }
 }
 

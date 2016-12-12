@@ -3,9 +3,6 @@ package org.jetbrains.kotlin.gradle.frontend.ktor
 import org.gradle.api.*
 import org.jetbrains.kotlin.gradle.frontend.*
 
-/**
- * @author Sergey Mashkov
- */
 object KtorLauncher : Launcher {
     override fun apply(packageManager: PackageManager, project: Project, startTask: Task, stopTask: Task) {
         val ktor = project.extensions.create("ktor", KtorExtension::class.java)

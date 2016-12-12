@@ -26,6 +26,12 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
     @Nested
     val npm: NpmExtension = project.extensions.findByType(NpmExtension::class.java)
 
+    init {
+        onlyIf {
+            npm.dependencies.isNotEmpty() && npm.developmentDependencies.isNotEmpty()
+        }
+    }
+
     @TaskAction
     fun unpackLibraries() {
         resultNames = mutableListOf()

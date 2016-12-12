@@ -6,6 +6,7 @@ import org.gradle.api.*
 import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.gradle.frontend.*
 import org.jetbrains.kotlin.gradle.frontend.servers.*
+import org.jetbrains.kotlin.gradle.frontend.util.*
 import org.jetbrains.kotlin.preprocessor.*
 import java.io.*
 import java.net.*
@@ -20,7 +21,7 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
     var start: Boolean = true
 
     @get:Nested
-    private val config by lazy { project.extensions.getByType(WebPackExtension::class.java)!! }
+    private val config by lazy { project.frontendExtension.bundles().filterIsInstance<WebPackExtension>().singleOrNull() ?: throw GradleException("Only one webpack bundle is supported") }
 
     val webPackConfigFile = project.buildDir.resolve("webpack.config.js")
 
@@ -47,7 +48,8 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
         checkLogFilePosition()
 
         if (webPackConfigFile.canRead()) {
-            inputs.file(webPackConfigFile)
+            // cast because of internal API leakage https://github.com/gradle/gradle/issues/1004
+            (this as Task).inputs.file(webPackConfigFile)
         }
 
         doLast {

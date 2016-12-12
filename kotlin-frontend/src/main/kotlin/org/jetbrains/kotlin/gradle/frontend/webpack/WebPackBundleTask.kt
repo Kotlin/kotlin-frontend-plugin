@@ -8,17 +8,11 @@ import org.jetbrains.kotlin.gradle.frontend.util.*
  * @author Sergey Mashkov
  */
 open class WebPackBundleTask : DefaultTask() {
-    @get:InputDirectory
-    val inputDir by lazy { kotlinOutput(project).parentFile }
-
-    @get:Internal
-    val webPackConfig by lazy { project.extensions.getByType(WebPackExtension::class.java)!! }
-
     @InputFile
     val webPackConfigFile = project.buildDir.resolve("webpack.config.js")
 
     @get:OutputDirectory
-    val bundleDir by lazy { GenerateWebPackConfigTask.handleFile(project, webPackConfig.bundleDirectory) }
+    val bundleDir by lazy { GenerateWebPackConfigTask.handleFile(project, project.frontendExtension.bundlesDirectory) }
 
     @TaskAction
     fun buildBundle() {

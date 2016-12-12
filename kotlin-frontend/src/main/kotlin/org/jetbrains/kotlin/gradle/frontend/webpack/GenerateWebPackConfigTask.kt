@@ -4,7 +4,6 @@ import groovy.json.*
 import groovy.lang.*
 import org.gradle.api.*
 import org.gradle.api.tasks.*
-import org.jetbrains.kotlin.gradle.frontend.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
 import java.io.*
 
@@ -16,20 +15,20 @@ open class GenerateWebPackConfigTask : DefaultTask() {
     val configsDir: File
         get() = project.projectDir.resolve("webpack.config.d")
 
+    @Input
+    val projectDirectory = project.projectDir.absolutePath
+
     @get:Input
     val contextDir by lazy { kotlinOutput(project).parentFile.absolutePath!! }
 
     @get:Nested
-    val webPackConfig by lazy { project.extensions.findByType(WebPackExtension::class.java)!! }
+    val bundles by lazy { project.frontendExtension.bundles().filterIsInstance<WebPackExtension>() }
+
+    @get:Input
+    val bundleDirectory by lazy { handleFile(project, project.frontendExtension.bundlesDirectory) }
 
     @OutputFile
     val webPackConfigFile: File = project.buildDir.resolve("webpack.config.js")
-
-    @get:Input
-    val bundleName: String by lazy { project.extensions.findByType(KotlinFrontendExtension::class.java).moduleName }
-
-    @get:Input
-    val sourceMapsEnabled: Boolean by lazy { project.extensions.findByType(KotlinFrontendExtension::class.java).sourceMaps }
 
     init {
         if (configsDir.exists()) {
@@ -39,7 +38,9 @@ open class GenerateWebPackConfigTask : DefaultTask() {
 
     @TaskAction
     fun generateConfig() {
-        val bundleDir = handleFile(project, webPackConfig.bundleDirectory)
+        val bundle = bundles.singleOrNull() ?: throw GradleException("Only single webpack bundle supported")
+
+        val bundleDir = handleFile(project, project.file(bundleDirectory))
         val resolveRoots = mutableListOf(
                 contextDir
         )
@@ -47,13 +48,13 @@ open class GenerateWebPackConfigTask : DefaultTask() {
         val json = linkedMapOf(
                 "context" to contextDir,
                 "entry" to mapOf(
-                        bundleName to (webPackConfig.entry ?: "")
+                        bundle.bundleName to kotlinOutput(project).nameWithoutExtension.let { "./$it" }
                 ),
                 "output" to mapOf(
                         "path" to bundleDir.absolutePath,
                         "filename" to "[name].bundle.js",
                         "chunkFilename" to "[id].bundle.js",
-                        "publicPath" to webPackConfig.publicPath
+                        "publicPath" to bundle.publicPath
                 ),
                 "module" to mapOf(
                         "preLoaders" to emptyList<Any>(),

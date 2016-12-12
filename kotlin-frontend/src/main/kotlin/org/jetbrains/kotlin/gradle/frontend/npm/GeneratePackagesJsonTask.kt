@@ -24,7 +24,7 @@ open class GeneratePackagesJsonTask : DefaultTask() {
     val configPartsDir = project.projectDir.resolve("package.json.d")
 
     @Nested
-    val npm: NpmExtension = project.extensions.findByType(NpmExtension::class.java)
+    val npm: NpmExtension = project.extensions.getByType(NpmExtension::class.java)
 
     @OutputFile
     lateinit var packageJsonFile: File
@@ -32,6 +32,10 @@ open class GeneratePackagesJsonTask : DefaultTask() {
     init {
         if (configPartsDir.exists()) {
             (inputs as TaskInputs).dir(configPartsDir)
+        }
+
+        onlyIf {
+            npm.dependencies.isNotEmpty() && npm.developmentDependencies.isNotEmpty()
         }
     }
 

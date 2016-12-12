@@ -5,13 +5,10 @@ import org.jetbrains.kotlin.gradle.frontend.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
 import kotlin.reflect.*
 
-/**
- * @author Sergey Mashkov
- */
 object WebPackLauncher : Launcher {
     override fun apply(packageManager: PackageManager, project: Project, startTask: Task, stopTask: Task) {
         project.afterEvaluate {
-            if (WebPackBundler.hasWebPack(project.extensions.getByType(WebPackExtension::class.java))) {
+            if (project.frontendExtension.bundles().any { it is WebPackExtension }) {
                 val run = project.tasks.create("webpack-run", WebPackRunTask::class.java) { t ->
                     t.start = true
                     t.description = "Start webpack dev server (if not yet running)"

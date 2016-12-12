@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.gradle.frontend.rollup.*
 import org.jetbrains.kotlin.gradle.frontend.webpack.*
 
 class FrontendPlugin : Plugin<Project> {
+    val bundlers = mapOf("webpack" to WebPackBundler, "rollup" to RollupBundler)
+
     override fun apply(project: Project) {
         project.pluginManager.apply("kotlin2js")
         project.pluginManager.withPlugin("kotlin2js") { kotlinPlugin ->
@@ -19,9 +21,7 @@ class FrontendPlugin : Plugin<Project> {
             val testKotlin2js = project.tasks.getByPath("compileTestKotlin2Js")
             testKotlin2js.dependsOn(kotlin2js)
 
-            project.extensions.create("kotlinFrontend", KotlinFrontendExtension::class.java).apply {
-                moduleName = project.name
-            }
+            val frontend = project.extensions.create("kotlinFrontend", KotlinFrontendExtension::class.java, project)
 
             val packages = project.tasks.create("packages").apply {
                 group = "build"
@@ -49,13 +49,18 @@ class FrontendPlugin : Plugin<Project> {
                 description = "Stops dev-server running in background if running"
             }
 
-            for (bundler in listOf<Bundler>(WebPackBundler(project), RollupBundler(project))) {
-                bundler.apply(packageManager, bundle, run, stop)
+            project.afterEvaluate {
+                for ((id, bundles) in frontend.bundles().groupBy { it.bundlerId }) {
+                    val bundler = frontend.bundlers[id] ?: throw GradleException("Bundler $id is not supported (or not plugged-in), required for bundles: ${bundles.map { it.bundleName }}")
+
+                    bundler.apply(project, packageManager, bundle, run, stop)
+                }
             }
 
             for (runner in listOf(WebPackLauncher, KtorLauncher, KarmaLauncher)) {
                 runner.apply(packageManager, project, run, stop)
             }
+
 
             kotlin2js.dependsOn(packages)
             testKotlin2js.dependsOn(packages)
@@ -82,8 +87,8 @@ class FrontendPlugin : Plugin<Project> {
                 override fun settingsEvaluated(p0: Settings?) {
                 }
 
-                override fun buildFinished(p0: BuildResult?) {
-                    if (resolutionTriggered) {
+                override fun buildFinished(result: BuildResult) {
+                    if (resolutionTriggered && result.failure == null && project.gradle.taskGraph == null) {
                         managers.forEach { m ->
                             m.install(project)
                         }
