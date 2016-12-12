@@ -6,7 +6,7 @@ apply plugin: 'org.jetbrains.kotlin.frontend'
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    compile "org.jetbrains.ktor:ktor-jetty:0.2.4-SNAPSHOT"
+    compile "org.jetbrains.ktor:ktor-jetty:0.2.4"
 }
 
 ktor {
