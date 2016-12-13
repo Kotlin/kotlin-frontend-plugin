@@ -13,6 +13,7 @@ buildscript {
 group = 'org.jetbrains.kotlin'
 version = '0.0.1-SNAPSHOT'
 
+apply plugin: 'java-gradle-plugin'
 apply plugin: 'kotlin'
 apply plugin: 'maven-publish'
 
@@ -23,6 +24,7 @@ repositories {
 dependencies {
     compile gradleApi()
     compile localGroovy()
+    testCompile gradleTestKit()
 
     compile "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
@@ -33,7 +35,6 @@ dependencies {
     testCompile 'junit:junit:4.12'
     testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
 }
-
 
 publishing {
     publications {

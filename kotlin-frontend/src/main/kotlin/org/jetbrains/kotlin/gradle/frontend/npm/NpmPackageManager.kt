@@ -11,9 +11,12 @@ class NpmPackageManager(val project: Project) : PackageManager {
         get() = project.buildDir.resolve("package.json")
 
     private val requiredDependencies = mutableListOf<Dependency>()
+    private var tasksDefined = false
 
     override fun require(dependencies: List<Dependency>) {
         requiredDependencies.addAll(dependencies)
+
+        defineTasks()
     }
 
     override fun install(project: Project) {
@@ -31,9 +34,17 @@ class NpmPackageManager(val project: Project) : PackageManager {
     }
 
     override fun apply(containerTask: Task) {
-        val npm = project.extensions.create("npm", NpmExtension::class.java)
+        project.extensions.create("npm", NpmExtension::class.java)
 
         project.afterEvaluate {
+            defineTasks()
+        }
+    }
+
+    private fun defineTasks() {
+        if (!tasksDefined) {
+            val npm = project.extensions.getByType(NpmExtension::class.java)!!
+
             if (npm.dependencies.isNotEmpty() || npm.developmentDependencies.isNotEmpty() || project.projectDir.resolve("package.json.d").exists() || requiredDependencies.isNotEmpty()) {
                 project.configurations.getByName("compile").dependencies.add(DefaultSelfResolvingDependency(object : AbstractFileCollection() {
                     override fun getFiles(): MutableSet<File> {
@@ -72,7 +83,8 @@ class NpmPackageManager(val project: Project) : PackageManager {
                 setup.dependsOn(index)
                 npmAll.dependsOn(setup)
 
-                containerTask.dependsOn(npmAll)
+                project.tasks.getByName("packages").dependsOn(npmAll)
+                tasksDefined = true
             }
         }
     }

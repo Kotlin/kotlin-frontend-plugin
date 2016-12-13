@@ -28,7 +28,7 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
 
     init {
         onlyIf {
-            npm.dependencies.isNotEmpty() && npm.developmentDependencies.isNotEmpty()
+            npm.dependencies.isNotEmpty() || npm.developmentDependencies.isNotEmpty()
         }
     }
 

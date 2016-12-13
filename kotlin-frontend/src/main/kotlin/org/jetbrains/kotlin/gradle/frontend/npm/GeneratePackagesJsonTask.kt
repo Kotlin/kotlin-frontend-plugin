@@ -4,6 +4,7 @@ import groovy.json.*
 import org.gradle.api.*
 import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.gradle.frontend.*
+import org.jetbrains.kotlin.gradle.frontend.util.*
 import java.io.*
 
 /**
@@ -35,7 +36,7 @@ open class GeneratePackagesJsonTask : DefaultTask() {
         }
 
         onlyIf {
-            npm.dependencies.isNotEmpty() && npm.developmentDependencies.isNotEmpty()
+            npm.dependencies.isNotEmpty() || npm.developmentDependencies.isNotEmpty() || toolsDependencies.isNotEmpty()
         }
     }
 
@@ -44,7 +45,7 @@ open class GeneratePackagesJsonTask : DefaultTask() {
         logger.info("Configuring npm")
 
         val dependencies = npm.dependencies + (project.tasks.filterIsInstance<UnpackGradleDependenciesTask>().map { task ->
-            task.resultNames?.map { Dependency(it.first, it.second, Dependency.RuntimeScope) } ?: task.resultFile.readLines()
+            task.resultNames?.map { Dependency(it.first, it.second, Dependency.RuntimeScope) } ?: task.resultFile.readLinesOrEmpty()
                     .map { it.split("=").map(String::trim) }
                     .filter { it.size == 2 }
                     .map { Dependency(it[0], it[1], Dependency.RuntimeScope) }
