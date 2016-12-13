@@ -5,10 +5,12 @@ import org.gradle.api.*
 import org.gradle.api.artifacts.*
 import org.gradle.api.initialization.*
 import org.gradle.api.invocation.*
+import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.frontend.karma.*
 import org.jetbrains.kotlin.gradle.frontend.ktor.*
 import org.jetbrains.kotlin.gradle.frontend.npm.*
 import org.jetbrains.kotlin.gradle.frontend.rollup.*
+import org.jetbrains.kotlin.gradle.frontend.util.*
 import org.jetbrains.kotlin.gradle.frontend.webpack.*
 
 class FrontendPlugin : Plugin<Project> {
@@ -50,6 +52,20 @@ class FrontendPlugin : Plugin<Project> {
             }
 
             project.afterEvaluate {
+                val sourceMapTasks = if (frontend.sourceMaps) {
+                    project.tasks.withType(KotlinJsCompile::class.java).toList().mapNotNull { compileTask ->
+                        if (compileTask.kotlinOptions.outputFile != null) {
+                            val task = project.tasks.create(compileTask.name + "RelativizeSMAP", RelativizeSourceMapTask::class.java) {
+                                it.compileTask = compileTask
+                            }
+
+                            task.dependsOn(compileTask)
+                        } else null
+                    }
+                } else {
+                    emptyList()
+                }
+
                 for ((id, bundles) in frontend.bundles().groupBy { it.bundlerId }) {
                     val bundler = frontend.bundlers[id] ?: throw GradleException("Bundler $id is not supported (or not plugged-in), required for bundles: ${bundles.map { it.bundleName }}")
 

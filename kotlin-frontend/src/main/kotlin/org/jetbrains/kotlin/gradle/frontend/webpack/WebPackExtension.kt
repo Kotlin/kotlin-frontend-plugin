@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.gradle.frontend.webpack
 import org.gradle.api.*
 import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.gradle.frontend.config.*
+import org.jetbrains.kotlin.gradle.frontend.util.*
 import java.io.*
 
 open class WebPackExtension(project: Project) : BundleConfig {
@@ -11,7 +12,7 @@ open class WebPackExtension(project: Project) : BundleConfig {
 
     override var bundleName = project.name!!
 
-    override var sourceMapEnabled: SourceMapType = SourceMapType.DISABLED
+    override var sourceMapEnabled: Boolean = project.frontendExtension.sourceMaps
 
     @Internal
     var contentPath: File? = null

@@ -84,7 +84,7 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
                                 "contentPath" to config.contentPath?.absolutePath,
                                 "proxyUrl" to config.proxyUrl.let { if (it.isBlank()) null else it },
                                 "publicPath" to config.publicPath,
-                                "sourceMap" to project.extensions.getByType(KotlinFrontendExtension::class.java).sourceMaps
+                                "sourceMap" to (project.frontendExtension.sourceMaps && config.sourceMapEnabled)
                         )).toPrettyString()))
 
         try {

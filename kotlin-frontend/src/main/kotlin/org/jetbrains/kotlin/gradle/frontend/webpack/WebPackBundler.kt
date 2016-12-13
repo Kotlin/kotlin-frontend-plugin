@@ -2,10 +2,8 @@ package org.jetbrains.kotlin.gradle.frontend.webpack
 
 import org.gradle.api.*
 import org.jetbrains.kotlin.gradle.frontend.*
+import org.jetbrains.kotlin.gradle.frontend.util.*
 
-/**
- * @author Sergey Mashkov
- */
 object WebPackBundler : Bundler<WebPackExtension> {
 
     override val bundlerId = "webpack"
@@ -17,7 +15,7 @@ object WebPackBundler : Bundler<WebPackExtension> {
                 listOf("webpack", "webpack-dev-server")
                         .map { Dependency(it, "*", Dependency.DevelopmentScope) }
         )
-        if (project.extensions.getByType(KotlinFrontendExtension::class.java).sourceMaps) {
+        if (project.frontendExtension.sourceMaps) {
             packageManager.require("source-map-loader")
         }
 
@@ -28,6 +26,7 @@ object WebPackBundler : Bundler<WebPackExtension> {
         }
 
         bundle.dependsOn(config)
+        bundle.dependsOn(*project.tasks.withType(RelativizeSourceMapTask::class.java).toTypedArray())
 
         bundleTask.dependsOn(bundle)
     }

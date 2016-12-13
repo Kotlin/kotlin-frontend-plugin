@@ -10,5 +10,5 @@ interface BundleConfig {
     val bundleName: String
 
     @get:Input
-    val sourceMapEnabled: SourceMapType
+    val sourceMapEnabled: Boolean
 }
