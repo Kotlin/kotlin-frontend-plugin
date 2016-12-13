@@ -23,6 +23,8 @@ class SimpleFrontendProjectTest(val gradleVersion: String, val kotlinVersion: St
     @Before
     fun setup() {
         projectDir.create()
+        buildGradleFile.parentFile.mkdirsOrFail()
+        projectDir.root.resolve("build/kotlin-build/caches").mkdirsOrFail()
 
         val cp = PluginUnderTestMetadataReading.readImplementationClasspath()
         buildGradleFile.writeText("""
@@ -53,9 +55,6 @@ class SimpleFrontendProjectTest(val gradleVersion: String, val kotlinVersion: St
 
     @Test
     fun testEmptyProject() {
-        buildGradleFile.parentFile.mkdirsOrFail()
-        projectDir.root.resolve("build/kotlin-build/caches").mkdirsOrFail()
-
         buildGradleFile.appendText("""
         apply plugin: 'org.jetbrains.kotlin.frontend'
 
@@ -74,9 +73,6 @@ class SimpleFrontendProjectTest(val gradleVersion: String, val kotlinVersion: St
 
     @Test
     fun testSimpleProjectNoBundles() {
-        buildGradleFile.parentFile.mkdirsOrFail()
-        projectDir.root.resolve("build/kotlin-build/caches").mkdirsOrFail()
-
         val BAX = '$'
         buildGradleFile.appendText("""
         apply plugin: 'org.jetbrains.kotlin.frontend'
@@ -106,9 +102,6 @@ class SimpleFrontendProjectTest(val gradleVersion: String, val kotlinVersion: St
 
     @Test
     fun testSimpleProjectWebPackBundle() {
-        buildGradleFile.parentFile.mkdirsOrFail()
-        projectDir.root.resolve("build/kotlin-build/caches").mkdirsOrFail()
-
         val BAX = '$'
         buildGradleFile.appendText("""
         apply plugin: 'org.jetbrains.kotlin.frontend'
@@ -136,11 +129,38 @@ class SimpleFrontendProjectTest(val gradleVersion: String, val kotlinVersion: St
                 .withGradleVersion(gradleVersion)
                 .build()
 
-//        assertEquals(TaskOutcome.SUCCESS, result.task(":npm-install")?.outcome)
+        assertEquals(TaskOutcome.SKIPPED, result.task(":npm-preunpack")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":npm-install")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":webpack-bundle")?.outcome)
 
         assertTrue { projectDir.root.resolve("build/js/script.js").isFile }
         assertTrue { projectDir.root.resolve("build/bundle/main.bundle.js").isFile }
+    }
+
+    @Test
+    fun testNpmOnly() {
+        val BAX = '$'
+        buildGradleFile.appendText("""
+        apply plugin: 'org.jetbrains.kotlin.frontend'
+
+        kotlinFrontend {
+            npm {
+                dependency "style-loader"
+            }
+        }
+        """.trimIndent())
+
+        val result = GradleRunner.create()
+                .withProjectDir(projectDir.root)
+                .withArguments("npm")
+                .withGradleVersion(gradleVersion)
+                .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":npm-preunpack")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":npm-install")?.outcome)
+        assertNull(result.task(":webpack-bundle"))
+
+        assertTrue { projectDir.root.resolve("build/node_modules/style-loader").isDirectory }
     }
 
     companion object {
