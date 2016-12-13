@@ -53,8 +53,12 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
         }
 
         doLast {
-            lastHashesFile.parentFile.mkdirsOrFail()
-            lastHashesFile.writeText(hashes.entries.sortedBy { it.key }.joinToString(separator = "\n", postfix = "\n") { "${it.key}\t${it.value}" })
+            if (hashes.isNotEmpty()) {
+                lastHashesFile.parentFile.mkdirsOrFail()
+                lastHashesFile.writeText(hashes.entries.sortedBy { it.key }.joinToString(separator = "\n", postfix = "\n") { "${it.key}\t${it.value}" })
+            } else {
+                lastHashesFile.delete()
+            }
             dumpLog()
         }
     }
