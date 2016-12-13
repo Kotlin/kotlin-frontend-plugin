@@ -12,7 +12,7 @@ import java.net.*
 open class KarmaStartStopTask : AbstractStartStopTask<Int>() {
     @get:Input
     val sourceMaps: Boolean
-        get() = project.extensions.getByType(KotlinFrontendExtension::class.java).sourceMaps
+        get() = project.frontendExtension.sourceMaps
 
     @get:Nested
     val extension by lazy { project.extensions.getByType(KarmaExtension::class.java)!! }
