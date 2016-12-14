@@ -150,17 +150,34 @@ class SimpleFrontendProjectTest(val gradleVersion: String, val kotlinVersion: St
         }
         """.trimIndent())
 
-        val result = GradleRunner.create()
+        val runner = GradleRunner.create()
                 .withProjectDir(projectDir.root)
                 .withArguments("npm")
                 .withGradleVersion(gradleVersion)
-                .build()
+
+
+        val result = runner.build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":npm-preunpack")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":npm-configure")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":npm-install")?.outcome)
         assertNull(result.task(":webpack-bundle"))
 
         assertTrue { projectDir.root.resolve("build/node_modules/style-loader").isDirectory }
+
+        val rerunResult = runner.build()
+
+        assertEquals(TaskOutcome.UP_TO_DATE, rerunResult.task(":npm-preunpack")?.outcome)
+        assertEquals(TaskOutcome.UP_TO_DATE, rerunResult.task(":npm-configure")?.outcome)
+        assertEquals(TaskOutcome.UP_TO_DATE, rerunResult.task(":npm-install")?.outcome)
+
+        buildGradleFile.writeText(buildGradleFile.readText().replace("dependency", "devDependency"))
+
+        val rerunResult2 = runner.build()
+
+        assertEquals(TaskOutcome.UP_TO_DATE, rerunResult2.task(":npm-preunpack")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, rerunResult2.task(":npm-configure")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, rerunResult2.task(":npm-install")?.outcome)
     }
 
     companion object {
