@@ -61,11 +61,11 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
         """.trimIndent())
 
         val result = GradleRunner.create()
-            .withProjectDir(projectDir.root)
-            .withArguments("bundle")
-            .withGradleVersion(gradleVersion)
-            .withDebug(true)
-            .build()
+                .withProjectDir(projectDir.root)
+                .withArguments("bundle")
+                .withGradleVersion(gradleVersion)
+                .withDebug(true)
+                .build()
 
         assertNull(result.task(":webpack-bundle"))
         assertNull(result.task(":npm-install"))
@@ -203,18 +203,34 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
         }
         """)
 
-        val result = GradleRunner.create()
+        val runner = GradleRunner.create()
                 .withProjectDir(projectDir.root)
                 .withArguments("bundle")
                 .withGradleVersion(gradleVersion)
-                .build()
 
-        assertEquals(TaskOutcome.SUCCESS, result.task(":npm-preunpack")?.outcome)
-        assertEquals(TaskOutcome.SUCCESS, result.task(":npm-install")?.outcome)
+        val result = runner.build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":webpack-config")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":webpack-bundle")?.outcome)
 
         assertTrue { projectDir.root.resolve("build/js/script.js").isFile }
         assertTrue { projectDir.root.resolve("build/bundle/main.bundle.js").isFile }
+
+        val noChangesRerunResult = runner.build()
+        assertEquals(TaskOutcome.UP_TO_DATE, noChangesRerunResult.task(":webpack-config")?.outcome)
+        assertEquals(TaskOutcome.UP_TO_DATE, noChangesRerunResult.task(":webpack-bundle")?.outcome)
+
+        projectDir.root.resolve("webpack.config.d").mkdirsOrFail()
+        projectDir.root.resolve("webpack.config.d/part.js").writeText("""
+        // this is a part
+        """.trimIndent())
+
+        val rerunResult = runner.build()
+
+        assertEquals(TaskOutcome.SUCCESS, rerunResult.task(":webpack-config")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, rerunResult.task(":webpack-bundle")?.outcome)
+
+        assertTrue { "this is a part" in projectDir.root.resolve("build/webpack.config.js").readText() }
     }
 
     companion object {
