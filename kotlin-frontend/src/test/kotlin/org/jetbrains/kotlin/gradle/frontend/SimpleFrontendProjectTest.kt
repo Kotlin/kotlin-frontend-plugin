@@ -15,6 +15,8 @@ import kotlin.test.*
 
 @RunWith(Parameterized::class)
 class SimpleFrontendProjectTest(val gradleVersion: String, val kotlinVersion: String) {
+    private val port = 8098
+
     @get:Rule
     val projectDir = TemporaryFolder()
 
@@ -109,6 +111,7 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
 
         kotlinFrontend {
             webpackBundle {
+                port = $port
                 bundleName = "main"
             }
         }
@@ -189,6 +192,7 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
 
         kotlinFrontend {
             webpackBundle {
+                port = $port
                 bundleName = "main"
             }
         }
@@ -242,6 +246,7 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
 
         kotlinFrontend {
             webpackBundle {
+                port = $port
                 bundleName = "main"
             }
         }
@@ -272,7 +277,7 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
             assertNull(result.task(":ktor-start"))
 
             assertFalse { projectDir.root.resolve("build/bundle/main.bundle.js").exists() }
-            val bundleContent = URL("http://localhost:8088/main.bundle.js").openStream().reader().use { it.readText() }
+            val bundleContent = URL("http://localhost:$port/main.bundle.js").openStream().reader().use { it.readText() }
             assertTrue { "webpackBootstrap" in bundleContent }
             assertTrue { "my script content" in bundleContent }
         } finally {
@@ -280,7 +285,7 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
             assertEquals(TaskOutcome.SUCCESS, stopResult.task(":webpack-stop")?.outcome)
 
             assertFails {
-                fail(URL("http://localhost:8088/main.bundle.js").openStream().reader().use { it.readText() })
+                fail(URL("http://localhost:$port/main.bundle.js").openStream().reader().use { it.readText() })
             }
         }
     }
@@ -293,6 +298,7 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
 
         kotlinFrontend {
             webpackBundle {
+                port = $port
                 bundleName = "main"
             }
         }
@@ -320,21 +326,25 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
             assertEquals(TaskOutcome.SUCCESS, result.task(":webpack-config")?.outcome)
             assertEquals(TaskOutcome.SUCCESS, result.task(":webpack-run")?.outcome)
 
-            URL("http://localhost:8088/main.bundle.js").openStream().reader().use { it.readText() }
+            URL("http://localhost:$port/main.bundle.js").openStream().reader().use { it.readText() }
 
-            buildGradleFile.writeText(buildGradleFile.readText().replace("webpackBundle {", "webpackBundle { port = 18088; "))
+            buildGradleFile.writeText(buildGradleFile.readText().replace("port = $port", "port = $port + 1"))
 
             val rerunResult = runner.build() // should detect changes and rerun
             assertEquals(TaskOutcome.UP_TO_DATE, rerunResult.task(":webpack-config")?.outcome)
             assertEquals(TaskOutcome.SUCCESS, rerunResult.task(":webpack-run")?.outcome)
 
-            URL("http://localhost:18088/main.bundle.js").openStream().reader().use { it.readText() }
+            URL("http://localhost:${port + 1}/main.bundle.js").openStream().reader().use { it.readText() }
         } finally {
             val stopResult = runner.withArguments("stop").build()
             assertEquals(TaskOutcome.SUCCESS, stopResult.task(":webpack-stop")?.outcome)
 
             assertFails {
-                fail(URL("http://localhost:8088/main.bundle.js").openStream().reader().use { it.readText() })
+                fail(URL("http://localhost:$port/main.bundle.js").openStream().reader().use { it.readText() })
+            }
+
+            assertFails {
+                fail(URL("http://localhost:${port + 1}/main.bundle.js").openStream().reader().use { it.readText() })
             }
         }
     }
