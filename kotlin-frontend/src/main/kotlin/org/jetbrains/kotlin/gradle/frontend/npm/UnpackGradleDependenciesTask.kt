@@ -23,8 +23,12 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
     @Internal
     var resultNames: MutableList<Pair<String, String>>? = null
 
-    @Nested
-    val npm: NpmExtension = project.extensions.findByType(NpmExtension::class.java)
+    @Internal
+    private val npm: NpmExtension = project.extensions.findByType(NpmExtension::class.java)!!
+
+    @get:Input
+    val replacementsInput: String
+        get() = npm.versionReplacements.joinToString()
 
     init {
         onlyIf {

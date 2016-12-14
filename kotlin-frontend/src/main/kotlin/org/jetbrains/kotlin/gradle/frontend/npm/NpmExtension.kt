@@ -1,6 +1,5 @@
 package org.jetbrains.kotlin.gradle.frontend.npm
 
-import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.gradle.frontend.*
 import java.util.*
 
@@ -8,13 +7,10 @@ import java.util.*
  * @author Sergey Mashkov
  */
 open class NpmExtension {
-    @Nested
     val dependencies: MutableList<Dependency> = ArrayList()
 
-    @Nested
     val versionReplacements: MutableList<Dependency> = ArrayList()
 
-    @Nested
     val developmentDependencies: MutableList<Dependency> = ArrayList()
 
     @JvmOverloads

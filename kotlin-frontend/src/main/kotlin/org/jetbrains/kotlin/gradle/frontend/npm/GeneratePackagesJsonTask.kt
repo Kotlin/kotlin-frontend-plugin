@@ -14,18 +14,38 @@ open class GeneratePackagesJsonTask : DefaultTask() {
     @Internal
     lateinit var dependenciesProvider: () -> List<Dependency>
 
-    @get:Nested
+    @get:Internal
     val toolsDependencies: List<Dependency> by lazy { dependenciesProvider() }
+
+    @get:Input
+    @Suppress("unused")
+    val toolsDependenciesInput: String
+        get() = toolsDependencies.joinToString()
 
     @get:InputFiles
     val unpackResults: List<File>
         get() = project.tasks.filterIsInstance<UnpackGradleDependenciesTask>().map { it.resultFile }
 
-//    @InputDirectory
+    @Input
     val configPartsDir = project.projectDir.resolve("package.json.d")
 
-    @Nested
-    val npm: NpmExtension = project.extensions.getByType(NpmExtension::class.java)
+    @Internal
+    private val npm = project.extensions.getByType(NpmExtension::class.java)!!
+
+    @get:Input
+    @Suppress("unused")
+    val dependenciesInput: String
+        get() = npm.dependencies.joinToString()
+
+    @get:Input
+    @Suppress("unused")
+    val devDependenciesInput: String
+        get() = npm.developmentDependencies.joinToString()
+
+    @Suppress("unused")
+    @get:Input
+    val versionReplacementsInput: String
+        get() = npm.versionReplacements.joinToString()
 
     @OutputFile
     lateinit var packageJsonFile: File
