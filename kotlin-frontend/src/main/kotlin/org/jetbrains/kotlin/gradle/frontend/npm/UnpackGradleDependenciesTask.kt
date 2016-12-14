@@ -4,6 +4,7 @@ import groovy.json.*
 import org.gradle.api.*
 import org.gradle.api.artifacts.*
 import org.gradle.api.tasks.*
+import org.jetbrains.kotlin.gradle.frontend.Dependency
 import org.jetbrains.kotlin.gradle.frontend.util.*
 import org.jetbrains.kotlin.preprocessor.*
 import org.jetbrains.kotlin.utils.*
@@ -13,6 +14,9 @@ import java.io.*
  * @author Sergey Mashkov
  */
 open class UnpackGradleDependenciesTask : DefaultTask() {
+    @Internal
+    lateinit var dependenciesProvider: () -> List<Dependency>
+
     @get:Input
     val compileConfiguration: Configuration
         get() = project.configurations.getByName("compile")!!
@@ -32,7 +36,7 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
 
     init {
         onlyIf {
-            npm.dependencies.isNotEmpty() || npm.developmentDependencies.isNotEmpty()
+            npm.dependencies.isNotEmpty() || npm.developmentDependencies.isNotEmpty() || dependenciesProvider().isNotEmpty()
         }
     }
 

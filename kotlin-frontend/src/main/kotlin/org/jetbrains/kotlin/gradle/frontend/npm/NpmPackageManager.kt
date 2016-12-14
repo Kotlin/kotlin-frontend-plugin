@@ -56,7 +56,9 @@ class NpmPackageManager(val project: Project) : PackageManager {
                     }
                 }))
 
-                val unpack = project.tasks.create("npm-preunpack", UnpackGradleDependenciesTask::class.java)
+                val unpack = project.tasks.create("npm-preunpack", UnpackGradleDependenciesTask::class.java) { task ->
+                    task.dependenciesProvider = { requiredDependencies }
+                }
                 val configure = project.tasks.create("npm-configure", GeneratePackagesJsonTask::class.java) { task ->
                     task.description = "Generate package.json and prepare for npm"
                     task.group = NpmGroup

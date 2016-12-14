@@ -37,11 +37,11 @@ class SimpleFrontendProjectTest(val gradleVersion: String, val kotlinVersion: St
 
             dependencies {
             classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
-            ${cp.joinToString("\n") { "classpath(project.files(" + JsonOutput.toJson(it.absolutePath) + "))" }}
+${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.toJson(it.absolutePath) + "))" }}
             }
         }
 
-        apply plugin: 'kotlin'
+        apply plugin: 'kotlin2js'
 
         repositories {
             jcenter()
@@ -50,7 +50,7 @@ class SimpleFrontendProjectTest(val gradleVersion: String, val kotlinVersion: St
         dependencies {
             compile "org.jetbrains.kotlin:kotlin-js-library:$kotlinVersion"
         }
-        """)
+        """.trimIndent() + "\n\n")
     }
 
     @Test
@@ -129,7 +129,7 @@ class SimpleFrontendProjectTest(val gradleVersion: String, val kotlinVersion: St
                 .withGradleVersion(gradleVersion)
                 .build()
 
-        assertEquals(TaskOutcome.SKIPPED, result.task(":npm-preunpack")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":npm-preunpack")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":npm-install")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":webpack-bundle")?.outcome)
 
@@ -178,6 +178,43 @@ class SimpleFrontendProjectTest(val gradleVersion: String, val kotlinVersion: St
         assertEquals(TaskOutcome.UP_TO_DATE, rerunResult2.task(":npm-preunpack")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, rerunResult2.task(":npm-configure")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, rerunResult2.task(":npm-install")?.outcome)
+    }
+
+    @Test
+    fun testBundleWithParts() {
+        val BAX = '$'
+        buildGradleFile.appendText("""
+        apply plugin: 'org.jetbrains.kotlin.frontend'
+
+        kotlinFrontend {
+            webpackBundle {
+                bundleName = "main"
+            }
+        }
+
+        compileKotlin2Js {
+            kotlinOptions.outputFile = "$BAX{project.buildDir.path}/js/script.js"
+        }
+        """.trimIndent())
+
+        srcDir.mkdirsOrFail()
+        srcDir.resolve("main.kt").writeText("""
+        fun main(args: Array<String>) {
+        }
+        """)
+
+        val result = GradleRunner.create()
+                .withProjectDir(projectDir.root)
+                .withArguments("bundle")
+                .withGradleVersion(gradleVersion)
+                .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":npm-preunpack")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":npm-install")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":webpack-bundle")?.outcome)
+
+        assertTrue { projectDir.root.resolve("build/js/script.js").isFile }
+        assertTrue { projectDir.root.resolve("build/bundle/main.bundle.js").isFile }
     }
 
     companion object {
