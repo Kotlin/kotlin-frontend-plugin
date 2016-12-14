@@ -27,7 +27,7 @@ open class KtorStartStopTask : AbstractStartStopTask<Int>() {
 
     @get:Input
     val workDir: File
-        get() = ext.workDir ?: project.buildDir
+        get() = ext.workDir?.let { project.file(it) } ?: project.buildDir
 
     private val logTailer = LogTail({ serverLog().toPath() })
 

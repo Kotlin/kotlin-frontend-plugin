@@ -8,5 +8,5 @@ import java.io.*
 open class KtorExtension {
     var port: Int? = null
     var jvmOptions: Array<String> = emptyArray()
-    var workDir: File? = null
+    var workDir: Any? = null
 }
