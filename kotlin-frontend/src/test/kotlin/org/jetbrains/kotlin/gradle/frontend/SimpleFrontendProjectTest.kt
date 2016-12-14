@@ -280,7 +280,61 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
             assertEquals(TaskOutcome.SUCCESS, stopResult.task(":webpack-stop")?.outcome)
 
             assertFails {
-                URL("http://localhost:8088/main.bundle.js").openStream().readBytes()
+                fail(URL("http://localhost:8088/main.bundle.js").openStream().reader().use { it.readText() })
+            }
+        }
+    }
+
+    @Test
+    fun testWebPackRunAmendConfigAndReRun() {
+        val BAX = '$'
+        buildGradleFile.appendText("""
+        apply plugin: 'org.jetbrains.kotlin.frontend'
+
+        kotlinFrontend {
+            webpackBundle {
+                bundleName = "main"
+            }
+        }
+
+        compileKotlin2Js {
+            kotlinOptions.outputFile = "$BAX{project.buildDir.path}/js/script.js"
+        }
+        """.trimIndent())
+
+        srcDir.mkdirsOrFail()
+        srcDir.resolve("main.kt").writeText("""
+        fun main(args: Array<String>) {
+            println("my script content")
+        }
+        """)
+
+        val runner = GradleRunner.create()
+                .withProjectDir(projectDir.root)
+                .withArguments("run")
+                .withGradleVersion(gradleVersion)
+
+        val result = runner.build()
+
+        try {
+            assertEquals(TaskOutcome.SUCCESS, result.task(":webpack-config")?.outcome)
+            assertEquals(TaskOutcome.SUCCESS, result.task(":webpack-run")?.outcome)
+
+            URL("http://localhost:8088/main.bundle.js").openStream().reader().use { it.readText() }
+
+            buildGradleFile.writeText(buildGradleFile.readText().replace("webpackBundle {", "webpackBundle { port = 18088; "))
+
+            val rerunResult = runner.build() // should detect changes and rerun
+            assertEquals(TaskOutcome.UP_TO_DATE, rerunResult.task(":webpack-config")?.outcome)
+            assertEquals(TaskOutcome.SUCCESS, rerunResult.task(":webpack-run")?.outcome)
+
+            URL("http://localhost:18088/main.bundle.js").openStream().reader().use { it.readText() }
+        } finally {
+            val stopResult = runner.withArguments("stop").build()
+            assertEquals(TaskOutcome.SUCCESS, stopResult.task(":webpack-stop")?.outcome)
+
+            assertFails {
+                fail(URL("http://localhost:8088/main.bundle.js").openStream().reader().use { it.readText() })
             }
         }
     }

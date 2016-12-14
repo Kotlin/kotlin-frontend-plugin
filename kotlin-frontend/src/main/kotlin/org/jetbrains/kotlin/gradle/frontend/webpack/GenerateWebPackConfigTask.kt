@@ -11,8 +11,7 @@ import java.io.*
  * @author Sergey Mashkov
  */
 open class GenerateWebPackConfigTask : DefaultTask() {
-//    @get:InputDirectory
-    val configsDir: File
+    private val configsDir: File
         get() = project.projectDir.resolve("webpack.config.d")
 
     @Input
@@ -21,8 +20,17 @@ open class GenerateWebPackConfigTask : DefaultTask() {
     @get:Input
     val contextDir by lazy { kotlinOutput(project).parentFile.absolutePath!! }
 
-    @get:Nested
+    @get:Internal
     val bundles by lazy { project.frontendExtension.bundles().filterIsInstance<WebPackExtension>() }
+
+    @get:Input
+    private val bundleNameInput: Any by lazy { bundles.singleOrNull()?.bundleName ?: "" }
+
+    @get:Input
+    private val publicPathInput: Any by lazy { bundles.singleOrNull()?.publicPath ?: "" }
+
+    @get:Input
+    private val outputFileName by lazy { kotlinOutput(project).name }
 
     @get:Input
     val bundleDirectory by lazy { handleFile(project, project.frontendExtension.bundlesDirectory) }
@@ -31,16 +39,13 @@ open class GenerateWebPackConfigTask : DefaultTask() {
     val webPackConfigFile: File = project.buildDir.resolve("webpack.config.js")
 
     init {
-        if (configsDir.exists()) {
-            (inputs as TaskInputs).dir(configsDir)
-        }
+        (inputs as TaskInputs).dir(configsDir).optional()
     }
 
     @TaskAction
     fun generateConfig() {
         val bundle = bundles.singleOrNull() ?: throw GradleException("Only single webpack bundle supported")
 
-        val bundleDir = handleFile(project, project.file(bundleDirectory))
         val resolveRoots = mutableListOf(
                 contextDir
         )
@@ -51,7 +56,7 @@ open class GenerateWebPackConfigTask : DefaultTask() {
                         bundle.bundleName to kotlinOutput(project).nameWithoutExtension.let { "./$it" }
                 ),
                 "output" to mapOf(
-                        "path" to bundleDir.absolutePath,
+                        "path" to bundleDirectory.absolutePath,
                         "filename" to "[name].bundle.js",
                         "chunkFilename" to "[id].bundle.js",
                         "publicPath" to bundle.publicPath

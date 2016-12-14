@@ -14,15 +14,11 @@ open class WebPackExtension(project: Project) : BundleConfig {
 
     override var sourceMapEnabled: Boolean = project.frontendExtension.sourceMaps
 
-    @Internal
     var contentPath: File? = null
 
-    @Input
     var publicPath: String = "/"
 
-    @Input
     var port: Int = 8088
 
-    @Input
     var proxyUrl: String = ""
 }
