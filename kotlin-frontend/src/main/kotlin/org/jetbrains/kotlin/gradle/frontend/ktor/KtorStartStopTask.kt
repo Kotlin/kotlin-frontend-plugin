@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.gradle.frontend.ktor
 import org.gradle.api.plugins.*
 import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.gradle.frontend.servers.*
+import org.jetbrains.kotlin.gradle.frontend.util.*
 import java.io.*
 import java.net.*
 
@@ -21,11 +22,17 @@ open class KtorStartStopTask : AbstractStartStopTask<Int>() {
     val jvmOptions: Array<String>
         get() = project.extensions.getByType(KtorExtension::class.java).jvmOptions
 
+    private val logTailer = LogTail({ serverLog().toPath() })
+
     @Input
     var shutdownPath = "/ktor/application/shutdown"
 
     @Input
     var mainClass = "org.jetbrains.ktor.jetty.DevelopmentHost"
+
+    init {
+        logTailer.rememberLogStartPosition()
+    }
 
     override val identifier = "ktor"
     override fun checkIsRunning(stopInfo: Int?): Boolean {
@@ -75,7 +82,12 @@ open class KtorStartStopTask : AbstractStartStopTask<Int>() {
     @TaskAction
     fun start() {
         if (start) {
-            doStart()
+            try {
+                doStart()
+            } catch (t: Throwable) {
+                logTailer.dumpLog()
+                throw t
+            }
         } else {
             doStop()
         }

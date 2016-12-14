@@ -2,6 +2,7 @@ package org.jetbrains.kotlin.gradle.frontend.servers
 
 import net.rubygrapefruit.platform.*
 import org.gradle.api.*
+import org.gradle.api.tasks.*
 import java.io.*
 import java.util.concurrent.*
 
@@ -9,6 +10,7 @@ import java.util.concurrent.*
  * @author Sergey Mashkov
  */
 abstract class AbstractStartStopTask<S : Any> : DefaultTask() {
+    @get:Internal
     protected abstract val identifier: String
     protected abstract fun checkIsRunning(stopInfo: S?): Boolean
 

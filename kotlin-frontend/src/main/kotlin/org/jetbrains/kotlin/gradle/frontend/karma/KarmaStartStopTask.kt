@@ -2,7 +2,6 @@ package org.jetbrains.kotlin.gradle.frontend.karma
 
 import groovy.json.*
 import org.gradle.api.tasks.*
-import org.jetbrains.kotlin.gradle.frontend.*
 import org.jetbrains.kotlin.gradle.frontend.servers.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
 import org.jetbrains.kotlin.gradle.frontend.webpack.*
@@ -17,13 +16,21 @@ open class KarmaStartStopTask : AbstractStartStopTask<Int>() {
     @get:Nested
     val extension by lazy { project.extensions.getByType(KarmaExtension::class.java)!! }
 
+    @Input
     var start: Boolean = false
+
+    @Internal
+    private val logTailer = LogTail({ serverLog().toPath() })
 
     override val identifier = "karma"
 
     override fun builder() = ProcessBuilder("node",
             project.buildDir.resolve("node_modules/karma/bin/karma").absolutePath,
             "start").directory(project.buildDir)!!
+
+    init {
+        logTailer.rememberLogStartPosition()
+    }
 
     @Suppress("RemoveRedundantCallsOfConversionMethods")
     override fun beforeStart(): Int? {
@@ -107,8 +114,13 @@ open class KarmaStartStopTask : AbstractStartStopTask<Int>() {
     @TaskAction
     fun run() {
         if (start) {
-            doStart()
-            project.logger.lifecycle("karma started, open http://localhost:${extension.port}/ in your browser to run tests and see report")
+            try {
+                doStart()
+                project.logger.lifecycle("karma started, open http://localhost:${extension.port}/ in your browser to run tests and see report")
+            } catch (t: Throwable) {
+                logTailer.dumpLog()
+                throw t
+            }
         } else {
             doStop()
         }

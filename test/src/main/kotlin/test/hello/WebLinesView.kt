@@ -38,7 +38,7 @@ class WebLinesView(val linesHolder: Element, val formRoot: Element) : LinesView 
 
     override fun addLine(lineText: String) {
         document.createElement("p").apply {
-            textContent = " > " + lineText
+            textContent = " + " + lineText
 
             linesHolder.appendChild(this)
         }

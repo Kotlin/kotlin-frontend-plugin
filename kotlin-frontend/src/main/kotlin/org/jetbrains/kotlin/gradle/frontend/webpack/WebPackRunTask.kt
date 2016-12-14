@@ -4,13 +4,11 @@ import groovy.json.*
 import org.codehaus.groovy.runtime.*
 import org.gradle.api.*
 import org.gradle.api.tasks.*
-import org.jetbrains.kotlin.gradle.frontend.*
 import org.jetbrains.kotlin.gradle.frontend.servers.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
 import org.jetbrains.kotlin.preprocessor.*
 import java.io.*
 import java.net.*
-import java.nio.file.*
 import java.nio.file.attribute.*
 import java.security.*
 
@@ -25,11 +23,7 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
 
     val webPackConfigFile = project.buildDir.resolve("webpack.config.js")
 
-    @Internal
-    private var logPosition = 0L
-
-    @Internal
-    private var logCreationDate = 0L
+    val logTailer = LogTail({serverLog().toPath() })
 
     val devServerLauncherFile = project.buildDir.resolve(DevServerLauncherFileName)
 
@@ -43,9 +37,9 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
 
     init {
         project.afterEvaluate {
-            checkLogFilePosition()
+            logTailer.rememberLogStartPosition()
         }
-        checkLogFilePosition()
+        logTailer.rememberLogStartPosition()
 
         if (webPackConfigFile.canRead()) {
             // cast because of internal API leakage https://github.com/gradle/gradle/issues/1004
@@ -59,14 +53,20 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
             } else {
                 lastHashesFile.delete()
             }
-            dumpLog()
+            logTailer.dumpLog()
         }
     }
 
     @TaskAction
     fun main() {
         if (start) {
-            doStart()
+            try {
+                doStart()
+                project.logger.lifecycle("webpack started, open http://localhost:${config.port}/ in your browser")
+            } catch (t: Throwable) {
+                logTailer.dumpLog()
+                throw t
+            }
         } else {
             doStop()
         }
@@ -142,61 +142,6 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
         logger.error("webpack-dev-server exited with exit code $exitCode, see $devServerLog")
     }
 
-    private fun checkLogFilePosition() {
-        try {
-            // it is important to execute it BEFORE any task run because we need to remember file position
-            // before any changes detected
-            val attrs = Files.readAttributes(serverLog().toPath(), BasicFileAttributes::class.java)
-
-            logCreationDate = attrs.creationTime().toMillis()
-            logPosition = Math.max(logPosition, attrs.size())
-        } catch (ignore: IOException) {
-        }
-    }
-
-    private fun dumpLog() {
-        try {
-            val file = serverLog().toPath()
-            var lastCreationDate = logCreationDate
-            var lastSize = logPosition
-            var lastCheck = System.currentTimeMillis()
-
-            while (true) {
-                val attributes = Files.readAttributes(file, BasicFileAttributes::class.java)
-                val size = attributes.size()
-                val date = attributes.creationTime().toMillis()
-
-                if (size != lastSize || date != lastCreationDate) {
-                    lastCheck = System.currentTimeMillis()
-
-                    Files.newInputStream(file).use { s ->
-                        val bytesCount = if (date == lastCreationDate && size >= lastSize) {
-                            if (s.skip(lastSize) != lastSize) {
-                                0   // truncated during read
-                            } else {
-                                size - lastSize
-                            }
-                        } else {
-                            size
-                        }
-
-                        val bytes = s.readFully(bytesCount.toInt())
-                        System.err.write(bytes)
-                        System.err.flush()
-                    }
-
-                    lastSize = size
-                    lastCreationDate = date
-                } else if (System.currentTimeMillis() - lastCheck > 1000) {
-                    break
-                }
-
-                Thread.sleep(75)
-            }
-        } catch (ignore: IOException) {
-        }
-    }
-
     companion object {
         private fun hashOf(vararg files: File) = files.filter(File::canRead).associateBy({ it.name }, { it.sha1() })
         private fun File.sha1() = EncodingGroovyMethods.encodeHex(MessageDigest.getInstance("SHA1").digest(readBytes())).toString()
@@ -215,22 +160,6 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
             } catch (e: IOException) {
                 return false
             }
-        }
-
-        private fun InputStream.readFully(size: Int): ByteArray {
-            val buffer = ByteArray(size)
-            var read = 0
-
-            do {
-                val rc = read(buffer, read, size - read)
-                if (rc == -1) {
-                    throw IOException("Unexpected EOF")
-                }
-
-                read += rc
-            } while (read < size)
-
-            return buffer
         }
     }
 }
