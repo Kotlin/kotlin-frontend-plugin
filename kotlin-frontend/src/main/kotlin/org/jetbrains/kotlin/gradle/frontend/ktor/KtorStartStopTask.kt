@@ -14,13 +14,20 @@ open class KtorStartStopTask : AbstractStartStopTask<Int>() {
     @Input
     var start: Boolean = true
 
+    @Internal
+    private val ext = project.extensions.getByType(KtorExtension::class.java)
+
     @get:Input
     val port: Int
-        get() = project.extensions.getByType(KtorExtension::class.java).port ?: throw IllegalArgumentException("ktor port not configured")
+        get() = ext.port ?: throw IllegalArgumentException("ktor port not configured")
 
     @get:Input
     val jvmOptions: Array<String>
-        get() = project.extensions.getByType(KtorExtension::class.java).jvmOptions
+        get() = ext.jvmOptions
+
+    @get:Input
+    val workDir: File
+        get() = ext.workDir ?: project.buildDir
 
     private val logTailer = LogTail({ serverLog().toPath() })
 
@@ -62,7 +69,7 @@ open class KtorStartStopTask : AbstractStartStopTask<Int>() {
                         "-Dktor.deployment.shutdown.url=$shutdownPath")
                         + jvmOptions
                         + mainClass
-        ).directory(project.buildDir)
+        ).directory(workDir)
     }
 
     override fun stop(state: Int?) {
