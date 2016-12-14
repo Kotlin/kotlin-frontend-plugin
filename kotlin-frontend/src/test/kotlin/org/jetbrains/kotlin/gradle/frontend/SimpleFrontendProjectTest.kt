@@ -10,6 +10,7 @@ import org.junit.runner.*
 import org.junit.runners.*
 import org.junit.runners.Parameterized.*
 import java.io.*
+import java.net.*
 import kotlin.test.*
 
 @RunWith(Parameterized::class)
@@ -231,6 +232,57 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
         assertEquals(TaskOutcome.SUCCESS, rerunResult.task(":webpack-bundle")?.outcome)
 
         assertTrue { "this is a part" in projectDir.root.resolve("build/webpack.config.js").readText() }
+    }
+
+    @Test
+    fun testWebPackRunAndStop() {
+        val BAX = '$'
+        buildGradleFile.appendText("""
+        apply plugin: 'org.jetbrains.kotlin.frontend'
+
+        kotlinFrontend {
+            webpackBundle {
+                bundleName = "main"
+            }
+        }
+
+        compileKotlin2Js {
+            kotlinOptions.outputFile = "$BAX{project.buildDir.path}/js/script.js"
+        }
+        """.trimIndent())
+
+        srcDir.mkdirsOrFail()
+        srcDir.resolve("main.kt").writeText("""
+        fun main(args: Array<String>) {
+            println("my script content")
+        }
+        """)
+
+        val runner = GradleRunner.create()
+                .withProjectDir(projectDir.root)
+                .withArguments("run")
+                .withGradleVersion(gradleVersion)
+
+        val result = runner.build()
+
+        try {
+            assertEquals(TaskOutcome.SUCCESS, result.task(":webpack-config")?.outcome)
+            assertEquals(TaskOutcome.SUCCESS, result.task(":webpack-run")?.outcome)
+            assertNull(result.task(":karma-start"))
+            assertNull(result.task(":ktor-start"))
+
+            assertFalse { projectDir.root.resolve("build/bundle/main.bundle.js").exists() }
+            val bundleContent = URL("http://localhost:8088/main.bundle.js").openStream().reader().use { it.readText() }
+            assertTrue { "webpackBootstrap" in bundleContent }
+            assertTrue { "my script content" in bundleContent }
+        } finally {
+            val stopResult = runner.withArguments("stop").build()
+            assertEquals(TaskOutcome.SUCCESS, stopResult.task(":webpack-stop")?.outcome)
+
+            assertFails {
+                URL("http://localhost:8088/main.bundle.js").openStream().readBytes()
+            }
+        }
     }
 
     companion object {
