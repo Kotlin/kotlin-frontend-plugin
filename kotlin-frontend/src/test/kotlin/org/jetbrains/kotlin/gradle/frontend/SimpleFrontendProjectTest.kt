@@ -319,6 +319,87 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
         }
     }
 
+    @Test
+    fun testMultiModule() {
+        buildGradleFile.writeText(builder.build())
+        projectDir.root.resolve("settings.gradle").writeText("""
+        include 'module1'
+        include 'module2'
+        """.trimIndent())
+
+        val module1 = projectDir.root.resolve("module1")
+        val module2 = projectDir.root.resolve("module2")
+
+        module1.mkdirsOrFail()
+        module2.mkdirsOrFail()
+
+        val src1 = module1.resolve("src/main/kotlin")
+        val src2 = module2.resolve("src/main/kotlin")
+
+        src1.mkdirsOrFail()
+        src2.mkdirsOrFail()
+
+        val builder1 = BuildScriptBuilder()
+        val builder2 = BuildScriptBuilder()
+
+        builder1.applyKotlin2JsPlugin()
+        builder1.applyFrontendPlugin()
+        builder2.applyKotlin2JsPlugin()
+        builder2.applyFrontendPlugin()
+
+        builder1.compileDependencies += "org.jetbrains.kotlin:kotlin-js-library:$kotlinVersion"
+        builder2.compileDependencies += ":module1"
+
+        module1.resolve("build.gradle").writeText(builder1.build {
+            kotlinFrontend {
+                block("npm") {
+                    line("dependency \"fs\"")
+                    line("devDependency \"path\"")
+                }
+            }
+
+            compileKotlin2Js {
+                line("kotlinOptions.outputFile = \"\${project.buildDir.path}/js/script.js\"")
+            }
+        })
+
+        module2.resolve("build.gradle").writeText(builder2.build {
+            compileKotlin2Js {
+                kotlinFrontend {
+                    block("npm") {
+                        line("dependency \"style-loader\"")
+                    }
+
+                    block("webpackBundle") {
+                        line("bundleName = \"main\"")
+                    }
+                }
+
+                line("kotlinOptions.outputFile = \"\${project.buildDir.path}/js/script.js\"")
+            }
+        })
+
+        src1.resolve("lib.kt").writeText("""
+        package my.test.lib
+
+        fun libFunction() = 1
+        """.trimIndent())
+
+        src2.resolve("main.kt").writeText("""
+        package my.test.ui
+        import my.test.lib.*
+
+        fun main(args: Array<String>) {
+            println(libFunction())
+        }
+        """.trimIndent())
+
+        val result = runner.withArguments("compileKotlin2Js").build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":module1:compileKotlin2Js")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":module2:compileKotlin2Js")?.outcome)
+    }
+
     companion object {
         @JvmStatic
         @Parameters

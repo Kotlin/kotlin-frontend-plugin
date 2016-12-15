@@ -53,7 +53,11 @@ class BuildScriptBuilder {
     private fun Builder.dependencies(type: String, list: List<Any>) {
         for (dep in list) {
             if (dep is String) {
-                line("$type ${JsonOutput.toJson(dep)}")
+                if (dep.startsWith(":")) {
+                    line("$type project(${JsonOutput.toJson(dep)})")
+                } else {
+                    line("$type ${JsonOutput.toJson(dep)}")
+                }
             } else if (dep is File) {
                 line("$type(files(${JsonOutput.toJson(dep.absolutePath)}))")
             } else {

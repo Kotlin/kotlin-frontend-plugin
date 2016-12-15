@@ -5,13 +5,14 @@ import org.gradle.api.*
 import org.gradle.api.artifacts.*
 import org.gradle.api.initialization.*
 import org.gradle.api.invocation.*
+import org.gradle.api.plugins.*
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.frontend.karma.*
 import org.jetbrains.kotlin.gradle.frontend.ktor.*
 import org.jetbrains.kotlin.gradle.frontend.npm.*
 import org.jetbrains.kotlin.gradle.frontend.rollup.*
-import org.jetbrains.kotlin.gradle.frontend.util.*
 import org.jetbrains.kotlin.gradle.frontend.webpack.*
+import java.io.*
 
 class FrontendPlugin : Plugin<Project> {
     val bundlers = mapOf("webpack" to WebPackBundler, "rollup" to RollupBundler)
@@ -52,6 +53,13 @@ class FrontendPlugin : Plugin<Project> {
             }
 
             project.afterEvaluate {
+                // TODO this need to be done in kotlin plugin itself
+                (kotlin2js as KotlinJsCompile).kotlinOptions.outputFile?.let { output ->
+                    project.convention.findPlugin(JavaPluginConvention::class.java)?.sourceSets?.let { sourceSets ->
+                        sourceSets.getByName("main").output.dir(File(output).parentFile)
+                    }
+                }
+
                 val sourceMapTasks = if (frontend.sourceMaps) {
                     project.tasks.withType(KotlinJsCompile::class.java).toList().mapNotNull { compileTask ->
                         if (compileTask.kotlinOptions.outputFile != null) {
