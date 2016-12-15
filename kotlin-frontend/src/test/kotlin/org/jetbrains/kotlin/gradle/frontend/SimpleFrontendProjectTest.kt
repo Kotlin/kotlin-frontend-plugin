@@ -1,6 +1,5 @@
 package org.jetbrains.kotlin.gradle.frontend
 
-import groovy.json.*
 import org.gradle.testkit.runner.*
 import org.gradle.testkit.runner.internal.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
@@ -21,8 +20,12 @@ class SimpleFrontendProjectTest(val gradleVersion: String, val kotlinVersion: St
     @get:Rule
     val projectDir = TemporaryFolder()
 
+    val builder = BuildScriptBuilder()
+
     private val buildGradleFile: File by lazy { projectDir.root.resolve("build.gradle") }
     private val srcDir by lazy { projectDir.root.resolve("src/main/kotlin") }
+
+    lateinit var runner: GradleRunner
 
     @Before
     fun setup() {
@@ -30,39 +33,24 @@ class SimpleFrontendProjectTest(val gradleVersion: String, val kotlinVersion: St
         buildGradleFile.parentFile.mkdirsOrFail()
         projectDir.root.resolve("build/kotlin-build/caches").mkdirsOrFail()
 
+        runner = GradleRunner.create()
+                .withProjectDir(projectDir.root)
+                .withGradleVersion(gradleVersion)
+
         val cp = PluginUnderTestMetadataReading.readImplementationClasspath()
-        buildGradleFile.writeText("""
-        buildscript {
-            ext.kotlin_version = ${JsonOutput.toJson(kotlinVersion)}
+        builder.applyKotlin2JsPlugin()
+        builder.kotlinVersion = kotlinVersion
 
-            repositories {
-                jcenter()
-            }
+        builder.scriptClassPath.addAll(cp)
+        builder.scriptClassPath += "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
 
-            dependencies {
-            classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
-${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.toJson(it.absolutePath) + "))" }}
-            }
-        }
-
-        apply plugin: 'kotlin2js'
-
-        repositories {
-            jcenter()
-        }
-
-        dependencies {
-            compile "org.jetbrains.kotlin:kotlin-js-library:$kotlinVersion"
-        }
-        """.trimIndent() + "\n\n")
+        builder.compileDependencies += "org.jetbrains.kotlin:kotlin-js-library:$kotlinVersion"
     }
 
     @Test
     fun testEmptyProject() {
-        buildGradleFile.appendText("""
-        apply plugin: 'org.jetbrains.kotlin.frontend'
-
-        """.trimIndent())
+        builder.applyFrontendPlugin()
+        buildGradleFile.writeText(builder.build())
 
         val result = GradleRunner.create()
                 .withProjectDir(projectDir.root)
@@ -77,14 +65,12 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
 
     @Test
     fun testSimpleProjectNoBundles() {
-        val BAX = '$'
-        buildGradleFile.appendText("""
-        apply plugin: 'org.jetbrains.kotlin.frontend'
-
-        compileKotlin2Js {
-            kotlinOptions.outputFile = "$BAX{project.buildDir.path}/js/script.js"
-        }
-        """.trimIndent())
+        builder.applyFrontendPlugin()
+        buildGradleFile.writeText(builder.build {
+            block("compileKotlin2Js") {
+                line("kotlinOptions.outputFile = \"\${project.buildDir.path}/js/script.js\"")
+            }
+        })
 
         srcDir.mkdirsOrFail()
         srcDir.resolve("main.kt").writeText("""
@@ -92,11 +78,7 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
         }
         """)
 
-        val result = GradleRunner.create()
-                .withProjectDir(projectDir.root)
-                .withArguments("bundle")
-                .withGradleVersion(gradleVersion)
-                .build()
+        val result = runner.withArguments("bundle").build()
 
         assertNull(result.task(":webpack-bundle"))
         assertNull(result.task(":npm-install"))
@@ -106,21 +88,19 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
 
     @Test
     fun testSimpleProjectWebPackBundle() {
-        val BAX = '$'
-        buildGradleFile.appendText("""
-        apply plugin: 'org.jetbrains.kotlin.frontend'
-
-        kotlinFrontend {
-            webpackBundle {
-                port = $port
-                bundleName = "main"
+        builder.applyFrontendPlugin()
+        buildGradleFile.writeText(builder.build {
+            kotlinFrontend {
+                block("webpackBundle") {
+                    line("port = $port")
+                    line("bundleName = \"main\"")
+                }
             }
-        }
 
-        compileKotlin2Js {
-            kotlinOptions.outputFile = "$BAX{project.buildDir.path}/js/script.js"
-        }
-        """.trimIndent())
+            compileKotlin2Js {
+                line("kotlinOptions.outputFile = \"\${project.buildDir.path}/js/script.js\"")
+            }
+        })
 
         srcDir.mkdirsOrFail()
         srcDir.resolve("main.kt").writeText("""
@@ -128,11 +108,7 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
         }
         """)
 
-        val result = GradleRunner.create()
-                .withProjectDir(projectDir.root)
-                .withArguments("bundle")
-                .withGradleVersion(gradleVersion)
-                .build()
+        val result = runner.withArguments("bundle").build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":npm-preunpack")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":npm-install")?.outcome)
@@ -145,21 +121,19 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
 
     @Test
     fun testSimpleProjectWebPackBundleFail() {
-        val BAX = '$'
-        buildGradleFile.appendText("""
-        apply plugin: 'org.jetbrains.kotlin.frontend'
-
-        kotlinFrontend {
-            webpackBundle {
-                port = $port
-                bundleName = "main"
+        builder.applyFrontendPlugin()
+        buildGradleFile.writeText(builder.build {
+            kotlinFrontend {
+                block("webpackBundle") {
+                    line("port = $port")
+                    line("bundleName = \"main\"")
+                }
             }
-        }
 
-        compileKotlin2Js {
-            kotlinOptions.outputFile = "$BAX{project.buildDir.path}/js/script.js"
-        }
-        """.trimIndent())
+            compileKotlin2Js {
+                line("kotlinOptions.outputFile = \"\${project.buildDir.path}/js/script.js\"")
+            }
+        })
 
         srcDir.mkdirsOrFail()
         srcDir.resolve("main.kt").writeText("""
@@ -172,11 +146,7 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
         letsFailHere()
         """.trimIndent())
 
-        val result = GradleRunner.create()
-                .withProjectDir(projectDir.root)
-                .withArguments("bundle")
-                .withGradleVersion(gradleVersion)
-                .buildAndFail()
+        val result = runner.withArguments("bundle").buildAndFail()
 
         assertEquals(TaskOutcome.FAILED, result.task(":webpack-bundle")?.outcome)
 
@@ -188,22 +158,16 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
     fun testNodePath() {
         val nodePrefix = whereIs("node").first(File::canExecute)
 
-        buildGradleFile.appendText("""
-        apply plugin: 'org.jetbrains.kotlin.frontend'
-
-        kotlinFrontend {
-            npm {
-                dependency "style-loader"
+        builder.applyFrontendPlugin()
+        buildGradleFile.writeText(builder.build {
+            kotlinFrontend {
+                block("npm") {
+                    line("dependency \"style-loader\"")
+                }
             }
-        }
-        """.trimIndent())
+        })
 
-        val runner = GradleRunner.create()
-                .withProjectDir(projectDir.root)
-                .withArguments("-Dorg.kotlin.frontend.node.dir=${nodePrefix.absolutePath}", "npm")
-                .withGradleVersion(gradleVersion)
-
-        val result = runner.build()
+        val result = runner.withArguments("-Dorg.kotlin.frontend.node.dir=${nodePrefix.absolutePath}", "npm").build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":npm-preunpack")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":npm-configure")?.outcome)
@@ -212,23 +176,16 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
 
     @Test
     fun testNpmOnly() {
-        val BAX = '$'
-        buildGradleFile.appendText("""
-        apply plugin: 'org.jetbrains.kotlin.frontend'
-
-        kotlinFrontend {
-            npm {
-                dependency "style-loader"
+        builder.applyFrontendPlugin()
+        buildGradleFile.writeText(builder.build {
+            kotlinFrontend {
+                block("npm") {
+                    line("dependency \"style-loader\"")
+                }
             }
-        }
-        """.trimIndent())
+        })
 
-        val runner = GradleRunner.create()
-                .withProjectDir(projectDir.root)
-                .withArguments("npm")
-                .withGradleVersion(gradleVersion)
-
-
+        val runner = runner.withArguments("npm")
         val result = runner.build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":npm-preunpack")?.outcome)
@@ -255,22 +212,16 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
 
     @Test
     fun testNpmFail() {
-        buildGradleFile.appendText("""
-        apply plugin: 'org.jetbrains.kotlin.frontend'
-
-        kotlinFrontend {
-            npm {
-                dependency "non-existing-package-here"
+        builder.applyFrontendPlugin()
+        buildGradleFile.writeText(builder.build {
+            kotlinFrontend {
+                block("npm") {
+                    line("dependency \"non-existing-package-here\"")
+                }
             }
-        }
-        """.trimIndent())
+        })
 
-        val runner = GradleRunner.create()
-                .withProjectDir(projectDir.root)
-                .withArguments("npm")
-                .withGradleVersion(gradleVersion)
-
-        val result = runner.buildAndFail()
+        val result = runner.withArguments("npm").buildAndFail()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":npm-preunpack")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":npm-configure")?.outcome)
@@ -279,21 +230,19 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
 
     @Test
     fun testBundleWithParts() {
-        val BAX = '$'
-        buildGradleFile.appendText("""
-        apply plugin: 'org.jetbrains.kotlin.frontend'
-
-        kotlinFrontend {
-            webpackBundle {
-                port = $port
-                bundleName = "main"
+        builder.applyFrontendPlugin()
+        buildGradleFile.writeText(builder.build {
+            kotlinFrontend {
+                block("webpackBundle") {
+                    line("port = $port")
+                    line("bundleName = \"main\"")
+                }
             }
-        }
 
-        compileKotlin2Js {
-            kotlinOptions.outputFile = "$BAX{project.buildDir.path}/js/script.js"
-        }
-        """.trimIndent())
+            compileKotlin2Js {
+                line("kotlinOptions.outputFile = \"\${project.buildDir.path}/js/script.js\"")
+            }
+        })
 
         srcDir.mkdirsOrFail()
         srcDir.resolve("main.kt").writeText("""
@@ -301,11 +250,7 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
         }
         """)
 
-        val runner = GradleRunner.create()
-                .withProjectDir(projectDir.root)
-                .withArguments("bundle")
-                .withGradleVersion(gradleVersion)
-
+        val runner = runner.withArguments("bundle")
         val result = runner.build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":webpack-config")?.outcome)
@@ -333,21 +278,19 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
 
     @Test
     fun testWebPackRunAndStop() {
-        val BAX = '$'
-        buildGradleFile.appendText("""
-        apply plugin: 'org.jetbrains.kotlin.frontend'
-
-        kotlinFrontend {
-            webpackBundle {
-                port = $port
-                bundleName = "main"
+        builder.applyFrontendPlugin()
+        buildGradleFile.writeText(builder.build {
+            kotlinFrontend {
+                block("webpackBundle") {
+                    line("port = $port")
+                    line("bundleName = \"main\"")
+                }
             }
-        }
 
-        compileKotlin2Js {
-            kotlinOptions.outputFile = "$BAX{project.buildDir.path}/js/script.js"
-        }
-        """.trimIndent())
+            compileKotlin2Js {
+                line("kotlinOptions.outputFile = \"\${project.buildDir.path}/js/script.js\"")
+            }
+        })
 
         srcDir.mkdirsOrFail()
         srcDir.resolve("main.kt").writeText("""
@@ -356,11 +299,7 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
         }
         """)
 
-        val runner = GradleRunner.create()
-                .withProjectDir(projectDir.root)
-                .withArguments("run")
-                .withGradleVersion(gradleVersion)
-
+        val runner = runner.withArguments("run")
         val result = runner.build()
 
         try {
@@ -385,21 +324,19 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
 
     @Test
     fun testWebPackRunAmendConfigAndReRun() {
-        val BAX = '$'
-        buildGradleFile.appendText("""
-        apply plugin: 'org.jetbrains.kotlin.frontend'
-
-        kotlinFrontend {
-            webpackBundle {
-                port = $port
-                bundleName = "main"
+        builder.applyFrontendPlugin()
+        buildGradleFile.writeText(builder.build {
+            kotlinFrontend {
+                block("webpackBundle") {
+                    line("port = $port")
+                    line("bundleName = \"main\"")
+                }
             }
-        }
 
-        compileKotlin2Js {
-            kotlinOptions.outputFile = "$BAX{project.buildDir.path}/js/script.js"
-        }
-        """.trimIndent())
+            compileKotlin2Js {
+                line("kotlinOptions.outputFile = \"\${project.buildDir.path}/js/script.js\"")
+            }
+        })
 
         srcDir.mkdirsOrFail()
         srcDir.resolve("main.kt").writeText("""
@@ -408,11 +345,7 @@ ${cp.joinToString("\n") { "            classpath(project.files(" + JsonOutput.to
         }
         """)
 
-        val runner = GradleRunner.create()
-                .withProjectDir(projectDir.root)
-                .withArguments("run")
-                .withGradleVersion(gradleVersion)
-
+        val runner = runner.withArguments("run")
         val result = runner.build()
 
         try {
