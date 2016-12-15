@@ -1,51 +1,16 @@
 package org.jetbrains.kotlin.gradle.frontend
 
 import org.gradle.testkit.runner.*
-import org.gradle.testkit.runner.internal.*
 import org.jetbrains.kotlin.preprocessor.*
 import org.junit.*
-import org.junit.rules.*
 import org.junit.runner.*
 import org.junit.runners.*
 import org.junit.runners.Parameterized.*
-import java.io.*
 import java.net.*
 import kotlin.test.*
 
 @RunWith(Parameterized::class)
-class SimpleFrontendProjectTest(val gradleVersion: String, val kotlinVersion: String) {
-    private val port = 8098
-
-    @get:Rule
-    val projectDir = TemporaryFolder()
-
-    val builder = BuildScriptBuilder()
-
-    private val buildGradleFile: File by lazy { projectDir.root.resolve("build.gradle") }
-    private val srcDir by lazy { projectDir.root.resolve("src/main/kotlin") }
-
-    lateinit var runner: GradleRunner
-
-    @Before
-    fun setup() {
-        projectDir.create()
-        buildGradleFile.parentFile.mkdirsOrFail()
-        projectDir.root.resolve("build/kotlin-build/caches").mkdirsOrFail()
-
-        runner = GradleRunner.create()
-                .withProjectDir(projectDir.root)
-                .withGradleVersion(gradleVersion)
-
-        val cp = PluginUnderTestMetadataReading.readImplementationClasspath()
-        builder.applyKotlin2JsPlugin()
-        builder.kotlinVersion = kotlinVersion
-
-        builder.scriptClassPath.addAll(cp)
-        builder.scriptClassPath += "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
-
-        builder.compileDependencies += "org.jetbrains.kotlin:kotlin-js-library:$kotlinVersion"
-    }
-
+class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : AbstractFrontendTest(gradleVersion, kotlinVersion) {
     @Test
     fun testEmptyProject() {
         builder.applyFrontendPlugin()
