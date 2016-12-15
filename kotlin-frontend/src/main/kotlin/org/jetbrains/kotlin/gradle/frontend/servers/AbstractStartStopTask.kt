@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.gradle.frontend.servers
 import net.rubygrapefruit.platform.*
 import org.gradle.api.*
 import org.gradle.api.tasks.*
+import org.jetbrains.kotlin.preprocessor.*
 import java.io.*
 import java.util.concurrent.*
 
@@ -31,7 +32,8 @@ abstract class AbstractStartStopTask<S : Any> : DefaultTask() {
     protected open fun startedMessage(): Unit = logger.warn("$identifier started")
     protected open fun stoppedMessage(): Unit = logger.warn("$identifier stopped")
 
-    protected open fun serverLog(): File = project.buildDir.resolve("$identifier.log")
+    fun serverLog() = serverLog(project.buildDir.resolve("logs"))
+    protected open fun serverLog(logsDir: File): File = logsDir.resolve("$identifier.log")
 
     protected open val stateFile: File
         get() = project.buildDir.resolve(".run-$identifier.txt")
@@ -51,7 +53,10 @@ abstract class AbstractStartStopTask<S : Any> : DefaultTask() {
         }
 
         stateFile.delete()
-        serverLog().delete()
+        serverLog().let {
+            it.delete()
+            it.parentFile.mkdirsOrFail()
+        }
 
         val launcher = Native.get(ProcessLauncher::class.java)!!
         val builder = builder()

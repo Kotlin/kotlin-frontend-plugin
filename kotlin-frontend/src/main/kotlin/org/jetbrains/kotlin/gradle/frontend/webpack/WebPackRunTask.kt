@@ -27,7 +27,6 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
 
     val devServerLauncherFile = project.buildDir.resolve(DevServerLauncherFileName)
 
-    val devServerLog = project.buildDir.resolve("webpack-dev-server.log")
     val lastHashesFile = project.buildDir.resolve(".webpack-last-hashes.txt")
 
     val hashes by lazy { hashOf(devServerLauncherFile, webPackConfigFile) } // TODO get all the hashes of all included configs
@@ -113,8 +112,6 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
         return hashesChanged(lastHashes, hashes)
     }
 
-    override fun serverLog() = devServerLog
-
     override fun builder(): ProcessBuilder {
         return ProcessBuilder(nodePath(project, "node").first().absolutePath, devServerLauncherFile.absolutePath).directory(project.buildDir)
     }
@@ -135,11 +132,11 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
     }
 
     override fun notRunningThenKilledMessage() {
-        logger.error("webpack-dev-server didn't listen port so has been killed, see $devServerLog")
+        logger.error("webpack-dev-server didn't listen port so has been killed, see ${serverLog()}")
     }
 
     override fun notRunningExitCodeMessage(exitCode: Int) {
-        logger.error("webpack-dev-server exited with exit code $exitCode, see $devServerLog")
+        logger.error("webpack-dev-server exited with exit code $exitCode, see ${serverLog()}")
     }
 
     override fun startedMessage() {

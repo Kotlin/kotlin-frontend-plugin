@@ -54,7 +54,7 @@ open class KtorStartStopTask : AbstractStartStopTask<Int>() {
 
     override fun beforeStart() = port
 
-    override fun serverLog() = project.buildDir.resolve("$identifier-$port.log")
+    override fun serverLog(logsDir: File) = logsDir.resolve("$identifier-$port.log")
 
     override fun builder(): ProcessBuilder {
         val gradleJavaHome = project.findProperty("org.gradle.java.home")?.let { listOf(it.toString() + File.separator + "bin") } ?: emptyList()
