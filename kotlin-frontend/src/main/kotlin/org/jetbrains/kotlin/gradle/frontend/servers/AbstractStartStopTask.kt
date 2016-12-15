@@ -25,6 +25,12 @@ abstract class AbstractStartStopTask<S : Any> : DefaultTask() {
 
     protected open fun notRunningThenKilledMessage(): Unit = logger.error("$identifier: not actually running so has been killed")
     protected open fun notRunningExitCodeMessage(exitCode: Int): Unit = logger.error("$identifier: exited with exit code $exitCode")
+
+    protected open fun alreadyRunningMessage(): Unit = logger.warn("$identifier is already running")
+    protected open fun needRestartMessage(): Unit = logger.warn("$identifier needs restart")
+    protected open fun startedMessage(): Unit = logger.warn("$identifier started")
+    protected open fun stoppedMessage(): Unit = logger.warn("$identifier stopped")
+
     protected open fun serverLog(): File = project.buildDir.resolve("$identifier.log")
 
     protected open val stateFile: File
@@ -36,10 +42,10 @@ abstract class AbstractStartStopTask<S : Any> : DefaultTask() {
 
         if (checkIsRunning(oldStopInfo)) {
             if (needRestart(oldStopInfo, newState)) {
-                logger.warn("Server need restart")
+                needRestartMessage()
                 doStop()
             } else {
-                logger.warn("Server is already running")
+                alreadyRunningMessage()
                 return
             }
         }
@@ -81,6 +87,8 @@ abstract class AbstractStartStopTask<S : Any> : DefaultTask() {
         if (newState != null) {
             writeState(stateFile, newState)
         }
+
+        startedMessage()
     }
 
     protected fun doStop() {
@@ -102,7 +110,7 @@ abstract class AbstractStartStopTask<S : Any> : DefaultTask() {
         if (checkIsRunning(state)) {
             logger.error("Failed to stop $identifier: still running")
         } else {
-            logger.info("$identifier: stopped")
+            stoppedMessage()
             stateFile.delete()
         }
     }

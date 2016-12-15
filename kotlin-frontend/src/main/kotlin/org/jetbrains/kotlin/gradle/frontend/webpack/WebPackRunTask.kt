@@ -62,7 +62,6 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
         if (start) {
             try {
                 doStart()
-                project.logger.lifecycle("webpack started, open http://localhost:${config.port}/ in your browser")
             } catch (t: Throwable) {
                 logTailer.dumpLog()
                 throw t
@@ -84,7 +83,8 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
                                 "contentPath" to config.contentPath?.absolutePath,
                                 "proxyUrl" to config.proxyUrl.let { if (it.isBlank()) null else it },
                                 "publicPath" to config.publicPath,
-                                "sourceMap" to (project.frontendExtension.sourceMaps && config.sourceMapEnabled)
+                                "sourceMap" to (project.frontendExtension.sourceMaps && config.sourceMapEnabled),
+                                "stats" to config.stats
                         )).toPrettyString()))
 
         try {
@@ -140,6 +140,14 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
 
     override fun notRunningExitCodeMessage(exitCode: Int) {
         logger.error("webpack-dev-server exited with exit code $exitCode, see $devServerLog")
+    }
+
+    override fun startedMessage() {
+        logger.lifecycle("webpack started, see http://localhost:${config.port}/")
+    }
+
+    override fun alreadyRunningMessage() {
+        logger.warn("webpack is already running at http://localhost:${config.port}/")
     }
 
     companion object {

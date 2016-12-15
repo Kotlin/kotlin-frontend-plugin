@@ -21,4 +21,6 @@ open class WebPackExtension(project: Project) : BundleConfig {
     var port: Int = 8088
 
     var proxyUrl: String = ""
+
+    var stats: String = "errors-only"
 }

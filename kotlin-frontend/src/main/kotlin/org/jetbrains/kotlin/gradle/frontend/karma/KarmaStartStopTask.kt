@@ -116,7 +116,6 @@ open class KarmaStartStopTask : AbstractStartStopTask<Int>() {
         if (start) {
             try {
                 doStart()
-                project.logger.lifecycle("karma started, open http://localhost:${extension.port}/ in your browser to run tests and see report")
             } catch (t: Throwable) {
                 logTailer.dumpLog()
                 throw t
@@ -124,6 +123,14 @@ open class KarmaStartStopTask : AbstractStartStopTask<Int>() {
         } else {
             doStop()
         }
+    }
+
+    override fun startedMessage() {
+        logger.lifecycle("karma started, open http://localhost:${extension.port}/ in your browser to run tests and see report")
+    }
+
+    override fun alreadyRunningMessage() {
+        logger.lifecycle("karma is already running at http://localhost:${extension.port}/")
     }
 
     override fun checkIsRunning(stopInfo: Int?): Boolean {

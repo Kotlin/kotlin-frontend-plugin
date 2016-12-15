@@ -41,6 +41,7 @@ var devServer = new WebpackDevServer(
     {
         publicPath: RunConfig.publicPath,
         contentBase: RunConfig.contentPath,
+        stats: RunConfig.stats || "errors-only",
         hot: true,
         setup: function(app) {
             app.get(RunConfig.shutDownPath, function(req, res) {
