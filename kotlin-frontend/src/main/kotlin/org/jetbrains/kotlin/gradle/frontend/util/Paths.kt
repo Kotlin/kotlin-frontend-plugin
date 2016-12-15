@@ -23,6 +23,19 @@ fun nodePath(project: Project, command: String = "node"): List<File> {
     return paths
 }
 
+fun ProcessBuilder.addCommandPathToSystemPath() = apply {
+    if (command().isNotEmpty()) {
+        val commandFile = File(command()[0])
+        if (commandFile.isAbsolute) {
+            val env = splitEnvironmentPath()
+            val commandDir = commandFile.parent
+            if (commandDir !in env) {
+                environment()["PATH"] = (env + commandDir).joinToString(File.pathSeparator)
+            }
+        }
+    }
+}
+
 private val Suffixes = if (Os.isFamily(Os.FAMILY_WINDOWS)) {
     listOf(".exe", ".bat", ".cmd")
 } else {

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.gradle.frontend.servers
 import net.rubygrapefruit.platform.*
 import org.gradle.api.*
 import org.gradle.api.tasks.*
+import org.jetbrains.kotlin.gradle.frontend.util.*
 import org.jetbrains.kotlin.preprocessor.*
 import java.io.*
 import java.util.concurrent.*
@@ -62,6 +63,7 @@ abstract class AbstractStartStopTask<S : Any> : DefaultTask() {
         val builder = builder()
                 .redirectErrorStream(true)
                 .redirectOutput(serverLog())
+                .addCommandPathToSystemPath()
 
         if (logger.isDebugEnabled) {
             logger.debug("Running ${builder.command().joinToString(" ")}")

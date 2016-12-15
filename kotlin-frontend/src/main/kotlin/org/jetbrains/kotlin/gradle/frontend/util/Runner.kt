@@ -13,6 +13,8 @@ fun ProcessBuilder.startWithRedirectOnFail(project: Project, name: String, exec:
 
     val cmd = command().toList()
     val process = Native.get(ProcessLauncher::class.java).let { l ->
+        addCommandPathToSystemPath()
+
         if (Os.isFamily(Os.FAMILY_WINDOWS) && !cmd[0].endsWith(".exe")) {
             command(listOf("cmd.exe", "/c") + cmd)
         }

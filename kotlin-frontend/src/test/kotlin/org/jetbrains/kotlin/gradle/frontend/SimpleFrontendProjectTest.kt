@@ -2,7 +2,6 @@ package org.jetbrains.kotlin.gradle.frontend
 
 import org.gradle.testkit.runner.*
 import org.gradle.testkit.runner.internal.*
-import org.jetbrains.kotlin.gradle.frontend.util.*
 import org.jetbrains.kotlin.preprocessor.*
 import org.junit.*
 import org.junit.rules.*
@@ -152,26 +151,6 @@ class SimpleFrontendProjectTest(val gradleVersion: String, val kotlinVersion: St
 
         assertTrue { projectDir.root.resolve("build/js/script.js").isFile }
         assertFalse { projectDir.root.resolve("build/bundle/main.bundle.js").isFile }
-    }
-
-    @Test
-    fun testNodePath() {
-        val nodePrefix = whereIs("node").first(File::canExecute)
-
-        builder.applyFrontendPlugin()
-        buildGradleFile.writeText(builder.build {
-            kotlinFrontend {
-                block("npm") {
-                    line("dependency \"style-loader\"")
-                }
-            }
-        })
-
-        val result = runner.withArguments("-Dorg.kotlin.frontend.node.dir=${nodePrefix.absolutePath}", "npm").build()
-
-        assertEquals(TaskOutcome.SUCCESS, result.task(":npm-preunpack")?.outcome)
-        assertEquals(TaskOutcome.SUCCESS, result.task(":npm-configure")?.outcome)
-        assertEquals(TaskOutcome.SUCCESS, result.task(":npm-install")?.outcome)
     }
 
     @Test
