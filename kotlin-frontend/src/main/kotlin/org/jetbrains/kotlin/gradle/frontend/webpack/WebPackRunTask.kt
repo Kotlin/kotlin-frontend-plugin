@@ -116,7 +116,7 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
     override fun serverLog() = devServerLog
 
     override fun builder(): ProcessBuilder {
-        return ProcessBuilder("node", devServerLauncherFile.absolutePath).directory(project.buildDir)
+        return ProcessBuilder(nodePath(project, "node").first().absolutePath, devServerLauncherFile.absolutePath).directory(project.buildDir)
     }
 
     override fun readState(file: File): Int = file.readText().trim().toInt()

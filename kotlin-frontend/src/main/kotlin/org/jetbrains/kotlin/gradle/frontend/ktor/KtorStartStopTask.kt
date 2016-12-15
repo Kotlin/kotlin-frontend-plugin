@@ -57,8 +57,10 @@ open class KtorStartStopTask : AbstractStartStopTask<Int>() {
     override fun serverLog() = project.buildDir.resolve("$identifier-$port.log")
 
     override fun builder(): ProcessBuilder {
+        val gradleJavaHome = project.findProperty("org.gradle.java.home")?.let { listOf(it.toString() + File.separator + "bin") } ?: emptyList()
+
         return ProcessBuilder(
-                listOf("java", "-cp")
+                listOf(whereIs("java", gradleJavaHome).first().absolutePath, "-cp")
                         + (project.configurations.flatMap { it.files.filter { it.canRead() && it.extension == "jar" } }
                         + project.convention.findPlugin(JavaPluginConvention::class.java).sourceSets.getByName("main").output.toList()
                         )

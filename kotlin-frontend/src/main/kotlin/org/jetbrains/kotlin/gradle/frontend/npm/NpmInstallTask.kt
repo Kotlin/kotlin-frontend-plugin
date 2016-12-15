@@ -19,10 +19,10 @@ open class NpmInstallTask : DefaultTask() {
     fun processInstallation() {
         logger.info("Running npm install")
 
-        ProcessBuilder("npm", "install")
+        ProcessBuilder(nodePath(project, "npm").first().absolutePath, "install")
                 .directory(project.buildDir)
                 .redirectErrorStream(true)
-                .startWithRedirectOnFail(project)
+                .startWithRedirectOnFail(project, "npm install")
                 .let { p ->
                     if (p.exitValue() != 0) {
                         throw GradleException("Failed to npm install")

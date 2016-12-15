@@ -8,34 +8,18 @@ import java.io.*
 import java.nio.*
 import java.util.concurrent.*
 
-fun ProcessBuilder.startWithRedirectOnFail(project: Project, exec: Executor = DummyExecutor): java.lang.Process {
+fun ProcessBuilder.startWithRedirectOnFail(project: Project, name: String, exec: Executor = DummyExecutor): java.lang.Process {
+    require(command().isNotEmpty()) { "No command specified" }
+
     val cmd = command().toList()
     val process = Native.get(ProcessLauncher::class.java).let { l ->
-        try {
-            l.start(this)!!
-        } catch(e: Exception) {
-            if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
-                throw e
-            }
-
-            val c = cmd.toMutableList()
-            if (c[0].endsWith(".exe")) {
-                throw e
-            }
-
-            c[0] = c[0] + ".exe"
-            try {
-                l.start(command(c))!!
-            } catch (e2: Throwable) {
-                val c2 = cmd.toMutableList()
-                c2.add(0, "cmd.exe")
-                c2.add(1, "/c")
-                c2[2] = c2[2] + ".cmd"
-
-                l.start(command(c2))!!
-            }
+        if (Os.isFamily(Os.FAMILY_WINDOWS) && !cmd[0].endsWith(".exe")) {
+            command(listOf("cmd.exe", "/c") + cmd)
         }
+
+        l.start(this)!!
     }
+
     val out = if (project.logger.isInfoEnabled) System.out else NullOutputStream
     val buffered = OutputStreamWithBuffer(out, 1024)
 
@@ -50,6 +34,9 @@ fun ProcessBuilder.startWithRedirectOnFail(project: Project, exec: Executor = Du
     if (rc != 0) {
         System.err.write(buffered.lines())
         System.err.flush()
+
+        project.logger.debug("Command failed (exit code = $rc): ${command().joinToString(" ")}")
+        throw GradleException("$name failed (exit code = $rc)")
     }
 
     return process

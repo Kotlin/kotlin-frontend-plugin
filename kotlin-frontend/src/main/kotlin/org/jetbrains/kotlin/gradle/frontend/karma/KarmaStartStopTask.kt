@@ -24,7 +24,7 @@ open class KarmaStartStopTask : AbstractStartStopTask<Int>() {
 
     override val identifier = "karma"
 
-    override fun builder() = ProcessBuilder("node",
+    override fun builder() = ProcessBuilder(nodePath(project, "node").first().absolutePath,
             project.buildDir.resolve("node_modules/karma/bin/karma").absolutePath,
             "start").directory(project.buildDir)!!
 

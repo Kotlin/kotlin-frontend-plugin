@@ -23,8 +23,11 @@ open class RollupBundleTask : DefaultTask() {
 
     @TaskAction
     fun runRollupCompile() {
-        ProcessBuilder("node", project.buildDir.resolve("node_modules/rollup/bin/rollup").absolutePath, "-c")
+        ProcessBuilder(
+                nodePath(project, "node").first().absolutePath,
+                project.buildDir.resolve("node_modules/rollup/bin/rollup").absolutePath,
+                "-c")
                 .directory(project.buildDir)
-                .startWithRedirectOnFail(project)
+                .startWithRedirectOnFail(project, "node rollup")
     }
 }
