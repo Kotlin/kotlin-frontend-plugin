@@ -36,8 +36,8 @@ abstract class AbstractFrontendTest(val gradleVersion: String, val kotlinVersion
         builder.applyKotlin2JsPlugin()
         builder.kotlinVersion = kotlinVersion
 
-        builder.scriptClassPath.addAll(cp)
         builder.scriptClassPath += "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+        builder.scriptClassPath.addAll(cp.filter { "org.jetbrains.kotlin" !in it.path.replace("\\", "/") || kotlinVersion in it.name })
 
         builder.compileDependencies += "org.jetbrains.kotlin:kotlin-js-library:$kotlinVersion"
     }

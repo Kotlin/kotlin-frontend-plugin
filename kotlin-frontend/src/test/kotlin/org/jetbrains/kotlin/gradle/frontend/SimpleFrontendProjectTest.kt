@@ -339,16 +339,21 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
         src1.mkdirsOrFail()
         src2.mkdirsOrFail()
 
-        val builder1 = BuildScriptBuilder()
-        val builder2 = BuildScriptBuilder()
+        val builder1 = BuildScriptBuilder().apply {
+            this@apply.kotlinVersion = this@SimpleFrontendProjectTest.kotlinVersion
+            applyKotlin2JsPlugin()
+            applyFrontendPlugin()
 
-        builder1.applyKotlin2JsPlugin()
-        builder1.applyFrontendPlugin()
-        builder2.applyKotlin2JsPlugin()
-        builder2.applyFrontendPlugin()
+            compileDependencies += "org.jetbrains.kotlin:kotlin-js-library:$kotlinVersion"
+        }
 
-        builder1.compileDependencies += "org.jetbrains.kotlin:kotlin-js-library:$kotlinVersion"
-        builder2.compileDependencies += ":module1"
+        val builder2 = BuildScriptBuilder().apply {
+            this@apply.kotlinVersion = this@SimpleFrontendProjectTest.kotlinVersion
+            applyKotlin2JsPlugin()
+            applyFrontendPlugin()
+
+            compileDependencies += ":module1"
+        }
 
         module1.resolve("build.gradle").writeText(builder1.build {
             kotlinFrontend {
@@ -407,6 +412,7 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
         @Parameters
         fun versions() = listOf(
                 arrayOf("3.1", "1.0.5-2"),
+                arrayOf("3.1", "1.1.0-dev-5520"),
                 arrayOf("3.2.1", "1.0.5-2")
         )
     }
