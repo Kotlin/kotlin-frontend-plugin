@@ -1,28 +1,7 @@
-buildscript {
-    ext.kotlin_version = '1.0.5-2'
-
-    repositories {
-        jcenter()
-        mavenLocal()
-    }
-
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-frontend:0.0.1-SNAPSHOT"
-    }
-}
-
 group = 'org.jetbrains.kotlin.examples'
 version = '0.0.1-SNAPSHOT'
 
 apply plugin: 'org.jetbrains.kotlin.frontend'
-
-repositories {
-    jcenter()
-}
-
-dependencies {
-    compile "org.jetbrains.kotlin:kotlin-js-library:$kotlin_version"
-}
 
 kotlinFrontend {
     npm {
@@ -37,6 +16,10 @@ kotlinFrontend {
         contentPath = file('src/main/web')
         proxyUrl = "http://localhost:9090"
     }
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-js-library:$kotlin_version"
 }
 
 compileKotlin2Js {
