@@ -6,6 +6,7 @@ import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.gradle.frontend.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
 import java.io.*
+import java.util.*
 
 /**
  * @author Sergey Mashkov
@@ -77,7 +78,7 @@ open class GeneratePackagesJsonTask : DefaultTask() {
             logger.debug(dependencies.joinToString(prefix = "Dependencies:\n", separator = "\n") { "${it.name}: ${it.versionOrUri}" })
         }
 
-        val packagesJson = mapOf(
+        val packagesJson: Map<*, *> = mapOf(
                 "name" to (project.name ?: "noname"),
                 "description" to "simple description",
                 "dependencies" to dependencies.associateBy({ it.name }, { it.versionOrUri }),
@@ -89,8 +90,9 @@ open class GeneratePackagesJsonTask : DefaultTask() {
                 .orEmpty()
                 .filter { it.isFile && it.canRead() }
                 .sortedBy { number.find(it.nameWithoutExtension)?.value?.toInt() ?: 0 }
-                .map { JsonSlurper().parse(it) }
+                .map { LinkedHashMap(JsonSlurper().parse(it) as Map<*, *>) }
 
-        packageJsonFile.writeText(JsonBuilder(packagesJson).toPrettyString())
+        val resultJson = allIncluded.fold(packagesJson, ::mergeMaps)
+        packageJsonFile.writeText(JsonBuilder(resultJson).toPrettyString())
     }
 }
