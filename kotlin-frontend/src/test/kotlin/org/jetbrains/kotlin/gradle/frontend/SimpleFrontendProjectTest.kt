@@ -398,6 +398,8 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":module1:compileKotlin2Js")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":module2:compileKotlin2Js")?.outcome)
+
+        assertTrue { "\"fs\"" in module2.resolve("build/package.json").readText() }
     }
 
     companion object {

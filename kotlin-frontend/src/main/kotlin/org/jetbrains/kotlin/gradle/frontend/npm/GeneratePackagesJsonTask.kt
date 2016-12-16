@@ -2,8 +2,10 @@ package org.jetbrains.kotlin.gradle.frontend.npm
 
 import groovy.json.*
 import org.gradle.api.*
+import org.gradle.api.artifacts.*
 import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.gradle.frontend.*
+import org.jetbrains.kotlin.gradle.frontend.Dependency
 import org.jetbrains.kotlin.gradle.frontend.util.*
 import java.io.*
 import java.util.*
@@ -48,6 +50,19 @@ open class GeneratePackagesJsonTask : DefaultTask() {
     val versionReplacementsInput: String
         get() = npm.versionReplacements.joinToString()
 
+    @get:Internal
+    val transitiveDependencies by lazy {
+        project.configurations.findByName("compile").allDependencies
+            .filterIsInstance<ProjectDependency>()
+            .mapNotNull { d -> d.dependencyProject?.extensions?.findByType(NpmExtension::class.java) }
+            .flatMap { it.dependencies }
+    }
+
+    @Suppress("unused")
+    @get:Input
+    val transitiveDependenciesInput: String
+        get() = transitiveDependencies.joinToString()
+
     @OutputFile
     lateinit var packageJsonFile: File
 
@@ -57,7 +72,7 @@ open class GeneratePackagesJsonTask : DefaultTask() {
         }
 
         onlyIf {
-            npm.dependencies.isNotEmpty() || npm.developmentDependencies.isNotEmpty() || toolsDependencies.isNotEmpty()
+            npm.dependencies.isNotEmpty() || npm.developmentDependencies.isNotEmpty() || toolsDependencies.isNotEmpty() || transitiveDependencies.isNotEmpty()
         }
     }
 
@@ -70,7 +85,7 @@ open class GeneratePackagesJsonTask : DefaultTask() {
                     .map { it.split("=").map(String::trim) }
                     .filter { it.size == 2 }
                     .map { Dependency(it[0], it[1], Dependency.RuntimeScope) }
-        }).flatten() + toolsDependencies.filter { it.scope == Dependency.RuntimeScope }
+        }).flatten() + toolsDependencies.filter { it.scope == Dependency.RuntimeScope } + transitiveDependencies
 
         val devDependencies = npm.developmentDependencies + toolsDependencies.filter { it.scope == Dependency.DevelopmentScope }
 
