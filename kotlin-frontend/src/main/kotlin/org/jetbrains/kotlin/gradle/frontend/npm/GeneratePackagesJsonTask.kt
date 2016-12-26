@@ -2,10 +2,8 @@ package org.jetbrains.kotlin.gradle.frontend.npm
 
 import groovy.json.*
 import org.gradle.api.*
-import org.gradle.api.artifacts.*
 import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.gradle.frontend.*
-import org.jetbrains.kotlin.gradle.frontend.Dependency
 import org.jetbrains.kotlin.gradle.frontend.util.*
 import java.io.*
 import java.util.*
@@ -50,19 +48,6 @@ open class GeneratePackagesJsonTask : DefaultTask() {
     val versionReplacementsInput: String
         get() = npm.versionReplacements.joinToString()
 
-    @get:Internal
-    val transitiveDependencies by lazy {
-        project.configurations.findByName("compile").allDependencies
-            .filterIsInstance<ProjectDependency>()
-            .mapNotNull { d -> d.dependencyProject?.extensions?.findByType(NpmExtension::class.java) }
-            .flatMap { it.dependencies }
-    }
-
-    @Suppress("unused")
-    @get:Input
-    val transitiveDependenciesInput: String
-        get() = transitiveDependencies.joinToString()
-
     @OutputFile
     lateinit var packageJsonFile: File
 
@@ -72,7 +57,7 @@ open class GeneratePackagesJsonTask : DefaultTask() {
         }
 
         onlyIf {
-            npm.dependencies.isNotEmpty() || npm.developmentDependencies.isNotEmpty() || toolsDependencies.isNotEmpty() || transitiveDependencies.isNotEmpty()
+            npm.dependencies.isNotEmpty() || npm.developmentDependencies.isNotEmpty() || toolsDependencies.isNotEmpty()
         }
     }
 
@@ -81,11 +66,11 @@ open class GeneratePackagesJsonTask : DefaultTask() {
         logger.info("Configuring npm")
 
         val dependencies = npm.dependencies + (project.tasks.filterIsInstance<UnpackGradleDependenciesTask>().map { task ->
-            task.resultNames?.map { Dependency(it.first, it.second, Dependency.RuntimeScope) } ?: task.resultFile.readLinesOrEmpty()
-                    .map { it.split("=").map(String::trim) }
-                    .filter { it.size == 2 }
-                    .map { Dependency(it[0], it[1], Dependency.RuntimeScope) }
-        }).flatten() + toolsDependencies.filter { it.scope == Dependency.RuntimeScope } + transitiveDependencies
+            task.resultNames?.map { Dependency(it.name, it.semver, Dependency.RuntimeScope) } ?: task.resultFile.readLinesOrEmpty()
+                    .map { it.split("/", limit = 4).map(String::trim) }
+                    .filter { it.size == 4 }
+                    .map { Dependency(it[0], it[2], Dependency.RuntimeScope) }
+        }).flatten() + toolsDependencies.filter { it.scope == Dependency.RuntimeScope }
 
         val devDependencies = npm.developmentDependencies + toolsDependencies.filter { it.scope == Dependency.DevelopmentScope }
 

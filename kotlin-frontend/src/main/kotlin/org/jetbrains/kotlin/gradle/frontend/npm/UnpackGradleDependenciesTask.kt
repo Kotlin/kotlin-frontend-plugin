@@ -25,7 +25,7 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
     val resultFile = unpackFile(project)
 
     @Internal
-    var resultNames: MutableList<Pair<String, String>>? = null
+    var resultNames: MutableList<NameVersionsUri>? = null
 
     @Internal
     private val npm: NpmExtension = project.extensions.findByType(NpmExtension::class.java)!!
@@ -66,7 +66,7 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
 
                         project.tasks.create("npm-unpack-$name", Copy::class.java).from(project.zipTree(artifact.file)).into(outDir).execute()
                         val version = npm.versionReplacements.singleOrNull { it.name == artifact.name }?.versionOrUri
-                            ?: fixVersion(artifact.moduleVersion.id.version)
+                            ?: toSemver(artifact.moduleVersion.id.version)
 
                         val packageJson = mapOf(
                                 "name" to name,
@@ -79,14 +79,17 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
                             out.appendln(JsonBuilder(packageJson).toPrettyString())
                         }
 
-                        resultNames?.add(name to outDir.toLocalURI())
+                        resultNames?.add(NameVersionsUri(name, artifact.moduleVersion.id.version, version, outDir.toLocalURI()))
                     } else {
-                        resultNames?.add(name to artifact.file.toLocalURI())
+                        val existingVersion = existingPackageJson["version"]?.toString() ?: throw IllegalArgumentException("artifact $name package.json doesn't have version")
+                        resultNames?.add(NameVersionsUri(name, artifact.moduleVersion.id.version, existingVersion, artifact.file.toLocalURI()))
                     }
                 }
 
-        resultFile.bufferedWriter().use { out -> resultNames?.joinTo(out, separator = "\n", postfix = "\n") { "${it.first} = ${it.second}" } }
+        resultFile.bufferedWriter().use { out -> resultNames?.joinTo(out, separator = "\n", postfix = "\n") { "${it.name}/${it.version}/${it.semver}/${it.uri}" } }
     }
+
+    data class NameVersionsUri(val name: String, val version: String, val semver: String, val uri: String)
 
     private val moduleNamePattern = """\s*//\s*Kotlin\.kotlin_module_metadata\(\s*\d+\s*,\s*("[^"]+")""".toRegex()
     private fun getJsModuleName(file: File): String? {
@@ -95,32 +98,6 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
                 .mapNotNull { moduleNamePattern.find(it.readText())?.groupValues?.get(1) }
                 .mapNotNull { JsonSlurper().parseText(it)?.toString() }
                 .singleOrNull()
-    }
-
-    private fun fixVersion(version: String?) = buildString {
-        val parts = version?.split("[._\\-+]+".toRegex()).orEmpty()
-        val numericParts = parts.takeWhile { it.all(Char::isDigit) }.take(3)
-        val majorMinorPatch = numericParts.padEnd(3, "0")
-
-        majorMinorPatch.joinTo(this, ".")
-
-        val remaining = parts.drop(numericParts.size)
-        if (remaining.isNotEmpty()) {
-            remaining.joinTo(this, ".", prefix = "-") { it.replace("[^0-9A-Za-z-]+".toRegex(), "-") }
-        }
-    }
-
-    private fun <T> List<T>.padEnd(size: Int, value: T): List<T> {
-        if (this.size >= size) {
-            return this
-        }
-
-        val result = toMutableList()
-        while (result.size < size) {
-            result.add(value)
-        }
-
-        return result
     }
 
     companion object {

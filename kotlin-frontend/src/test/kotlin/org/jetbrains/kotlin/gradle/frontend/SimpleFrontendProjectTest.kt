@@ -1,6 +1,8 @@
 package org.jetbrains.kotlin.gradle.frontend
 
+import groovy.json.*
 import org.gradle.testkit.runner.*
+import org.jetbrains.kotlin.gradle.frontend.util.*
 import org.jetbrains.kotlin.preprocessor.*
 import org.junit.*
 import org.junit.runner.*
@@ -138,6 +140,19 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
         assertNull(result.task(":webpack-bundle"))
 
         assertTrue { projectDir.root.resolve("build/node_modules/style-loader").isDirectory }
+
+        val expectedVersion = toSemver(kotlinVersion)
+
+        @Suppress("UNCHECKED_CAST")
+        assertEquals(expectedVersion,
+            projectDir.root.resolve("build/package.json").let { JsonSlurper().parse(it) as Map<String, Any?> }["dependencies"]
+                    ?.let { it as Map<String, String?> }
+                    ?.let { it["kotlin"] }
+        )
+        @Suppress("UNCHECKED_CAST")
+        assertEquals(expectedVersion,
+                projectDir.root.resolve("build/node_modules/kotlin/package.json").let { JsonSlurper().parse(it) as Map<String, Any?> }["version"]
+        )
 
         val rerunResult = runner.build()
 
@@ -403,8 +418,6 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":module1:compileKotlin2Js")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":module2:compileKotlin2Js")?.outcome)
-
-        assertTrue { "\"fs\"" in module2.resolve("build/package.json").readText() }
     }
 
     companion object {
