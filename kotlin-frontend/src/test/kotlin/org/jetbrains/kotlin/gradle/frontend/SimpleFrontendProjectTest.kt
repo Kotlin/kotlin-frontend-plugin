@@ -379,7 +379,8 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
             }
 
             compileKotlin2Js {
-                line("kotlinOptions.outputFile = \"\${project.buildDir.path}/js/script.js\"")
+                line("kotlinOptions.outputFile = \"\${project.buildDir.path}/js/test-lib.js\"")
+                line("kotlinOptions.moduleKind = \"commonjs\"")
             }
         })
 
@@ -395,19 +396,23 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
                     }
                 }
 
-                line("kotlinOptions.outputFile = \"\${project.buildDir.path}/js/script.js\"")
+                line("kotlinOptions.outputFile = \"\${project.buildDir.path}/js/test-app.js\"")
+                line("kotlinOptions.moduleKind = \"commonjs\"")
             }
         })
 
         src1.resolve("lib.kt").writeText("""
         package my.test.lib
 
+        val const1 = "my-special-const-1"
         fun libFunction() = 1
         """.trimIndent())
 
         src2.resolve("main.kt").writeText("""
         package my.test.ui
         import my.test.lib.*
+
+        val const1 = "my-special-const-2"
 
         fun main(args: Array<String>) {
             println(libFunction())
@@ -418,6 +423,13 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":module1:compileKotlin2Js")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":module2:compileKotlin2Js")?.outcome)
+
+        val runBundle = runner.withArguments("bundle").build()
+        assertTrue { module2.resolve("build/bundle/main.bundle.js").exists() }
+        val bundleContent = module2.resolve("build/bundle/main.bundle.js").readText()
+
+        assertTrue { "my-special-const-2" in bundleContent }
+        assertTrue { "my-special-const-1" in bundleContent }
     }
 
     companion object {

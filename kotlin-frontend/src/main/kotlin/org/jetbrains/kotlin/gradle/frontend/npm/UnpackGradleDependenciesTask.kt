@@ -4,6 +4,7 @@ import groovy.json.*
 import org.gradle.api.*
 import org.gradle.api.artifacts.*
 import org.gradle.api.tasks.*
+import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.frontend.Dependency
 import org.jetbrains.kotlin.gradle.frontend.util.*
 import org.jetbrains.kotlin.preprocessor.*
@@ -47,6 +48,23 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
 
         out.mkdirsOrFail()
 
+        compileConfiguration.allDependencies.filterIsInstance<ProjectDependency>()
+                .mapNotNull { d -> d.dependencyProject }
+                .filter { it.plugins.hasPlugin("kotlin2js") }
+                .forEach { p ->
+                    val js = p.tasks.filterIsInstance<KotlinJsCompile>()
+                            .filter { !it.name.contains("test", ignoreCase = true) }
+                            .mapNotNull { it.kotlinOptions.outputFile }
+                            .map { project.file(it) }
+                            .distinct()
+                            .filter(File::exists)
+
+                    if (js.isNotEmpty()) {
+                        val allFiles = p.tasks.flatMap { it.outputs.files }
+//                        println(allFiles)
+                    }
+                }
+
         compileConfiguration.resolvedConfiguration.resolvedArtifacts
                 .filter { it.file.exists() && LibraryUtils.isKotlinJavascriptLibrary(it.file) }
                 .forEach { artifact ->
@@ -60,11 +78,13 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
                             ?: artifact.id.displayName
                             ?: artifact.file.nameWithoutExtension
 
-                    if (existingPackageJson == null) {
-                        val outDir = out.resolve(name)
-                        outDir.mkdirsOrFail()
+                    val outDir = out.resolve(name)
+                    outDir.mkdirsOrFail()
 
-                        project.tasks.create("npm-unpack-$name", Copy::class.java).from(project.zipTree(artifact.file)).into(outDir).execute()
+                    println(">> Copy from ${artifact.file} to $outDir")
+                    project.tasks.create("npm-unpack-$name", Copy::class.java).from(project.zipTree(artifact.file)).into(outDir).execute()
+
+                    if (existingPackageJson == null) {
                         val version = npm.versionReplacements.singleOrNull { it.name == artifact.name }?.versionOrUri
                             ?: toSemver(artifact.moduleVersion.id.version)
 
@@ -81,7 +101,8 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
 
                         resultNames?.add(NameVersionsUri(name, artifact.moduleVersion.id.version, version, outDir.toLocalURI()))
                     } else {
-                        val existingVersion = existingPackageJson["version"]?.toString() ?: throw IllegalArgumentException("artifact $name package.json doesn't have version")
+                        val existingVersion = existingPackageJson["version"]?.toString() ?: toSemver(null)
+
                         resultNames?.add(NameVersionsUri(name, artifact.moduleVersion.id.version, existingVersion, artifact.file.toLocalURI()))
                     }
                 }

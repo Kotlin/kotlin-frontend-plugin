@@ -2,9 +2,12 @@ package org.jetbrains.kotlin.gradle.frontend.npm
 
 import groovy.json.*
 import org.gradle.api.*
+import org.gradle.api.plugins.*
 import org.gradle.api.tasks.*
+import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.frontend.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
+import org.jetbrains.kotlin.preprocessor.*
 import java.io.*
 import java.util.*
 
@@ -48,12 +51,27 @@ open class GeneratePackagesJsonTask : DefaultTask() {
     val versionReplacementsInput: String
         get() = npm.versionReplacements.joinToString()
 
+    @get:Input
+    val moduleNames: List<String> by lazy { project.tasks.withType(KotlinJsCompile::class.java)
+            .filter { !it.name.contains("test", ignoreCase = true) }
+            .mapNotNull { it.kotlinOptions.outputFile?.substringAfterLast('/')?.removeSuffix(".js") }
+    }
+
     @OutputFile
     lateinit var packageJsonFile: File
+
+    val buildPackageJsonFile: File?
 
     init {
         if (configPartsDir.exists()) {
             (inputs as TaskInputs).dir(configPartsDir)
+        }
+        buildPackageJsonFile = project.convention.findPlugin(JavaPluginConvention::class.java)?.sourceSets?.let { sourceSets ->
+            sourceSets.findByName("main")?.output?.resourcesDir?.resolve("package.json")
+        }
+
+        if (buildPackageJsonFile != null) {
+            outputs.file(buildPackageJsonFile)
         }
 
         onlyIf {
@@ -79,8 +97,10 @@ open class GeneratePackagesJsonTask : DefaultTask() {
         }
 
         val packagesJson: Map<*, *> = mapOf(
-                "name" to (project.name ?: "noname"),
+                "name" to (moduleNames.singleOrNull() ?: project.name ?: "noname"),
+                "version" to (project.version.toString().let { if (it == Project.DEFAULT_VERSION) toSemver(null) else it }),
                 "description" to "simple description",
+                "main" to (moduleNames.singleOrNull()),
                 "dependencies" to dependencies.associateBy({ it.name }, { it.versionOrUri }),
                 "devDependencies" to devDependencies.associateBy({ it.name }, { it.versionOrUri })
         )
@@ -94,5 +114,10 @@ open class GeneratePackagesJsonTask : DefaultTask() {
 
         val resultJson = allIncluded.fold(packagesJson, ::mergeMaps)
         packageJsonFile.writeText(JsonBuilder(resultJson).toPrettyString())
+
+        if (buildPackageJsonFile != null) {
+            buildPackageJsonFile.parentFile.mkdirsOrFail()
+            packageJsonFile.copyTo(buildPackageJsonFile, overwrite = true)
+        }
     }
 }
