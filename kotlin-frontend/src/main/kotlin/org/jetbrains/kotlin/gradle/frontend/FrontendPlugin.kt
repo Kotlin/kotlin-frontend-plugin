@@ -82,13 +82,12 @@ class FrontendPlugin : Plugin<Project> {
 
                 val sourceMapTasks = if (frontend.sourceMaps) {
                     project.tasks.withType(KotlinJsCompile::class.java).toList().mapNotNull { compileTask ->
-                        if (compileTask.kotlinOptions.outputFile != null) {
-                            val task = project.tasks.create(compileTask.name + "RelativizeSMAP", RelativizeSourceMapTask::class.java) {
-                                it.compileTask = compileTask
-                            }
+                        val task = project.tasks.create(compileTask.name + "RelativizeSMAP", RelativizeSourceMapTask::class.java) {
+                            it.compileTask = compileTask
+                        }
 
-                            task.dependsOn(compileTask)
-                        } else null
+                        task.onlyIf { compileTask.kotlinOptions.outputFile != null }
+                        task.dependsOn(compileTask)
                     }
                 } else {
                     emptyList()
@@ -110,8 +109,12 @@ class FrontendPlugin : Plugin<Project> {
             kotlin2js.dependsOn(packages)
             testKotlin2js.dependsOn(packages)
 
-            bundle.dependsOn(kotlin2js)
-            run.dependsOn(packages, kotlin2js)
+            project.afterEvaluate {
+                val compileTask = project.tasks.findByName(kotlin2js.name + "RelativizeSMAP") ?: kotlin2js
+
+                bundle.dependsOn(compileTask)
+                run.dependsOn(packages, compileTask)
+            }
         })
 
         bundle.dependsOn(packages)

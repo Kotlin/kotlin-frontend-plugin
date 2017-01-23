@@ -12,6 +12,8 @@ kotlinFrontend {
         devDependency("karma")
     }
 
+    sourceMaps = true
+
     webpackBundle {
     	bundleName = "main"
         contentPath = file('src/main/web')
