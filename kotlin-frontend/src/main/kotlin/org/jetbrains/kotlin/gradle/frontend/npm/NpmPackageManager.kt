@@ -1,9 +1,11 @@
 package org.jetbrains.kotlin.gradle.frontend.npm
 
 import org.gradle.api.*
+import org.gradle.api.artifacts.*
 import org.gradle.api.internal.artifacts.dependencies.*
 import org.gradle.api.internal.file.*
 import org.jetbrains.kotlin.gradle.frontend.*
+import org.jetbrains.kotlin.gradle.frontend.Dependency
 import java.io.*
 
 class NpmPackageManager(val project: Project) : PackageManager {
@@ -41,20 +43,30 @@ class NpmPackageManager(val project: Project) : PackageManager {
         }
     }
 
+    private fun withConfiguration(name: String, block: (Configuration) -> Unit) {
+        project.configurations.findByName(name)?.let(block) ?: project.configurations.whenObjectAdded { configuration ->
+            if (configuration.name == name) {
+                block(configuration)
+            }
+        }
+    }
+
     private fun defineTasks() {
         if (!tasksDefined) {
             val npm = project.extensions.getByType(NpmExtension::class.java)!!
 
             if (npm.dependencies.isNotEmpty() || npm.developmentDependencies.isNotEmpty() || project.projectDir.resolve("package.json.d").exists() || requiredDependencies.isNotEmpty()) {
-                project.configurations.getByName("compile").dependencies.add(DefaultSelfResolvingDependency(object : AbstractFileCollection() {
-                    override fun getFiles(): MutableSet<File> {
-                        return project.tasks.filterIsInstance<NpmDependenciesTask>().flatMap { it.results }.toMutableSet()
-                    }
+                withConfiguration("compile") { configuration ->
+                    configuration.dependencies.add(DefaultSelfResolvingDependency(object : AbstractFileCollection() {
+                        override fun getFiles(): MutableSet<File> {
+                            return project.tasks.filterIsInstance<NpmDependenciesTask>().flatMap { it.results }.toMutableSet()
+                        }
 
-                    override fun getDisplayName(): String {
-                        return "npm-dependencies"
-                    }
-                }))
+                        override fun getDisplayName(): String {
+                            return "npm-dependencies"
+                        }
+                    }))
+                }
 
                 val unpack = project.tasks.create("npm-preunpack", UnpackGradleDependenciesTask::class.java) { task ->
                     task.dependenciesProvider = { requiredDependencies }

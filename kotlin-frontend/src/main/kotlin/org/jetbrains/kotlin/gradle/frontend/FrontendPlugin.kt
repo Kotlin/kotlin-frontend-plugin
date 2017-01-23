@@ -116,8 +116,8 @@ class FrontendPlugin : Plugin<Project> {
 
         bundle.dependsOn(packages)
 
-        project.tasks.getByPath("assemble").dependsOn(bundle)
-        project.tasks.getByName("clean").dependsOn(stop)
+        withTask(project, "assemble") { it.dependsOn(bundle) }
+        withTask(project, "clean") { it.dependsOn(stop) }
 
         var resolutionTriggered = false
         project.gradle.addListener(object : DependencyResolutionListener {
@@ -150,6 +150,14 @@ class FrontendPlugin : Plugin<Project> {
             override fun projectsEvaluated(p0: Gradle?) {
             }
         })
+    }
+
+    private fun withTask(project: Project, name: String, block: (Task) -> Unit) {
+        project.tasks.findByName(name)?.let(block) ?: project.tasks.whenTaskAdded {
+            if (it.name == name) {
+                block(it)
+            }
+        }
     }
 }
 
