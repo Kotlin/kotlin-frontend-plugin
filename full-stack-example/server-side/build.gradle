@@ -14,6 +14,3 @@ ktor {
     jvmOptions = ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5009"]
 }
 
-//compileKotlin {}
-compileKotlin2Js.onlyIf { false }
-
