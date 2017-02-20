@@ -62,8 +62,7 @@ open class GenerateWebPackConfigTask : DefaultTask() {
                         "publicPath" to bundle.publicPath
                 ),
                 "module" to mapOf(
-                        "preLoaders" to emptyList<Any>(),
-                        "loaders" to emptyList<Any>()
+                        "rules" to emptyList<Any>()
                 ),
                 "resolve" to mapOf(
                         "root" to resolveRoots
