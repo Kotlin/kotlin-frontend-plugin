@@ -80,17 +80,14 @@ class FrontendPlugin : Plugin<Project> {
                     }
                 }
 
-                val sourceMapTasks = if (frontend.sourceMaps) {
+                if (frontend.sourceMaps) {
                     project.tasks.withType(KotlinJsCompile::class.java).toList().mapNotNull { compileTask ->
                         val task = project.tasks.create(compileTask.name + "RelativizeSMAP", RelativizeSourceMapTask::class.java) {
                             it.compileTask = compileTask
                         }
 
-                        task.onlyIf { compileTask.kotlinOptions.outputFile != null }
                         task.dependsOn(compileTask)
                     }
-                } else {
-                    emptyList()
                 }
 
                 for ((id, bundles) in frontend.bundles().groupBy { it.bundlerId }) {

@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.gradle.frontend.webpack
 import org.gradle.api.*
 import org.jetbrains.kotlin.gradle.frontend.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
-import kotlin.reflect.*
 
 object WebPackLauncher : Launcher {
     override fun apply(packageManager: PackageManager, project: Project, startTask: Task, stopTask: Task) {
@@ -21,6 +20,9 @@ object WebPackLauncher : Launcher {
                 }
 
                 project.withTask(GenerateWebPackConfigTask::class) { task ->
+                    run.dependsOn(task)
+                }
+                project.withTask(RelativizeSourceMapTask::class) { task ->
                     run.dependsOn(task)
                 }
 

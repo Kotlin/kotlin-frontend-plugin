@@ -19,7 +19,7 @@ open class RelativizeSourceMapTask : DefaultTask() {
 
     init {
         onlyIf {
-            compileTask.kotlinOptions.outputFile != null && compileTask.kotlinOptions.sourceMap
+            compileTask.kotlinOptions.outputFile != null && File(compileTask.kotlinOptions.outputFile).exists() && compileTask.kotlinOptions.sourceMap
         }
     }
 
