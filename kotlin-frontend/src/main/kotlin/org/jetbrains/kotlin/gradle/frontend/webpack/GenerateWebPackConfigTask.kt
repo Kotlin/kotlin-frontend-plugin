@@ -47,7 +47,8 @@ open class GenerateWebPackConfigTask : DefaultTask() {
         val bundle = bundles.singleOrNull() ?: throw GradleException("Only single webpack bundle supported")
 
         val resolveRoots = mutableListOf(
-                contextDir
+                contextDir,
+                project.buildDir.resolve("node_modules").absolutePath
         )
 
         val json = linkedMapOf(
@@ -65,7 +66,7 @@ open class GenerateWebPackConfigTask : DefaultTask() {
                         "rules" to emptyList<Any>()
                 ),
                 "resolve" to mapOf(
-                        "root" to resolveRoots
+                        "modules" to resolveRoots
                 ),
                 "plugins" to listOf<Any>()
         )

@@ -87,7 +87,7 @@ open class KarmaStartStopTask : AbstractStartStopTask<Int>() {
                 webpackTask.webPackConfigFile.ifCanRead { file ->
                     prepares += "var webpackConfig = require(${JsonOutput.toJson(file.absolutePath)})"
                     prepares += "webpackConfig.entry = {}"
-                    prepares += "webpackConfig.resolve.root.push(" + JsonOutput.toJson(kotlinTestOutput(project).absolutePath) + ")"
+                    prepares += "webpackConfig.resolve.modules.push(" + JsonOutput.toJson(kotlinTestOutput(project).absolutePath) + ")"
 
                     plugins += "karma-webpack"
                     preprocessors += "webpack"

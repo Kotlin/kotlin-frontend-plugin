@@ -41,7 +41,7 @@ var devServer = new WebpackDevServer(
     webpack(config),
     {
         publicPath: RunConfig.publicPath,
-        contentBase: RunConfig.contentPath,
+        contentBase: (RunConfig.contentPath ? RunConfig.contentPath : undefined),
         stats: RunConfig.stats || "errors-only",
         hot: true,
         setup: function(app) {
