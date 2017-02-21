@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.gradle.frontend.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
 import org.jetbrains.kotlin.gradle.frontend.webpack.*
 import org.jetbrains.kotlin.gradle.tasks.*
+import java.io.*
 
 object KarmaLauncher : Launcher {
     override fun apply(packageManager: PackageManager, project: Project, startTask: Task, stopTask: Task) {
@@ -17,7 +18,9 @@ object KarmaLauncher : Launcher {
                 val karmaStart = project.tasks.create("karma-start", KarmaStartStopTask::class.java) {
                     it.start = true
                     it.onlyIf {
-                        project.tasks.filterIsInstance<KotlinJsCompile>().count { it.name.contains("test", ignoreCase = true) && it.kotlinOptions.outputFile != null } > 0
+                        project.tasks.filterIsInstance<KotlinJsCompile>()
+                                .filter { it.name.contains("test", ignoreCase = true) && it.kotlinOptions.outputFile != null }
+                                .any { File(it.kotlinOptions.outputFile).exists() }
                     }
                 }
                 val karmaStop = project.tasks.create("karma-stop", KarmaStartStopTask::class.java) { it.start = false }
