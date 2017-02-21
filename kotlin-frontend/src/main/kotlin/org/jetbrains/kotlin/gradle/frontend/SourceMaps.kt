@@ -12,10 +12,10 @@ open class RelativizeSourceMapTask : DefaultTask() {
     lateinit var compileTask: KotlinJsCompile
 
     @get:InputFile
-    val input: File by lazy { compileTask.kotlinOptions.outputFile!!.let { project.file(it) }.let { it.resolveSibling(it.name + ".map") } }
+    val input: File? by lazy { compileTask.kotlinOptions.outputFile?.let { project.file(it) }?.let { it.resolveSibling(it.name + ".map") } }
 
     @get:OutputFile
-    val output: File by lazy { input }
+    val output: File? by lazy { input }
 
     init {
         onlyIf {
@@ -25,7 +25,11 @@ open class RelativizeSourceMapTask : DefaultTask() {
 
     @TaskAction
     fun relativize() {
-        relativizeSourceMap(input, output)
+        input?.let { from ->
+            output?.let { to ->
+                relativizeSourceMap(from, to)
+            }
+        }
     }
 }
 
