@@ -71,7 +71,7 @@ abstract class AbstractStartStopTask<S : Any> : DefaultTask() {
 
         val process = launcher.start(builder)
 
-        for (i in 1..10) {
+        for (i in 1..15) {
             if (checkIsRunning(newState)) {
                 break
             }
