@@ -5,7 +5,7 @@ import java.io.*
 import java.util.*
 
 class BuildScriptBuilder {
-    var kotlinVersion = "1.0.5-2"
+    var kotlinVersion = "1.0.6"
 
     val scriptClassPath = ArrayList<Any>()
     val compileDependencies = ArrayList<String>()
@@ -18,6 +18,15 @@ class BuildScriptBuilder {
 
     fun applyKotlin2JsPlugin() {
         applyPlugins += "kotlin2js"
+    }
+
+    fun addJsDependency() {
+        if (kotlinVersion.startsWith("1.0."))
+            compileDependencies += "org.jetbrains.kotlin:kotlin-js-library:$kotlinVersion"
+        else if (kotlinVersion.startsWith("1.1."))
+            compileDependencies += "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlinVersion"
+        else
+            throw IllegalArgumentException("Only 1.0 and 1.1 kotlin supported")
     }
 
     fun build(body: Builder.() -> Unit = {}): String {

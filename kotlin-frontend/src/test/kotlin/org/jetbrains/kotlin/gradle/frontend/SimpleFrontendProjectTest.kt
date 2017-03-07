@@ -1,6 +1,7 @@
 package org.jetbrains.kotlin.gradle.frontend
 
 import groovy.json.*
+import javafx.concurrent.*
 import org.gradle.testkit.runner.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
 import org.jetbrains.kotlin.preprocessor.*
@@ -26,7 +27,7 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
                 .build()
 
         assertNull(result.task(":webpack-bundle"))
-        assertNull(result.task(":npm-install"))
+        assertNotFailed(result.task(":npm-install"))
     }
 
     @Test
@@ -47,7 +48,7 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
         val result = runner.withArguments("bundle").build()
 
         assertNull(result.task(":webpack-bundle"))
-        assertNull(result.task(":npm-install"))
+        assertNotFailed(result.task(":npm-install"))
         assertEquals(TaskOutcome.SUCCESS, result.task(":compileKotlin2Js")?.outcome)
         assertTrue { projectDir.root.resolve("build/js/script.js").isFile }
     }
@@ -264,7 +265,7 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
         try {
             assertEquals(TaskOutcome.SUCCESS, result.task(":webpack-config")?.outcome)
             assertEquals(TaskOutcome.SUCCESS, result.task(":webpack-run")?.outcome)
-            assertNull(result.task(":karma-start"))
+            assertNotExecuted(result.task(":karma-start"))
             assertNull(result.task(":ktor-start"))
 
             assertFalse { projectDir.root.resolve("build/bundle/main.bundle.js").exists() }
@@ -359,7 +360,7 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
             applyKotlin2JsPlugin()
             applyFrontendPlugin()
 
-            compileDependencies += "org.jetbrains.kotlin:kotlin-js-library:$kotlinVersion"
+            addJsDependency()
         }
 
         val builder2 = BuildScriptBuilder().apply {
@@ -432,13 +433,23 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
         assertTrue { "my-special-const-1" in bundleContent }
     }
 
+    private fun assertNotExecuted(task: BuildTask?) {
+        if (task != null && task.outcome != TaskOutcome.UP_TO_DATE && task.outcome != TaskOutcome.SKIPPED) {
+            fail("${task.path} should be skipped or up-to-date for empty project but it is ${task.outcome}")
+        }
+    }
+
+    private fun assertNotFailed(task: BuildTask?) {
+        assertNotEquals(TaskOutcome.FAILED, task?.outcome, "Task ${task?.path} is failed")
+    }
+
     companion object {
         @JvmStatic
         @Parameters
         fun versions() = listOf(
-                arrayOf("3.1", "1.0.5-2"),
-                arrayOf("3.1", "1.1.0-dev-5520"),
-                arrayOf("3.2.1", "1.0.5-2")
+                arrayOf("3.1", "1.0.6"),
+                arrayOf("3.1", "1.1.0"),
+                arrayOf("3.2.1", "1.0.6")
         )
     }
 }

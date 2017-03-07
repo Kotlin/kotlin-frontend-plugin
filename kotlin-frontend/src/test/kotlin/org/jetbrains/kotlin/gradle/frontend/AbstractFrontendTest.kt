@@ -5,6 +5,7 @@ import org.gradle.testkit.runner.internal.*
 import org.jetbrains.kotlin.preprocessor.*
 import org.junit.*
 import org.junit.rules.*
+import org.junit.runner.*
 import java.io.*
 
 abstract class AbstractFrontendTest(val gradleVersion: String, val kotlinVersion: String) {
@@ -14,6 +15,28 @@ abstract class AbstractFrontendTest(val gradleVersion: String, val kotlinVersion
     protected lateinit var buildGradleFile: File
     protected lateinit var srcDir: File
     protected lateinit var runner: GradleRunner
+
+    @get:Rule
+    val testName = TestName()
+
+    @get:Rule
+    val failedRule = object : TestWatcher() {
+        override fun failed(e: Throwable?, description: Description?) {
+            val dst = File("build/tests/${testName.methodName.replace("[", "-").replace("]", "")}").apply { mkdirsOrFail() }
+            projectDir.root.copyRecursively(dst, true) { file, e ->
+                System.err.println("Failed to copy $file due to ${e.message}")
+                OnErrorAction.SKIP
+            }
+            println("Copied project to ${dst.absolutePath}")
+        }
+
+        /*
+        // useful for debugging
+        override fun succeeded(description: Description?) {
+            failed(null, description)
+        }
+        // */
+    }
 
     @get:Rule
     val projectDir = TemporaryFolder()
@@ -39,6 +62,6 @@ abstract class AbstractFrontendTest(val gradleVersion: String, val kotlinVersion
         builder.scriptClassPath += "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
         builder.scriptClassPath.addAll(cp.filter { "org.jetbrains.kotlin" !in it.path.replace("\\", "/") || kotlinVersion in it.name })
 
-        builder.compileDependencies += "org.jetbrains.kotlin:kotlin-js-library:$kotlinVersion"
+        builder.addJsDependency()
     }
 }
