@@ -2,7 +2,6 @@ package test
 
 import org.junit.*
 import test.hello.*
-import java.util.*
 import kotlin.test.*
 
 class TestLinesPresenter {

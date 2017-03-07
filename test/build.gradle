@@ -1,42 +1,36 @@
 buildscript {
-    ext.kotlin_version = '1.1.0-dev-5520'
-//    ext.kotlin_version = '1.1-SNAPSHOT'
+    ext.kotlin_version = '1.1.0'
 
     repositories {
         jcenter()
-        mavenLocal()
-        maven {
-            url "https://dl.bintray.com/kotlin/kotlin-dev"
-        }
-        maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+        maven { url 'https://jitpack.io' }
     }
 
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "org.jetbrains.kotlin:kotlin-frontend:0.0.1-SNAPSHOT"
+//        classpath "org.jetbrains.kotlin:kotlin-frontend:0.0.1-SNAPSHOT"
+        classpath "com.github.cy6erGn0m:kotlin-frontend-plugin:568610baa1"
     }
 }
 
 group = 'org.jetbrains.kotlin'
 version = '0.0.1-SNAPSHOT'
 
+apply plugin: 'kotlin2js'
 apply plugin: 'org.jetbrains.kotlin.frontend'
 
 repositories {
     jcenter()
-    maven {
-        url "https://dl.bintray.com/kotlin/kotlin-dev"
-    }
-    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
 }
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-js-library:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-test-js:$kotlin_version" // for now only compile configuration is supported
 }
 
 kotlinFrontend {
     npm {
-        //dependency("kotlin", "1.1.0-dev-4546")
+//        dependency("kotlin", "1.1.0")
         dependency "style-loader"
 
         devDependency("karma")

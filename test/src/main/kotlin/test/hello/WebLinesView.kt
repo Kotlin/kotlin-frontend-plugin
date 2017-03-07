@@ -5,7 +5,7 @@ import org.w3c.dom.events.*
 import kotlin.browser.*
 import kotlin.dom.*
 
-class WebLinesView(val linesHolder: Element, val formRoot: Element) : LinesView {
+class WebLinesView(val linesHolder: Element, formRoot: Element) : LinesView {
     lateinit override var presenter: LinesPresenter
 
     @Suppress("UNCHECKED_CAST_TO_NATIVE_INTERFACE")
@@ -14,7 +14,7 @@ class WebLinesView(val linesHolder: Element, val formRoot: Element) : LinesView 
     @Suppress("UNCHECKED_CAST_TO_NATIVE_INTERFACE")
     private val addButton = formRoot.querySelector("button") as HTMLButtonElement
 
-    private val buttonHandler: (Event) -> Unit = { e ->
+    private val buttonHandler: (Event) -> Unit = {
         presenter.addButtonClicked()
     }
 

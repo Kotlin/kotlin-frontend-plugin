@@ -21,7 +21,7 @@ fun main(args: Array<String>) {
         application = start(state)
     } else {
         application = null
-        document.addEventListener("DOMContentLoaded", { e -> application = start(state) })
+        document.addEventListener("DOMContentLoaded", { application = start(state) })
     }
 }
 
