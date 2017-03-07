@@ -63,7 +63,7 @@ var devServer = new WebpackDevServer(
                     }
                 }
             }
-        } : null
+        } : undefined
     }
 );
 devServer.listen(RunConfig.port, 'localhost');
