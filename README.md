@@ -1,4 +1,4 @@
-# kotlin-frontend-plugin
+# kotlin-frontend-plugin  [![](https://jitpack.io/v/Kotlin/kotlin-frontend-plugin.svg)](https://jitpack.io/#Kotlin/kotlin-frontend-plugin)
 Gradle plugin for kotlin frontend development
 
 The plugin provides easy way to gather maven and npm dependencies, pack bundles (via webpack) and test frontend application using karma. By default the plugin generates all required configs for webpack, karma and manages the corresponding daemons.
