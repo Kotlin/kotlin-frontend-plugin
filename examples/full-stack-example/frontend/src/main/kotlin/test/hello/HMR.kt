@@ -1,12 +1,12 @@
 package test.hello
 
-@native val module: Module
+external val module: Module
 
-@native interface Module {
+external interface Module {
     val hot: Hot?
 }
 
-@native interface Hot {
+external interface Hot {
     val data: dynamic
 
     fun accept()
@@ -16,5 +16,4 @@ package test.hello
     fun dispose(callback: (data: dynamic) -> Unit)
 }
 
-@native
-fun require(name: String): dynamic
+external fun require(name: String): dynamic

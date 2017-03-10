@@ -18,9 +18,7 @@
     </option>
     <envs />
     <patterns />
-    <RunnerSettings RunnerId="JProfiler">
-      <option name="WINDOW" value="false" />
-    </RunnerSettings>
+    <RunnerSettings RunnerId="JProfiler" />
     <method />
   </configuration>
 </component>

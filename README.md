@@ -72,7 +72,7 @@ kotlinFrontend {
 
 ### complete example
 
-See [test/build.gradle](test/build.gradle) for full example
+See [examples/frontend-only/build.gradle](examples/frontend-only/build.gradle) for full example
 
 # Building and running
 
@@ -146,7 +146,7 @@ config file is generated at `build/karma.conf.js`
 
 Webpack provides ability to apply code changes on the fly with no page reload (if possible). For reference see [Webpack Hot Module Replacement documentation](https://webpack.js.org/concepts/hot-module-replacement/)
 
-Webpack does a lot of work for you however to get it working well most likely you have to implement state save and restore functionality via webpack's API. See [HMR.kt](test/src/main/kotlin/test/hello/HMR.kt) for corresponding Kotlin external declarations for webpack API and [main.kt](test/src/main/kotlin/test/hello/main.kt) for sample save/load.
+Webpack does a lot of work for you however to get it working well most likely you have to implement state save and restore functionality via webpack's API. See [HMR.kt](examples/frontend-only/src/main/kotlin/test/hello/HMR.kt) for corresponding Kotlin external declarations for webpack API and [main.kt](examples/frontend-only/src/main/kotlin/test/hello/main.kt) for sample save/load.
 
 Briefly at module load accept HMR feature and listen for disposal
 

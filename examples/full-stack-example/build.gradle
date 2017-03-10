@@ -2,28 +2,29 @@ group 'org.jetbrains.kotlin.examples'
 version '1.0-SNAPSHOT'
 
 buildscript {
-    ext.kotlin_version = '1.0.6'
+    ext.kotlin_version = '1.1.0'
 
     repositories {
         jcenter()
-        mavenLocal()
+        maven { url 'https://jitpack.io' }
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "org.jetbrains.kotlin:kotlin-frontend:0.0.1-SNAPSHOT"
+        classpath "com.github.cy6erGn0m:kotlin-frontend-plugin:568610baa1"
     }
 }
 
 subprojects { p ->
     p.repositories {
-        mavenLocal()
         jcenter()
+        maven { url 'https://jitpack.io' }
         maven { url "http://dl.bintray.com/kotlin/ktor" }
     }
 }
 
 repositories {
     jcenter()
+    maven { url 'https://jitpack.io' }
     maven { url "http://dl.bintray.com/kotlin/ktor" }
 }
 

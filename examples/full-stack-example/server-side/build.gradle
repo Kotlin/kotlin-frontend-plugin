@@ -1,0 +1,11 @@
+group 'org.jetbrains.kotlin.examples'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'kotlin'
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile "org.jetbrains.ktor:ktor-jetty:0.3.0"
+}
+
+
