@@ -24,7 +24,7 @@ buildscript {
 
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "com.github.cy6erGn0m:kotlin-frontend-plugin:568610baa1"
+        classpath "com.github.Kotlin:kotlin-frontend-plugin:568610baa1"
     }
 }
 
