@@ -1,15 +1,15 @@
 # kotlin-frontend-plugin  [![](https://jitpack.io/v/Kotlin/kotlin-frontend-plugin.svg)](https://jitpack.io/#Kotlin/kotlin-frontend-plugin)
-Gradle plugin for kotlin frontend development
+Gradle plugin for Kotlin frontend development
 
-The plugin provides easy way to gather maven and npm dependencies, pack bundles (via webpack) and test frontend application using karma. By default the plugin generates all required configs for webpack, karma and manages the corresponding daemons.
+The plugin provides an easy way to gather Maven and npm dependencies, pack bundles (via [webpack](https://webpack.github.io/)) and test a frontend application using [Karma](http://karma-runner.github.io/1.0/index.html). By default the plugin generates all required configs for webpack, karma and manages the corresponding daemons.
 
-By using gradle continuous build you also can get hot module replacement feature (apply code changes in browser on the fly). See corresponding [section below](#hot-module-replacement).
+By using Gradle continuous build, you also can get hot module replacement feature (apply code changes in browser on the fly). See corresponding [section below](#hot-module-replacement).
 
 # Howto
 
-### Configure gradle project
+### Configure Gradle project
 
-Fist of all you have to apply plugin `org.jetbrains.kotlin.frontend` and setup kotlin
+Fist of all you have to apply plugin `org.jetbrains.kotlin.frontend` and setup Kotlin:
 
 ```gradle
 buildscript {
@@ -60,7 +60,7 @@ kotlinFrontend {
 
 ### webpack bundler
 
-To create webpack bundle (for both packaing and running dev server)
+To create a webpack bundle (for both packaging and running the dev server):
 
 ```
 kotlinFrontend {
@@ -70,27 +70,27 @@ kotlinFrontend {
 }
 ```
 
-### complete example
+### Complete example
 
-See [examples/frontend-only/build.gradle](examples/frontend-only/build.gradle) for full example
+See [examples/frontend-only/build.gradle](examples/frontend-only/build.gradle) for a full example.
 
 # Building and running
 
-To run dev server (that also will build kotlin sources)
+To run dev server (that also will build kotlin sources):
 
 `gradlew run`
 
-to pack bundle
+To pack the bundle:
 
 `gradle bundle`
 
-to stop running webpack and karma daemon
+To stop running webpack and Karma daemons:
 
 `gradle stop`
 
-# Webpack
+# webpack
 
-webpack configuration 
+webpack configuration: 
 
 ```
 kotlinFrontend {
@@ -110,9 +110,9 @@ dev server log is located at `build/logs/webpack-dev-server.log`
 
 config file is generated at `build/webpack.config.js`
 
-## webpack config customization
+## webpack configuration customization
 
-For webpack cnfig you can apply additional script by placing a small scripts to directory `webpack.config.d` that will be appended to the end of config script. Use number prefix to change order (it is very similar to UNIX rc.d config directories)
+To customize webpack coniguration, you can apply additional scripts by placing them in the directory `webpack.config.d`. The scripts will be appended to the end of config script. Use number prefix to change order (it is very similar to UNIX rc.d config directories)
 
 Sample structure:
 
@@ -124,7 +124,7 @@ Sample structure:
 
 # Karma
 
-karma configuration
+Karma configuration:
 
 ```
 kotlinFrontend {
@@ -168,7 +168,7 @@ To get previously saved state at module load use `module.hot?.data`
     }
 ```
 
-Finally use gradle continuous build with run task to get live replacement every time you change your code.
+Finally use Gradle continuous build with run task to get live replacement every time you change your code.
 
 ```
 gradlew -t run
