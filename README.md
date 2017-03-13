@@ -80,6 +80,11 @@ To run dev server (that also will build kotlin sources):
 
 `gradlew run`
 
+To run tests:
+
+- run `gradlew tests` to build the tests and start the Karma daemon
+- open `http://localhost:9876` to run the tests in your browser using Karma
+
 To pack the bundle:
 
 `gradle bundle`
