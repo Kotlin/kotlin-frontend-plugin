@@ -1,5 +1,69 @@
+
+plugins {
+    id "com.jfrog.bintray" version "1.7.3"
+    id 'net.researchgate.release' version '2.6.0'
+}
+
+apply plugin: 'java'
 apply plugin: 'kotlin2js'
+apply plugin: 'maven-publish'
+
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
 }
+
+
+defaultTasks 'jar'
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}
+
+publishing {
+    publications {
+        hmrJsJars(MavenPublication) {
+            from components.java
+            artifact sourcesJar
+            artifact javadocJar
+
+            groupId project.group
+            artifactId project.name
+            version project.version
+        }
+        
+    }
+}
+
+bintray {
+    user = System.getProperty('bintray.user.name')
+    key = System.getProperty('bintray.user.token')
+
+    publications = ['hmrJsJars'] 
+
+    pkg {
+        repo = 'kotlinx'
+        name = 'kotlin-frontend'
+        userOrg = 'kotlin'
+        licenses = ['Apache-2.0']
+        vcsUrl = 'https://github.com/Kotlin/kotlin-frontend-plugin.git'
+
+        version {
+            name = project.version
+            released = new Date()
+            vcsTag = project.version
+        }
+    }
+}
+
+afterReleaseBuild.dependsOn bintrayUpload
