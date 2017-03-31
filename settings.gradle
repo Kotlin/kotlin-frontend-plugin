@@ -1,0 +1,4 @@
+include 'kotlin-frontend'
+include 'webpack-hmr-api'
+
+rootProject.name = 'kotlin-frontend-plugin-root'
