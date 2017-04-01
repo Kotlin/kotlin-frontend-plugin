@@ -52,7 +52,7 @@ bintray {
     publications = ['hmrJsJars'] 
 
     pkg {
-        repo = 'kotlinx'
+        repo = 'kotlin-eap'
         name = 'kotlin-frontend'
         userOrg = 'kotlin'
         licenses = ['Apache-2.0']
