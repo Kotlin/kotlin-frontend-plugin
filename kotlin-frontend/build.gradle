@@ -55,8 +55,8 @@ publishing {
 }
 
 bintray {
-    user = System.getProperty('bintray.user.name')
-    key = System.getProperty('bintray.user.token')
+    user = System.getProperty('bintray.user.name') ?: ""
+    key = System.getProperty('bintray.user.token') ?: ""
 
     publications = ['mainMaven'] 
 
