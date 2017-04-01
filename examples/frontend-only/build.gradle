@@ -1,18 +1,18 @@
 buildscript {
-    ext.kotlin_version = '1.1.0'
+    ext.kotlin_version = '1.1.1'
 
     repositories {
         jcenter()
-        maven { url 'https://jitpack.io' }
+        maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
     }
 
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "com.github.Kotlin:kotlin-frontend-plugin:568610baa1"
+        classpath "org.jetbrains.kotlin:kotlin-frontend-plugin:0.0.17"
     }
 }
 
-group = 'org.jetbrains.kotlin'
+group = 'org.jetbrains.kotlin.example'
 version = '0.0.1-SNAPSHOT'
 
 apply plugin: 'kotlin2js'

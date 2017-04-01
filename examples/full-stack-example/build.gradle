@@ -6,25 +6,23 @@ buildscript {
 
     repositories {
         jcenter()
-        maven { url 'https://jitpack.io' }
+        maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "com.github.Kotlin:kotlin-frontend-plugin:568610baa1"
+        classpath 'org.jetbrains.kotlin:kotlin-frontend-plugin:0.0.17'
     }
 }
 
 subprojects { p ->
     p.repositories {
         jcenter()
-        maven { url 'https://jitpack.io' }
         maven { url "http://dl.bintray.com/kotlin/ktor" }
     }
 }
 
 repositories {
     jcenter()
-    maven { url 'https://jitpack.io' }
     maven { url "http://dl.bintray.com/kotlin/ktor" }
 }
 
