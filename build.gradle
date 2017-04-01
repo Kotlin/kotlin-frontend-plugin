@@ -11,6 +11,8 @@ buildscript {
 group = 'org.jetbrains.kotlin'
 
 allprojects {
+    group = 'org.jetbrains.kotlin'
+
     repositories {
         jcenter()
     }
