@@ -1,14 +1,16 @@
 package org.jetbrains.kotlin.gradle.frontend
 
-import org.jetbrains.kotlin.gradle.frontend.util.*
-import org.junit.*
-import kotlin.test.*
+import org.gradle.api.Project.DEFAULT_VERSION
+import org.jetbrains.kotlin.gradle.frontend.util.toSemver
+import org.junit.Test
+import kotlin.test.assertEquals
 
 class SemverTest {
     @Test
     fun testEmpty() {
         assertEquals("0.0.0", toSemver(""))
         assertEquals("0.0.0", toSemver(null))
+        assertEquals("0.0.0", toSemver(DEFAULT_VERSION))
     }
 
     @Test

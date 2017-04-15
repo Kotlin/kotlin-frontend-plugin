@@ -1,15 +1,16 @@
 package org.jetbrains.kotlin.gradle.frontend
 
-import groovy.json.*
-import javafx.concurrent.*
-import org.gradle.testkit.runner.*
-import org.jetbrains.kotlin.gradle.frontend.util.*
-import org.jetbrains.kotlin.preprocessor.*
-import org.junit.*
-import org.junit.runner.*
-import org.junit.runners.*
-import org.junit.runners.Parameterized.*
-import java.net.*
+import groovy.json.JsonSlurper
+import org.gradle.testkit.runner.BuildTask
+import org.gradle.testkit.runner.GradleRunner
+import org.gradle.testkit.runner.TaskOutcome
+import org.jetbrains.kotlin.gradle.frontend.util.toSemver
+import org.jetbrains.kotlin.preprocessor.mkdirsOrFail
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
+import org.junit.runners.Parameterized.Parameters
+import java.net.URL
 import kotlin.test.*
 
 @RunWith(Parameterized::class)
@@ -124,7 +125,10 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
     @Test
     fun testNpmOnly() {
         builder.applyFrontendPlugin()
+
         buildGradleFile.writeText(builder.build {
+            line("version '1.0'")
+
             kotlinFrontend {
                 block("npm") {
                     line("dependency \"style-loader\"")
@@ -142,17 +146,27 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
 
         assertTrue { projectDir.root.resolve("build/node_modules/style-loader").isDirectory }
 
-        val expectedVersion = toSemver(kotlinVersion)
+        val expectedProjectVersion = toSemver("1.0")
+        val expectedKotlinVersion = toSemver(kotlinVersion)
 
         @Suppress("UNCHECKED_CAST")
-        assertEquals(expectedVersion,
-            projectDir.root.resolve("build/package.json").let { JsonSlurper().parse(it) as Map<String, Any?> }["dependencies"]
-                    ?.let { it as Map<String, String?> }
-                    ?.let { it["kotlin"] }
+        assertEquals(expectedKotlinVersion,
+                projectDir.root.resolve("build/package.json")
+                        .let { JsonSlurper().parse(it) as Map<String, Any?> }["dependencies"]
+                        ?.let { it as Map<String, String?> }
+                        ?.let { it["kotlin"] }
         )
+
         @Suppress("UNCHECKED_CAST")
-        assertEquals(expectedVersion,
-                projectDir.root.resolve("build/node_modules/kotlin/package.json").let { JsonSlurper().parse(it) as Map<String, Any?> }["version"]
+        assertEquals(expectedKotlinVersion,
+                projectDir.root.resolve("build/node_modules/kotlin/package.json")
+                        .let { JsonSlurper().parse(it) as Map<String, Any?> }["version"]
+        )
+
+        @Suppress("UNCHECKED_CAST")
+        assertEquals(expectedProjectVersion,
+                projectDir.root.resolve("build/package.json")
+                        .let { JsonSlurper().parse(it) as Map<String, Any?> }["version"]
         )
 
         val rerunResult = runner.build()
