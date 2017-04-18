@@ -13,6 +13,12 @@ import java.util.concurrent.*
  */
 abstract class AbstractStartStopTask<S : Any> : DefaultTask() {
     @get:Internal
+    open val startupTimeoutSeconds: Int = project.findProperty("org.kotlin.frontend.startup.timeout")?.toString()?.toInt() ?: 30
+
+    @get:Internal
+    open val shutdownTimeoutSeconds: Int = project.findProperty("org.kotlin.frontend.shutdown.timeout")?.toString()?.toInt() ?: 30
+
+    @get:Internal
     protected abstract val identifier: String
     protected abstract fun checkIsRunning(stopInfo: S?): Boolean
 
@@ -25,7 +31,7 @@ abstract class AbstractStartStopTask<S : Any> : DefaultTask() {
     protected abstract fun readState(file: File): S
     protected abstract fun writeState(file: File, state: S)
 
-    protected open fun notRunningThenKilledMessage(): Unit = logger.error("$identifier: not actually running so has been killed")
+    protected open fun notRunningThenKilledMessage(): Unit = logger.error("$identifier: startup timeout")
     protected open fun notRunningExitCodeMessage(exitCode: Int): Unit = logger.error("$identifier: exited with exit code $exitCode")
 
     protected open fun alreadyRunningMessage(): Unit = logger.warn("$identifier is already running")
@@ -71,11 +77,11 @@ abstract class AbstractStartStopTask<S : Any> : DefaultTask() {
 
         val process = launcher.start(builder)
 
-        for (i in 1..15) {
-            if (checkIsRunning(newState)) {
+        for (i in 1..startupTimeoutSeconds.div(2).coerceAtLeast(1)) {
+            if (process.waitFor(500, TimeUnit.MILLISECONDS)) {
                 break
             }
-            if (process.waitFor(500, TimeUnit.MILLISECONDS)) {
+            if (checkIsRunning(newState)) {
                 break
             }
         }
@@ -106,7 +112,7 @@ abstract class AbstractStartStopTask<S : Any> : DefaultTask() {
             return
         }
 
-        for (i in 1..10) {
+        for (i in 1..shutdownTimeoutSeconds.div(2).coerceAtLeast(1)) {
             stop(state)
             if (!checkIsRunning(state)) {
                 break

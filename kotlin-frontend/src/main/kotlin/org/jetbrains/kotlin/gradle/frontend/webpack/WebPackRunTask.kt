@@ -132,7 +132,7 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
     }
 
     override fun notRunningThenKilledMessage() {
-        logger.error("webpack-dev-server didn't listen port so has been killed, see ${serverLog()}")
+        logger.error("webpack-dev-server didn't listen port for too long so has been killed, see ${serverLog()}")
     }
 
     override fun notRunningExitCodeMessage(exitCode: Int) {
