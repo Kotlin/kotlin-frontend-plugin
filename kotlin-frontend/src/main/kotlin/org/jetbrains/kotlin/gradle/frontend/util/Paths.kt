@@ -4,6 +4,8 @@ import org.apache.tools.ant.taskdefs.condition.*
 import org.gradle.api.*
 import java.io.*
 
+val nodeDirProperty = "org.kotlin.frontend.node.dir"
+
 fun splitEnvironmentPath() = System.getenv("PATH").split(File.pathSeparator).filter(String::isNotBlank)
 fun whereIs(command: String, extraPaths: List<String> = emptyList()): List<File> = (extraPaths + splitEnvironmentPath()).flatMap {
     val bin = it + File.separator + command
@@ -12,11 +14,19 @@ fun whereIs(command: String, extraPaths: List<String> = emptyList()): List<File>
 }.filter { it.exists() && it.canExecute() }.distinct()
 
 fun nodePath(project: Project, command: String = "node"): List<File> {
-    val extraNodeDir = project.findProperty("org.kotlin.frontend.node.dir")?.let { listOf(it.toString()) } ?: emptyList()
-    val paths = whereIs(command, extraNodeDir)
+    val userDefinedNodeDir = project.findProperty(nodeDirProperty)?.toString()?.let { listOf(it) } ?: emptyList()
+    val downloadedNodeDirs = project.tasks
+            .filterIsInstance<NodeJsDownloadTask>()
+            .mapNotNull { it.nodePathTextFile }
+            .filter { it.isFile }
+            .map { File(it.readText().trim()).resolve("bin") }
+            .filter { it.isDirectory }
+            .map { it.absolutePath }
+
+    val paths = whereIs(command, userDefinedNodeDir + downloadedNodeDirs)
 
     if (paths.isEmpty()) {
-        project.logger.debug("No executable $command found in ${extraNodeDir + splitEnvironmentPath()}")
+        project.logger.debug("No executable $command found in ${userDefinedNodeDir + splitEnvironmentPath()}")
         throw GradleException("No executable $command found")
     }
 

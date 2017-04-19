@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.gradle.frontend.karma.*
 import org.jetbrains.kotlin.gradle.frontend.ktor.*
 import org.jetbrains.kotlin.gradle.frontend.npm.*
 import org.jetbrains.kotlin.gradle.frontend.rollup.*
+import org.jetbrains.kotlin.gradle.frontend.util.*
 import org.jetbrains.kotlin.gradle.frontend.webpack.*
 import java.io.*
 
@@ -94,6 +95,17 @@ class FrontendPlugin : Plugin<Project> {
                     val bundler = frontend.bundlers[id] ?: throw GradleException("Bundler $id is not supported (or not plugged-in), required for bundles: ${bundles.map { it.bundleName }}")
 
                     bundler.apply(project, packageManager, bundle, run, stop)
+                }
+
+                if (frontend.downloadNodeJsVersion.isNotBlank()) {
+                    val downloadTask = project.tasks.create("nodejs-download", NodeJsDownloadTask::class.java) { task ->
+                        task.version = frontend.downloadNodeJsVersion
+                        if (frontend.nodeJsMirror.isNotBlank()) {
+                            task.mirror = frontend.nodeJsMirror
+                        }
+                    }
+
+                    packages.dependsOn(downloadTask)
                 }
             }
         })

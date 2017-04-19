@@ -28,6 +28,12 @@ open class KotlinFrontendExtension(val project: Project) : GroovyObjectSupport()
 
     var bundlesDirectory: Any = project.buildDir.resolve("bundle")
 
+    @Input
+    var downloadNodeJsVersion: String = ""
+
+    @Input
+    var nodeJsMirror: String = ""
+
     fun bundles(): List<BundleConfig> = Collections.unmodifiableList(
             bundleBuilders.map { p ->
                 val (id, builder) = p
