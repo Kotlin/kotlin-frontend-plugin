@@ -40,6 +40,10 @@ open class GenerateWebPackConfigTask : DefaultTask() {
 
     init {
         (inputs as TaskInputs).dir(configsDir).optional()
+
+        onlyIf {
+            bundles.size == 1 && bundles.single().webpackConfigFile == null
+        }
     }
 
     @TaskAction

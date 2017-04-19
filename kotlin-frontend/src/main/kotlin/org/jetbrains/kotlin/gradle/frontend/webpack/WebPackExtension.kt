@@ -23,4 +23,6 @@ open class WebPackExtension(project: Project) : BundleConfig {
     var proxyUrl: String = ""
 
     var stats: String = "errors-only"
+
+    var webpackConfigFile: Any? = null
 }

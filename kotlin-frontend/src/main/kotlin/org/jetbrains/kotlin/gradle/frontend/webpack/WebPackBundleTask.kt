@@ -8,8 +8,11 @@ import org.jetbrains.kotlin.gradle.frontend.util.*
  * @author Sergey Mashkov
  */
 open class WebPackBundleTask : DefaultTask() {
+    @get:Nested
+    private val config by lazy { project.frontendExtension.bundles().filterIsInstance<WebPackExtension>().singleOrNull() ?: throw GradleException("Only one webpack bundle is supported") }
+
     @InputFile
-    val webPackConfigFile = project.buildDir.resolve("webpack.config.js")
+    val webPackConfigFile = config.webpackConfigFile?.let { project.file(it) } ?: project.buildDir.resolve("webpack.config.js")
 
     @get:OutputDirectory
     val bundleDir by lazy { GenerateWebPackConfigTask.handleFile(project, project.frontendExtension.bundlesDirectory) }
