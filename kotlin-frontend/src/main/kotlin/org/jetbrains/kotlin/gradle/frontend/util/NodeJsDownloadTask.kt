@@ -182,7 +182,7 @@ open class NodeJsDownloadTask : DefaultTask() {
         val npmFile = dir.resolve("bin").resolve("npm") // TODO windows!
         if (npmFile.exists()) {
             npmFile.delete()
-            Files.createSymbolicLink(npmFile.toPath(), dir.resolve("node_modules/npm/bin/npm-cli.js").absoluteFile.toPath())
+            Files.createSymbolicLink(npmFile.toPath(), dir.resolve("lib/node_modules/npm/bin/npm-cli.js").absoluteFile.toPath())
         }
 
         return dir
