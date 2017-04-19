@@ -9,7 +9,7 @@ By using Gradle continuous build, you also can get hot module replacement featur
 
 ### Configure Gradle project
 
-Fist of all you have to apply plugin `org.jetbrains.kotlin.frontend` and setup Kotlin:
+First of all you have to apply plugin `org.jetbrains.kotlin.frontend` and setup Kotlin:
 
 ```gradle
 buildscript {
@@ -117,7 +117,7 @@ config file is generated at `build/webpack.config.js`
 
 ## webpack configuration customization
 
-To customize webpack coniguration, you can apply additional scripts by placing them in the directory `webpack.config.d`. The scripts will be appended to the end of config script. Use number prefix to change order (it is very similar to UNIX rc.d config directories)
+To customize webpack configuration, you can apply additional scripts by placing them in the directory `webpack.config.d`. The scripts will be appended to the end of config script. Use number prefix to change order (it is very similar to UNIX rc.d config directories)
 
 Sample structure:
 
