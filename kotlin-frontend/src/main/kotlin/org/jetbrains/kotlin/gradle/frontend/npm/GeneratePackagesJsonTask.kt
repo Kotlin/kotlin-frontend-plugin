@@ -54,7 +54,7 @@ open class GeneratePackagesJsonTask : DefaultTask() {
     @get:Input
     val moduleNames: List<String> by lazy { project.tasks.withType(KotlinJsCompile::class.java)
             .filter { !it.name.contains("test", ignoreCase = true) }
-            .mapNotNull { it.kotlinOptions.outputFile?.substringAfterLast('/')?.removeSuffix(".js") }
+            .mapNotNull { it.kotlinOptions.outputFile?.replace('\\', '/')?.substringAfterLast('/')?.removeSuffix(".js") }
     }
 
     @OutputFile
