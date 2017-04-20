@@ -10,7 +10,7 @@ var RunConfig = require('$RunConfig$');
 
 var config = require(RunConfig.webPackConfig);
 
-for (name in config.entry) {
+for (var name in config.entry) {
     if (config.entry.hasOwnProperty(name)) {
         config.entry[name] = [ "webpack-dev-server/client?http://localhost:" + RunConfig.port + "/", "webpack/hot/dev-server", config.entry[name] ];
     }

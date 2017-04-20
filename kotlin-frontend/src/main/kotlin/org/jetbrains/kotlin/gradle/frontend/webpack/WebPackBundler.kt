@@ -20,12 +20,16 @@ object WebPackBundler : Bundler<WebPackExtension> {
         }
 
         val config = project.tasks.create("webpack-config", GenerateWebPackConfigTask::class.java)
+        val helper = project.tasks.create("webpack-helper", GenerateWebpackHelperTask::class.java) { t ->
+            t.dependsOn(config)
+        }
+
         val bundle = project.tasks.create("webpack-bundle", WebPackBundleTask::class.java) { t ->
             t.description = "Bundles all scripts and resources with webpack"
             t.group = WebPackGroup
         }
 
-        bundle.dependsOn(config)
+        bundle.dependsOn(config, helper)
         bundle.dependsOn(*project.tasks.withType(RelativizeSourceMapTask::class.java).toTypedArray())
 
         bundleTask.dependsOn(bundle)

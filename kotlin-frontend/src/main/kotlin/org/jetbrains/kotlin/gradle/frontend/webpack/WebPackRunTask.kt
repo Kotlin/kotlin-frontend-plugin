@@ -75,16 +75,10 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
 
         devServerLauncherFile.writeText(
                 launcherFileTemplate
-                        .replace("require('\$RunConfig\$')", JsonBuilder(mapOf(
-                                "port" to config.port,
-                                "shutDownPath" to ShutDownPath,
-                                "webPackConfig" to webPackConfigFile.absolutePath,
-                                "contentPath" to config.contentPath?.absolutePath,
-                                "proxyUrl" to config.proxyUrl.let { if (it.isBlank()) null else it },
-                                "publicPath" to config.publicPath,
-                                "sourceMap" to (project.frontendExtension.sourceMaps && config.sourceMapEnabled),
-                                "stats" to config.stats
-                        )).toPrettyString()))
+                        .replace("require('\$RunConfig\$')",
+                                JsonBuilder(GenerateWebpackHelperTask.config(project, config, webPackConfigFile)).toPrettyString()
+                        )
+        )
 
         try {
             val newPermissions = java.nio.file.Files.getPosixFilePermissions(devServerLauncherFile.toPath()) + PosixFilePermission.OWNER_EXECUTE
