@@ -78,6 +78,7 @@ class NpmPackageManager(val project: Project) : PackageManager {
 
                     task.dependenciesProvider = { requiredDependencies }
                     task.packageJsonFile = packageJsonFile
+                    task.npmrcFile = packageJsonFile.resolveSibling(".npmrc")
                 }
                 val install = project.tasks.create("npm-install", NpmInstallTask::class.java) { task ->
                     task.description = "Install npm packages"

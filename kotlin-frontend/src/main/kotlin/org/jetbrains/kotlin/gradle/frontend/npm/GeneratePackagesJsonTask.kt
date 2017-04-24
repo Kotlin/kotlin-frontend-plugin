@@ -60,6 +60,9 @@ open class GeneratePackagesJsonTask : DefaultTask() {
     @OutputFile
     lateinit var packageJsonFile: File
 
+    @OutputFile
+    lateinit var npmrcFile: File
+
     val buildPackageJsonFile: File?
 
     init {
@@ -114,6 +117,10 @@ open class GeneratePackagesJsonTask : DefaultTask() {
 
         val resultJson = allIncluded.fold(packagesJson, ::mergeMaps)
         packageJsonFile.writeText(JsonBuilder(resultJson).toPrettyString())
+        npmrcFile.writeText("""
+        progress=false
+        # cache-min=3600
+        """.trimIndent())
 
         if (buildPackageJsonFile != null) {
             buildPackageJsonFile.parentFile.mkdirsOrFail()
