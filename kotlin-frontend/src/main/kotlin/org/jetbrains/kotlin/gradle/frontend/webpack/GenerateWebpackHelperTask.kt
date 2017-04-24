@@ -42,7 +42,8 @@ open class GenerateWebpackHelperTask : DefaultTask() {
                 "publicPath" to config.publicPath,
                 "sourceMap" to (project.frontendExtension.sourceMaps && config.sourceMapEnabled),
                 "stats" to config.stats,
-                "bundlePath" to kotlinOutput(project).absolutePath
+                "bundlePath" to kotlinOutput(project).absolutePath,
+                "moduleName" to kotlinOutput(project).nameWithoutExtension
         )
     }
 }

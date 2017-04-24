@@ -21,13 +21,22 @@ open class NodeJsDownloadTask : DefaultTask() {
     @get:OutputFile
     var nodePathTextFile: File = project.buildDir.resolve("nodePath.txt")
 
+    @Internal
+    private val target = project.gradle.gradleUserHomeDir.resolve("nodejs")
+
     @TaskAction
     fun doDownload() {
-        if (version == "latest") {
-            version = detectLatest()
-        }
-
+        val version = this.version.takeIf { it != "latest" } ?: detectLatest()
         val url = nodeUrl(version)
+
+        expectedNodeJsDir(target, url.path.substringAfterLast('/'))?.let { executable(it) }?.let { existing ->
+            if (askNodeJsVersion(existing).removePrefix("v") == version) {
+                logger.info("nodejs $version found")
+                nodePathTextFile.writeText(existing.parentFile.absolutePath)
+
+                return
+            }
+        }
 
         val outFile = project.buildDir.resolve(url.path.substringAfterLast('/'))
         outFile.parentFile.mkdirsOrFail()
@@ -35,16 +44,27 @@ open class NodeJsDownloadTask : DefaultTask() {
         download(url, outFile)
         val nodejsDir = extract(outFile)
 
-        val executable = arrayOf("node.exe", "bin/node")
-                .map { nodejsDir.resolve(it) }
-                .firstOrNull { it.exists() } ?: throw GradleException("No node executable found in $nodejsDir")
-
-        project.tasks.create("ask-nodejs-version", Exec::class.java) { execute ->
-            execute.executable(executable.absoluteFile).args("--version")
-        }.execute()
+        val executable = executable(nodejsDir) ?: throw GradleException("No node executable found in $nodejsDir")
+        val actualVersion = askNodeJsVersion(executable)
+        if (actualVersion.removePrefix("v") != version) {
+            logger.warn("Downloaded version is $actualVersion")
+        }
 
         nodePathTextFile.writeText(executable.parentFile.absolutePath)
     }
+
+    private fun askNodeJsVersion(executable: File): String {
+        val stdout = ByteArrayOutputStream()
+        val stderr = ByteArrayOutputStream()
+
+        project.tasks.create("ask-nodejs-version", Exec::class.java) { execute ->
+            execute.executable(executable.absoluteFile).args("--version").setStandardOutput(stdout).setErrorOutput(stderr)
+        }.execute()
+
+        return stdout.toByteArray().toString(Charsets.ISO_8859_1).trim()
+    }
+
+    private fun executable(nodejsDir: File) = arrayOf("node.exe", "bin/node").map { nodejsDir.resolve(it) }.firstOrNull { it.exists() }
 
     private fun detectLatest(): String {
         val url = URL("${mirror()}/latest/SHASUMS256.txt")
@@ -155,8 +175,6 @@ open class NodeJsDownloadTask : DefaultTask() {
     }
 
     private fun extract(file: File): File {
-        val target = project.gradle.gradleUserHomeDir.resolve("nodejs")
-
         println("Extracting nodejs")
         project.tasks.create("extract-nodejs", Copy::class.java) { copy ->
             val tree = when {
@@ -168,16 +186,7 @@ open class NodeJsDownloadTask : DefaultTask() {
             copy.from(tree).into(target)
         }.execute()
 
-        val dir: File
-        var name = file.name.substringBeforeLast('.', "")
-        while (true) {
-            if (target.resolve(name).isDirectory) {
-                dir = target.resolve(name)
-                break
-            }
-            name = name.substringBeforeLast('.', "")
-            if (name.isEmpty()) throw GradleException("Failed to extract nodejs, check $target dir")
-        }
+        val dir = expectedNodeJsDir(target, file) ?: throw GradleException("Failed to extract nodejs, check $target dir")
 
         // note: we don't need to check .exe suffix as Windows doesn't require executable permission
         arrayOf("node")
@@ -192,6 +201,14 @@ open class NodeJsDownloadTask : DefaultTask() {
         }
 
         return dir
+    }
+
+    private fun expectedNodeJsDir(target: File, bundleFileName: File): File? = expectedNodeJsDir(target, bundleFileName.nameWithoutExtension)
+
+    private tailrec fun expectedNodeJsDir(target: File, name: String): File? = when {
+        name.isEmpty() -> null
+        target.resolve(name).isDirectory -> target.resolve(name)
+        else -> expectedNodeJsDir(target, name.substringBeforeLast('.', ""))
     }
 
     private fun newOperation() = services.get(ProgressLoggerFactory::class.java)!!.newOperation(javaClass)!!
