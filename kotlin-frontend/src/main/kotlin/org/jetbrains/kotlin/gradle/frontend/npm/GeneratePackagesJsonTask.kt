@@ -101,7 +101,7 @@ open class GeneratePackagesJsonTask : DefaultTask() {
 
         val packagesJson: Map<*, *> = mapOf(
                 "name" to (moduleNames.singleOrNull() ?: project.name ?: "noname"),
-                "version" to (project.version.toString().let { if (it == Project.DEFAULT_VERSION) toSemver(null) else it }),
+                "version" to (toSemver(project.version.toString())),
                 "description" to "simple description",
                 "main" to (moduleNames.singleOrNull()),
                 "dependencies" to dependencies.associateBy({ it.name }, { it.versionOrUri }),

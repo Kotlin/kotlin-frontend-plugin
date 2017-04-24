@@ -1,7 +1,11 @@
 package org.jetbrains.kotlin.gradle.frontend.util
 
+import org.gradle.api.Project.DEFAULT_VERSION
+
 fun toSemver(version: String?) = buildString {
-    if (version == null) {
+    if (version == null ||
+        version == DEFAULT_VERSION) {
+
         return "0.0.0"
     }
 
