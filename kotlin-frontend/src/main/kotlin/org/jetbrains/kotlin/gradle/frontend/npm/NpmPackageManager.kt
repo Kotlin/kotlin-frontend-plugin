@@ -6,6 +6,7 @@ import org.gradle.api.internal.artifacts.dependencies.*
 import org.gradle.api.internal.file.*
 import org.jetbrains.kotlin.gradle.frontend.*
 import org.jetbrains.kotlin.gradle.frontend.Dependency
+import org.jetbrains.kotlin.gradle.frontend.util.*
 import java.io.*
 
 class NpmPackageManager(val project: Project) : PackageManager {
@@ -91,6 +92,7 @@ class NpmPackageManager(val project: Project) : PackageManager {
                     task.group = NpmGroup
                 }
 
+                project.tasks.withType(NodeJsDownloadTask::class.java)?.let { configure.dependsOn(it) }
                 configure.dependsOn(unpack)
                 install.dependsOn(configure)
                 index.dependsOn(install)

@@ -19,7 +19,7 @@ fun nodePath(project: Project, command: String = "node"): List<File> {
             .filterIsInstance<NodeJsDownloadTask>()
             .mapNotNull { it.nodePathTextFile }
             .filter { it.isFile }
-            .map { File(it.readText().trim()).resolve("bin") }
+            .flatMap { File(it.readText().trim()).let { listOf(it.resolve("bin"), it) } }
             .filter { it.isDirectory }
             .map { it.absolutePath }
 

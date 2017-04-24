@@ -12,8 +12,17 @@ open class NpmInstallTask : DefaultTask() {
     @InputFile
     lateinit var packageJsonFile: File
 
+    val npmDirFile =  project.tasks
+            .filterIsInstance<NodeJsDownloadTask>()
+            .mapNotNull { it.nodePathTextFile }
+            .firstOrNull()
+
     @OutputDirectory
     val nodeModulesDir: File = project.buildDir.resolve("node_modules")
+
+    init {
+        if (npmDirFile != null) inputs.file(npmDirFile)
+    }
 
     @TaskAction
     fun processInstallation() {

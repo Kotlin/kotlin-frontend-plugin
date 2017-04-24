@@ -35,7 +35,7 @@ open class NodeJsDownloadTask : DefaultTask() {
         download(url, outFile)
         val nodejsDir = extract(outFile)
 
-        val executable = arrayOf("bin/node.exe", "bin/node")
+        val executable = arrayOf("node.exe", "bin/node")
                 .map { nodejsDir.resolve(it) }
                 .firstOrNull { it.exists() } ?: throw GradleException("No node executable found in $nodejsDir")
 
@@ -43,7 +43,7 @@ open class NodeJsDownloadTask : DefaultTask() {
             execute.executable(executable.absoluteFile).args("--version")
         }.execute()
 
-        nodePathTextFile.writeText(nodejsDir.absolutePath)
+        nodePathTextFile.writeText(executable.parentFile.absolutePath)
     }
 
     private fun detectLatest(): String {
@@ -159,7 +159,13 @@ open class NodeJsDownloadTask : DefaultTask() {
 
         println("Extracting nodejs")
         project.tasks.create("extract-nodejs", Copy::class.java) { copy ->
-            copy.from(project.tarTree(project.resources.gzip(file))).into(target)
+            val tree = when {
+                file.name.endsWith(".tar.gz") -> project.tarTree(project.resources.gzip(file))
+                file.name.endsWith(".zip") -> project.zipTree(file)
+                else -> throw GradleException("Unsupported package type $file")
+            }
+
+            copy.from(tree).into(target)
         }.execute()
 
         val dir: File
@@ -179,7 +185,7 @@ open class NodeJsDownloadTask : DefaultTask() {
                 .filter { it.isFile && !it.canExecute() && !it.setExecutable(true, true) }
                 .forEach { logger.warn("Failed to make $it executable") }
 
-        val npmFile = dir.resolve("bin").resolve("npm") // TODO windows!
+        val npmFile = dir.resolve("bin").resolve("npm")
         if (npmFile.exists()) {
             npmFile.delete()
             Files.createSymbolicLink(npmFile.toPath(), dir.resolve("lib/node_modules/npm/bin/npm-cli.js").absoluteFile.toPath())
