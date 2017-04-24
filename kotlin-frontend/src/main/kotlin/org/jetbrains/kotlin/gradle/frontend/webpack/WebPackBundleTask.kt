@@ -2,6 +2,7 @@ package org.jetbrains.kotlin.gradle.frontend.webpack
 
 import org.gradle.api.*
 import org.gradle.api.tasks.*
+import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
 
 /**
@@ -16,6 +17,9 @@ open class WebPackBundleTask : DefaultTask() {
 
     @get:OutputDirectory
     val bundleDir by lazy { GenerateWebPackConfigTask.handleFile(project, project.frontendExtension.bundlesDirectory) }
+
+    @get:InputFile
+    val sourceFile by lazy { kotlinOutput(project) }
 
     @TaskAction
     fun buildBundle() {
