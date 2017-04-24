@@ -374,7 +374,7 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
         module1.resolve("build.gradle").writeText(builder1.build {
             kotlinFrontend {
                 block("npm") {
-                    line("dependency \"fs\"")
+                    line("dependency \"tar\"")
                     line("devDependency \"path\"")
                 }
             }
