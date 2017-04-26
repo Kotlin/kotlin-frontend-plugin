@@ -32,10 +32,5 @@ open class NpmInstallTask : DefaultTask() {
                 .directory(project.buildDir)
                 .redirectErrorStream(true)
                 .startWithRedirectOnFail(project, "npm install")
-                .let { p ->
-                    if (p.exitValue() != 0) {
-                        throw GradleException("Failed to npm install")
-                    }
-                }
     }
 }
