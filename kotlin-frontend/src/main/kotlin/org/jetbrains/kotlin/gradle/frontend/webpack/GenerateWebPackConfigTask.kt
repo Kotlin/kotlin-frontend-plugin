@@ -3,8 +3,10 @@ package org.jetbrains.kotlin.gradle.frontend.webpack
 import groovy.json.*
 import groovy.lang.*
 import org.gradle.api.*
+import org.gradle.api.artifacts.*
 import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
+import org.jetbrains.kotlin.gradle.tasks.*
 import java.io.*
 
 /**
@@ -52,8 +54,18 @@ open class GenerateWebPackConfigTask : DefaultTask() {
 
         val resolveRoots = mutableListOf(
                 File(contextDir).toRelativeString(project.buildDir),
-                project.buildDir.resolve("node_modules").toRelativeString(project.buildDir)
+                project.buildDir.resolve("node_modules").toRelativeString(project.buildDir),
+                project.buildDir.resolve("node_modules").absolutePath
         )
+
+        project.configurations.findByName("compile")?.allDependencies
+                ?.filterIsInstance<ProjectDependency>().orEmpty()
+                .mapNotNull { it.dependencyProject }
+                .flatMap { it.tasks.filterIsInstance<Kotlin2JsCompile>() }
+                .filter { !it.name.contains("test") }
+                .mapNotNull { it.outputFile }
+                .map { project.file(it) }
+                .map { resolveRoots.add(it.parentFile.toRelativeString(project.buildDir)) }
 
         val json = linkedMapOf(
                 "context" to contextDir,

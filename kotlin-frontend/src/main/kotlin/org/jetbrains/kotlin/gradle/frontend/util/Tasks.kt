@@ -4,7 +4,9 @@ import org.gradle.api.*
 import org.jetbrains.kotlin.gradle.frontend.*
 import kotlin.reflect.*
 
-fun <T : Task> Project.withTask(type: KClass<T>, block: (Task) -> Unit) {
+inline fun <reified T : Task> Project.withTask(noinline block: (T) -> Unit) = withTask(T::class, block)
+
+fun <T : Task> Project.withTask(type: KClass<T>, block: (T) -> Unit) {
     val javaType = type.java
     val existing = project.tasks.withType(javaType)
     existing?.forEach { task ->
@@ -13,7 +15,8 @@ fun <T : Task> Project.withTask(type: KClass<T>, block: (Task) -> Unit) {
 
     project.tasks.whenTaskAdded { task ->
         if (javaType.isInstance(task)) {
-            block(task)
+            @Suppress("UNCHECKED_CAST")
+            block(task as T)
         }
     }
 }
