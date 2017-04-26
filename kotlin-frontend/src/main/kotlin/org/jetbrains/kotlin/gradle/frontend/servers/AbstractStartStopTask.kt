@@ -77,7 +77,7 @@ abstract class AbstractStartStopTask<S : Any> : DefaultTask() {
 
         val process = launcher.start(builder)
 
-        for (i in 1..startupTimeoutSeconds.div(2).coerceAtLeast(1)) {
+        for (i in 1..startupTimeoutSeconds.times(2).coerceAtLeast(1)) {
             if (process.waitFor(500, TimeUnit.MILLISECONDS)) {
                 break
             }
