@@ -40,6 +40,9 @@ open class GenerateWebPackConfigTask : DefaultTask() {
     @OutputFile
     val webPackConfigFile: File = project.buildDir.resolve("webpack.config.js")
 
+    @Input
+    val exts = project.frontendExtension.defined
+
     init {
         (inputs as TaskInputs).dir(configsDir).optional()
 
@@ -97,6 +100,15 @@ open class GenerateWebPackConfigTask : DefaultTask() {
             out.append("var config = ")
             out.append(JsonBuilder(json).toPrettyString())
             out.appendln(";")
+
+
+            if (exts.isNotEmpty()) {
+                out.append("var defined = ")
+                out.append(JsonBuilder(exts).toPrettyString())
+                out.appendln(";")
+
+                out.appendln("config.plugins.push(new webpack.DefinePlugin(defined));")
+            }
 
             out.appendln()
             out.appendln("module.exports = config;")

@@ -6,7 +6,6 @@ import org.gradle.api.*
 import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.gradle.frontend.servers.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
-import org.jetbrains.kotlin.preprocessor.*
 import java.io.*
 import java.net.*
 import java.nio.file.attribute.*
@@ -15,24 +14,30 @@ import java.security.*
 /**
  * @author Sergey Mashkov
  */
-open class WebPackRunTask : AbstractStartStopTask<Int>() {
+open class WebPackRunTask : AbstractStartStopTask<WebPackRunTask.State>() {
+    @Input
     var start: Boolean = true
 
     @get:Nested
     private val config by lazy { project.frontendExtension.bundles().filterIsInstance<WebPackExtension>().singleOrNull() ?: throw GradleException("Only one webpack bundle is supported") }
 
+    @Input
     val webPackConfigFile = config.webpackConfigFile?.let { project.file(it) } ?: project.buildDir.resolve("webpack.config.js")
 
+    @Internal
     val logTailer = LogTail({serverLog().toPath() })
 
+    @Input
     val devServerLauncherFile = project.buildDir.resolve(DevServerLauncherFileName)
 
-    val lastHashesFile = project.buildDir.resolve(".webpack-last-hashes.txt")
-
+    @get:Internal
     val hashes by lazy { hashOf(devServerLauncherFile, webPackConfigFile) } // TODO get all the hashes of all included configs
 
+    @Input
+    val exts = project.frontendExtension.defined
+
     override val identifier = "webpack-dev-server"
-    override fun checkIsRunning(stopInfo: Int?) = stopInfo != null && Companion.checkIsRunning(stopInfo)
+    override fun checkIsRunning(stopInfo: State?) = stopInfo != null && Companion.checkIsRunning(stopInfo.port)
 
     init {
         project.afterEvaluate {
@@ -46,12 +51,6 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
         }
 
         doLast {
-            if (hashes.isNotEmpty()) {
-                lastHashesFile.parentFile.mkdirsOrFail()
-                lastHashesFile.writeText(hashes.entries.sortedBy { it.key }.joinToString(separator = "\n", postfix = "\n") { "${it.key}\t${it.value}" })
-            } else {
-                lastHashesFile.delete()
-            }
             logTailer.dumpLog()
         }
     }
@@ -70,7 +69,7 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
         }
     }
 
-    override fun beforeStart(): Int? {
+    override fun beforeStart(): State? {
         val launcherFileTemplate = javaClass.classLoader.getResourceAsStream("kotlin/webpack/webpack-dev-server-launcher.js")?.reader()?.readText() ?: throw GradleException("No dev-server launcher template found")
 
         devServerLauncherFile.writeText(
@@ -86,41 +85,38 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
         } catch (ignore: UnsupportedOperationException) {
         }
 
-        return config.port
-    }
-
-    override fun needRestart(oldState: Int?, newState: Int?): Boolean {
-        if (oldState != newState) {
-            return true
-        }
-
-        val lastHashes = lastHashesFile.let {
-            if (it.canRead()) it.readLines()
-                    .map(String::trim)
-                    .map { it.split("\\s+".toRegex()) }
-                    .filter { it.size == 2 }
-                    .associateBy({ it[0] }, { it[1] })
-            else emptyMap()
-        }
-
-        return hashesChanged(lastHashes, hashes)
+        return State(config.port, exts, hashes)
     }
 
     override fun builder(): ProcessBuilder {
         return ProcessBuilder(nodePath(project, "node").first().absolutePath, devServerLauncherFile.absolutePath).directory(project.buildDir)
     }
 
-    override fun readState(file: File): Int = file.readText().trim().toInt()
-    override fun writeState(file: File, state: Int) {
-        file.writeText("$state\n")
+    override fun readState(file: File): State {
+        val j = JsonSlurper().parse(file) as Map<*, *>
+        val port = j["port"]!!.toString().toInt()
+
+        @Suppress("UNCHECKED_CAST")
+        val hashes = j["hashes"] as Map<String, String>
+
+        @Suppress("UNCHECKED_CAST")
+        val exts = j["exts"] as Map<String, String>
+
+        return State(port, exts, hashes)
     }
 
-    override fun stop(state: Int?) {
+    override fun writeState(file: File, state: State) {
+        file.bufferedWriter().use { out ->
+            JsonBuilder(state).writeTo(out)
+        }
+    }
+
+    override fun stop(state: State?) {
         if (state != null) {
             try {
-                URL("http://localhost:$state${WebPackRunTask.ShutDownPath}").readText()
+                URL("http://localhost:${state.port}${WebPackRunTask.ShutDownPath}").readText()
             } catch (e: IOException) {
-                logger.info("Couldn't stop server on port $state")
+                logger.info("Couldn't stop server on port ${state.port}")
             }
         }
     }
@@ -141,13 +137,11 @@ open class WebPackRunTask : AbstractStartStopTask<Int>() {
         logger.warn("webpack is already running at http://localhost:${config.port}/")
     }
 
+    data class State(val port: Int, val exts: Map<String, Any?>, val hashes: Map<String, String>)
+
     companion object {
         private fun hashOf(vararg files: File) = files.filter(File::canRead).associateBy({ it.name }, { it.sha1() })
         private fun File.sha1() = EncodingGroovyMethods.encodeHex(MessageDigest.getInstance("SHA1").digest(readBytes())).toString()
-
-        private fun hashesChanged(oldHashes: Map<String, String>, newHashes: Map<String, String>): Boolean {
-            return oldHashes != newHashes
-        }
 
         val DevServerLauncherFileName = "webpack-dev-server-run.js"
         val ShutDownPath = "/webpack/dev/server/shutdown"

@@ -20,8 +20,13 @@ open class KotlinFrontendExtension(val project: Project) : GroovyObjectSupport()
             "rollup" to RollupBundler
     )
 
+    private val _ext = linkedMapOf<String, Any?>()
+
     val bundlers: Map<String, Bundler<*>>
         get() = Collections.unmodifiableMap(_bundlers)
+
+    val defined: Map<String, Any?>
+        get() = Collections.unmodifiableMap(_ext)
 
     @Input
     var sourceMaps: Boolean = false
@@ -82,6 +87,10 @@ open class KotlinFrontendExtension(val project: Project) : GroovyObjectSupport()
             throw GradleException("Bundler with $id is already registered")
         }
         _bundlers[id] = instance
+    }
+
+    fun define(name: String, value: Any?) {
+        _ext[name] = value
     }
 
     @Suppress("unused") // groovy magic method - don't change name/signature

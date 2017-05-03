@@ -98,7 +98,12 @@ abstract class AbstractStartStopTask<S : Any> : DefaultTask() {
         }
 
         if (newState != null) {
-            writeState(stateFile, newState)
+            try {
+                writeState(stateFile, newState)
+            } catch (t: Throwable) {
+                stateFile.delete()
+                throw t
+            }
         }
 
         startedMessage()
