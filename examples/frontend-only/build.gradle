@@ -39,7 +39,9 @@ kotlinFrontend {
         bundleName = "main"
         contentPath = file('src/main/web')
     }
-    
+
+    define "PRODUCTION", true
+
 //    rollupBundle {
 //        bundleName = "rolledUp"
 //    }

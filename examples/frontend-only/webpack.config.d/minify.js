@@ -1,3 +1,5 @@
-// config.plugins.push(new webpack.optimize.UglifyJsPlugin({
-//     minimize: true
-// }));
+if (defined.PRODUCTION) {
+    config.plugins.push(new webpack.optimize.UglifyJsPlugin({
+        minimize: true
+    }));
+}
