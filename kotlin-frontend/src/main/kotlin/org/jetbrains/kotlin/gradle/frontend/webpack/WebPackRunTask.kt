@@ -92,15 +92,15 @@ open class WebPackRunTask : AbstractStartStopTask<WebPackRunTask.State>() {
         return ProcessBuilder(nodePath(project, "node").first().absolutePath, devServerLauncherFile.absolutePath).directory(project.buildDir)
     }
 
-    override fun readState(file: File): State {
-        val j = JsonSlurper().parse(file) as Map<*, *>
-        val port = j["port"]!!.toString().toInt()
+    override fun readState(file: File): State? {
+        val j = JsonSlurper().parse(file) as? Map<*, *> ?: return null
+        val port = j["port"]?.toString()?.toInt() ?: return null
 
         @Suppress("UNCHECKED_CAST")
-        val hashes = j["hashes"] as Map<String, String>
+        val hashes = j["hashes"] as? Map<String, String> ?: return null
 
         @Suppress("UNCHECKED_CAST")
-        val exts = j["exts"] as Map<String, String>
+        val exts = j["exts"] as? Map<String, String> ?: return null
 
         return State(port, exts, hashes)
     }

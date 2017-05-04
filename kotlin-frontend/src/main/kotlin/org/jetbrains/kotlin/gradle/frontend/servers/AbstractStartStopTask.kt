@@ -28,7 +28,7 @@ abstract class AbstractStartStopTask<S : Any> : DefaultTask() {
 
     protected open fun needRestart(oldState: S?, newState: S?) = oldState != newState
 
-    protected abstract fun readState(file: File): S
+    protected abstract fun readState(file: File): S?
     protected abstract fun writeState(file: File, state: S)
 
     protected open fun notRunningThenKilledMessage(): Unit = logger.error("$identifier: startup timeout")
