@@ -93,7 +93,14 @@ open class GeneratePackagesJsonTask : DefaultTask() {
                     .map { Dependency(it[0], it[2], Dependency.RuntimeScope) }
         }).flatten() + toolsDependencies.filter { it.scope == Dependency.RuntimeScope }
 
-        val devDependencies = npm.developmentDependencies + toolsDependencies.filter { it.scope == Dependency.DevelopmentScope }
+        val devDependencies = mutableListOf<Dependency>()
+
+        devDependencies.addAll(npm.developmentDependencies)
+
+        toolsDependencies.filter{ it.scope == Dependency.DevelopmentScope }.forEach {
+          if(!devDependencies.any { dep ->  dep.name == it.name })
+            devDependencies.add(it)
+        }
 
         if (logger.isDebugEnabled) {
             logger.debug(dependencies.joinToString(prefix = "Dependencies:\n", separator = "\n") { "${it.name}: ${it.versionOrUri}" })
