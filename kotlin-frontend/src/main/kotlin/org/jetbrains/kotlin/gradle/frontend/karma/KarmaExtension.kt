@@ -4,6 +4,9 @@ import org.gradle.api.tasks.*
 
 open class KarmaExtension {
     @Input
+    var customConfigFile: String? = null
+
+    @Input
     var port: Int = 9876
 
     @Input
