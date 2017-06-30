@@ -39,11 +39,11 @@ open class KarmaStartStopTask : AbstractStartStopTask<Int>() {
         val preprocessors = extension.preprocessors.toMutableList()
         val clientConfig = mutableMapOf<String, Any>()
 
-        extension.customConfigFile?.let {
-          val file = File(project.projectDir.absolutePath + it)
-          file.copyTo(File(project.buildDir.absolutePath+"karma.conf.js"), true)
+        if(extension.customConfigFile.trim() != "") {
+          val file = File(project.projectDir.absolutePath + "\\" + extension.customConfigFile)
+          file.copyTo(File(project.buildDir.absolutePath+"\\karma.conf.js"), true)
 
-        } ?: kotlin.run {
+        } else {
           val config = linkedMapOf(
               "basePath" to project.buildDir.absolutePath,
               "frameworks" to extension.frameworks.toMutableList(),
