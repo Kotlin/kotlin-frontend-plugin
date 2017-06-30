@@ -40,8 +40,8 @@ open class KarmaStartStopTask : AbstractStartStopTask<Int>() {
         val clientConfig = mutableMapOf<String, Any>()
 
         if(extension.customConfigFile.trim() != "") {
-          val file = File(project.projectDir.absolutePath + "\\" + extension.customConfigFile)
-          file.copyTo(File(project.buildDir.absolutePath+"\\karma.conf.js"), true)
+          val file = project.projectDir.resolve(extension.customConfigFile)
+          file.copyTo(project.buildDir.resolve("karma.conf.js"), true)
 
         } else {
           val config = linkedMapOf(

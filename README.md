@@ -142,10 +142,29 @@ kotlinFrontend {
     }
 }
 ```
+This will generate a config file located at `build/karma.conf.js`.
+
+Note that for your tests to run correctly with webpack their module type must be defined as well:
+```
+compileTestKotlin2Js {
+    kotlinOptions.metaInfo = true
+    kotlinOptions.moduleKind = 'commonjs'
+}
+```
+
+If you would like to use a custom `karma.config.js` then specify it using `customConfigFile`:
+
+```
+kotlinFrontend {
+    karma {
+        customConfigFile = "myKarma.conf.js"
+    }
+}
+```
+
+Your custom config file will be copied to the build folder and renamed to `karma.config.js`.
 
 karma log is located at `build/logs/karma.log`
-
-config file is generated at `build/karma.conf.js`
 
 # Hot module replacement
 
