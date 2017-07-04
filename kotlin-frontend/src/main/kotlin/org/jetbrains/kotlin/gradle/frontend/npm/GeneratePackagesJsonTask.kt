@@ -96,7 +96,7 @@ open class GeneratePackagesJsonTask : DefaultTask() {
         val devDependencies = mutableListOf(*npm.developmentDependencies.toTypedArray())
 
         devDependencies.addAll(toolsDependencies.filter {
-          (it.scope == Dependency.DevelopmentScope) && devDependencies.all { dep ->  dep.name != it.name }
+            (it.scope == Dependency.DevelopmentScope) && devDependencies.all { dep ->  dep.name != it.name }
         })
 
         if (logger.isDebugEnabled) {
