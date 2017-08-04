@@ -39,12 +39,17 @@ open class KarmaStartStopTask : AbstractStartStopTask<Int>() {
         val preprocessors = extension.preprocessors.toMutableList()
         val clientConfig = mutableMapOf<String, Any>()
 
-        val config = linkedMapOf(
+        if (extension.customConfigFile.isNotBlank()) {
+            val file = project.projectDir.resolve(extension.customConfigFile)
+            file.copyTo(project.buildDir.resolve("karma.conf.js"), true)
+
+        } else {
+            val config = linkedMapOf(
                 "basePath" to project.buildDir.absolutePath,
                 "frameworks" to extension.frameworks.toMutableList(),
                 "reporters" to extension.reporters.toMutableList(),
                 "files" to listOf<String>(
-                        kotlinTestOutput(project).absolutePath
+                    kotlinTestOutput(project).absolutePath
                 ),
                 "exclude" to listOf("*~", "*.swp", "*.swo"),
                 "port" to extension.port,
@@ -55,57 +60,58 @@ open class KarmaStartStopTask : AbstractStartStopTask<Int>() {
                 "captureTimeout" to 5000,
                 "singleRun" to false,
                 "preprocessors" to mapOf(
-                        kotlinTestOutput(project).absolutePath to preprocessors
+                    kotlinTestOutput(project).absolutePath to preprocessors
                 ),
                 "plugins" to plugins,
                 "client" to clientConfig
-        )
+            )
 
-        if ("junit" in extension.reporters) {
-            config["junitReporter"] = mapOf(
+            if ("junit" in extension.reporters) {
+                config["junitReporter"] = mapOf(
                     "outputFile" to "", // TODO junit report
                     "suite" to ""
-            )
-        }
-        if ("qunit" in extension.frameworks) {
-            if ("karma-qunit" !in plugins) {
-                plugins += "karma-qunit"
+                )
             }
+            if ("qunit" in extension.frameworks) {
+                if ("karma-qunit" !in plugins) {
+                    plugins += "karma-qunit"
+                }
 
-            clientConfig["clearContext"] = false
-            clientConfig["qunit"] = hashMapOf(
+                clientConfig["clearContext"] = false
+                clientConfig["qunit"] = hashMapOf(
                     "showUI" to true,
                     "testTimeout" to 5000
-            )
-        }
-        if (sourceMaps) {
-            preprocessors.add("sourcemap")
-            plugins.add("karma-sourcemap-loader")
-        }
-        if (extension.enableWebPack) {
-            project.tasks.withType(GenerateWebPackConfigTask::class.java).single().let { webpackTask ->
-                webpackTask.webPackConfigFile.ifCanRead { file ->
-                    prepares += "var webpackConfig = require(${JsonOutput.toJson(file.absolutePath)})"
-                    prepares += "webpackConfig.resolve.modules.push(" + JsonOutput.toJson(kotlinTestOutput(project).absolutePath) + ")"
+                )
+            }
+            if (sourceMaps) {
+                preprocessors.add("sourcemap")
+                plugins.add("karma-sourcemap-loader")
+            }
+            if (extension.enableWebPack) {
+                project.tasks.withType(GenerateWebPackConfigTask::class.java).single().let { webpackTask ->
+                    webpackTask.webPackConfigFile.ifCanRead { file ->
+                        prepares += "var webpackConfig = require(${JsonOutput.toJson(file.absolutePath)})"
+                        prepares += "webpackConfig.resolve.modules.push(" + JsonOutput.toJson(kotlinTestOutput(project).absolutePath) + ")"
 
-                    plugins += "karma-webpack"
-                    preprocessors += "webpack"
-                    config["webpack"] = "\$webpackConfig"
+                        plugins += "karma-webpack"
+                        preprocessors += "webpack"
+                        config["webpack"] = "\$webpackConfig"
+                    }
                 }
             }
+
+            val configText = """
+            #PREPARES
+            module.exports = function (config) {
+            config.set(#CONFIG)
+            };
+            """.trimIndent()
+                  .replace("#CONFIG", JsonBuilder(config).toPrettyString())
+                  .replace("#PREPARES", prepares.joinToString(";\n", postfix = ";\n"))
+                  .replace("\"\\\$([^\"]+)\"".toRegex()) { m -> m.groupValues[1] }
+
+            project.buildDir.resolve("karma.conf.js").writeText(configText)
         }
-
-        val configText = """
-        #PREPARES
-        module.exports = function (config) {
-        config.set(#CONFIG)
-        };
-        """.trimIndent()
-                .replace("#CONFIG", JsonBuilder(config).toPrettyString())
-                .replace("#PREPARES", prepares.joinToString(";\n", postfix = ";\n"))
-                .replace("\"\\\$([^\"]+)\"".toRegex()) { m -> m.groupValues[1] }
-
-        project.buildDir.resolve("karma.conf.js").writeText(configText)
 
         return extension.port
     }
