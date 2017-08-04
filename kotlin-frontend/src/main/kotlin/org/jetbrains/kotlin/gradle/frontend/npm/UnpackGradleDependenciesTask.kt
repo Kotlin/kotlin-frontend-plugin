@@ -63,7 +63,6 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
 
                     val name = existingPackageJson?.get("name")?.toString()
                             ?: getJsModuleName(artifact.file)
-                            ?: LibraryUtils.getKotlinJsModuleName(artifact.file)
                             ?: artifact.name
                             ?: artifact.id.displayName
                             ?: artifact.file.nameWithoutExtension
