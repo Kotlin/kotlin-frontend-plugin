@@ -150,12 +150,12 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
         val expectedKotlinVersion = toSemver(kotlinVersion)
 
         @Suppress("UNCHECKED_CAST")
-        assertEquals(expectedKotlinVersion,
-                projectDir.root.resolve("build/package.json")
-                        .let { JsonSlurper().parse(it) as Map<String, Any?> }["dependencies"]
-                        ?.let { it as Map<String, String?> }
-                        ?.let { it["kotlin"] }
-        )
+        val packageJsonKotlinLocation = projectDir.root.resolve("build/package.json")
+                .let { JsonSlurper().parse(it) as Map<String, Any?> }["dependencies"]
+                ?.let { it as Map<String, String?> }
+                ?.let { it["kotlin"] } ?: fail("No kotlin found in package.json")
+
+        assertTrue { packageJsonKotlinLocation.startsWith("file://") }
 
         @Suppress("UNCHECKED_CAST")
         assertEquals(expectedKotlinVersion,
@@ -439,7 +439,7 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
         assertEquals(TaskOutcome.SUCCESS, result.task(":module1:compileKotlin2Js")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":module2:compileKotlin2Js")?.outcome)
 
-        val runBundle = runner.withArguments("bundle").build()
+        runner.withArguments("bundle").build()
         assertTrue { module2.resolve("build/bundle/main.bundle.js").exists() }
         val bundleContent = module2.resolve("build/bundle/main.bundle.js").readText()
 
