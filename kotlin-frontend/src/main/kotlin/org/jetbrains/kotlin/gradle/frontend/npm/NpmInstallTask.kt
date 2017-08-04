@@ -39,10 +39,11 @@ open class NpmInstallTask : DefaultTask() {
     }
 
     private fun ensurePath(env: MutableMap<String, String>, path: String) {
+        val sep = File.pathSeparator
         env.keys.filter { it.equals("path", ignoreCase = true) }.forEach { envName ->
             val envValue = env[envName]
             if (envValue != null && !envValue.startsWith(path)) {
-                env[envName] = path + ":" + if (envValue.endsWith(path)) envValue.removeSuffix(path) else envValue.replace(":$path:", ":")
+                env[envName] = path + sep + if (envValue.endsWith(path)) envValue.removeSuffix(path) else envValue.replace("$sep$path$sep", sep)
             }
         }
     }
