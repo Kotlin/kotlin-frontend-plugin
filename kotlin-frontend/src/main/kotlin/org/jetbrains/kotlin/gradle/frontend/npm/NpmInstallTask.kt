@@ -14,7 +14,7 @@ open class NpmInstallTask : DefaultTask() {
 
     val npmDirFile =  project.tasks
             .filterIsInstance<NodeJsDownloadTask>()
-            .mapNotNull { it.nodePathTextFile }
+            .map { it.nodePathTextFile }
             .firstOrNull()
 
     @OutputDirectory
@@ -28,9 +28,22 @@ open class NpmInstallTask : DefaultTask() {
     fun processInstallation() {
         logger.info("Running npm install")
 
-        ProcessBuilder(nodePath(project, "npm").first().absolutePath, "install")
+        val npm = nodePath(project, "npm").first()
+        val npmPath = npm.absolutePath
+
+        ProcessBuilder(npmPath, "install")
                 .directory(project.buildDir)
+                .apply { ensurePath(environment(), npm.parentFile.absolutePath) }
                 .redirectErrorStream(true)
                 .startWithRedirectOnFail(project, "npm install")
+    }
+
+    private fun ensurePath(env: MutableMap<String, String>, path: String) {
+        env.keys.filter { it.equals("path", ignoreCase = true) }.forEach { envName ->
+            val envValue = env[envName]
+            if (envValue != null && !envValue.startsWith(path)) {
+                env[envName] = path + ":" + if (envValue.endsWith(path)) envValue.removeSuffix(path) else envValue.replace(":$path:", ":")
+            }
+        }
     }
 }

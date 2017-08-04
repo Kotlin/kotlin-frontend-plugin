@@ -17,7 +17,7 @@ fun nodePath(project: Project, command: String = "node"): List<File> {
     val userDefinedNodeDir = project.findProperty(nodeDirProperty)?.toString()?.let { listOf(it) } ?: emptyList()
     val downloadedNodeDirs = project.tasks
             .filterIsInstance<NodeJsDownloadTask>()
-            .mapNotNull { it.nodePathTextFile }
+            .map { it.nodePathTextFile }
             .filter { it.isFile }
             .flatMap { File(it.readText().trim()).let { listOf(it.resolve("bin"), it) } }
             .filter { it.isDirectory }
