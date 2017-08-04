@@ -43,7 +43,7 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
     @TaskAction
     fun unpackLibraries() {
         resultNames = mutableListOf()
-        val out = project.buildDir.resolve("node_modules")
+        val out = project.buildDir.resolve("node_modules_imported")
 
         out.mkdirsOrFail()
 
