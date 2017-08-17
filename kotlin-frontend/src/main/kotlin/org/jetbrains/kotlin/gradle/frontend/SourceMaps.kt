@@ -50,7 +50,7 @@ fun relativizeSourceMap(input: File, output: File = input.parentFile.resolve(inp
 
             if (source is String) {
                 val file = if (":/" in source) {
-                    File(URI(source.replace(":[/]+".toRegex()) { ":///" }))
+                    File(URI(source.replace("^file:[/]+".toRegex()) { "file:///" }))
                 } else {
                     File(source)
                 }
