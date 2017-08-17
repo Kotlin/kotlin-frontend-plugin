@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.gradle.frontend.npm.*
 import org.jetbrains.kotlin.gradle.frontend.rollup.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
 import org.jetbrains.kotlin.gradle.frontend.webpack.*
+import org.jetbrains.kotlin.gradle.plugin.*
 import java.io.*
 
 class FrontendPlugin : Plugin<Project> {
@@ -82,12 +83,16 @@ class FrontendPlugin : Plugin<Project> {
                 }
 
                 if (frontend.sourceMaps) {
-                    project.tasks.withType(KotlinJsCompile::class.java).toList().mapNotNull { compileTask ->
-                        val task = project.tasks.create(compileTask.name + "RelativizeSMAP", RelativizeSourceMapTask::class.java) {
-                            it.compileTask = compileTask
-                        }
+                    val kotlinVersion = project.plugins.findPlugin(Kotlin2JsPluginWrapper::class.java).kotlinPluginVersion
 
-                        task.dependsOn(compileTask)
+                    if (compareVersions(kotlinVersion, "1.1.4") < 0) {
+                        project.tasks.withType(KotlinJsCompile::class.java).toList().mapNotNull { compileTask ->
+                            val task = project.tasks.create(compileTask.name + "RelativizeSMAP", RelativizeSourceMapTask::class.java) {
+                                it.compileTask = compileTask
+                            }
+
+                            task.dependsOn(compileTask)
+                        }
                     }
                 }
 
@@ -171,5 +176,17 @@ class FrontendPlugin : Plugin<Project> {
             }
         }
     }
+
+    private fun compareVersions(a: String, b: String): Int {
+        return compareVersions(versionToList(a), versionToList(b))
+    }
+
+    private fun compareVersions(a: List<Int>, b: List<Int>): Int {
+        return (0 until maxOf(a.size, b.size)).
+                map { idx -> a.getOrElse(idx) { 0 }.compareTo(b.getOrElse(idx) { 0 }) }
+                .firstOrNull { it != 0 } ?: 0
+    }
+
+    private fun versionToList(v: String) = v.split("[._\\-\\s]+".toRegex()).mapNotNull { it.toIntOrNull() }
 }
 
