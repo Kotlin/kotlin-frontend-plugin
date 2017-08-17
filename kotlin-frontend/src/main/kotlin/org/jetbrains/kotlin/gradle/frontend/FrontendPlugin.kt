@@ -93,6 +93,12 @@ class FrontendPlugin : Plugin<Project> {
 
                             task.dependsOn(compileTask)
                         }
+                    } else {
+                        project.tasks.withType(KotlinJsCompile::class.java).forEach {
+                            if (!it.kotlinOptions.sourceMap) {
+                                project.logger.warn("Source map generation is not enabled for kotlin task ${it.name}")
+                            }
+                        }
                     }
                 }
 
