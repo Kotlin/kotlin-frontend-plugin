@@ -112,7 +112,7 @@ open class GeneratePackagesJsonTask : DefaultTask() {
                 "devDependencies" to devDependencies.associateBy({ it.name }, { it.versionOrUri })
         )
 
-        val number = "\\d+$".toRegex()
+        val number = "^\\d+".toRegex()
         val allIncluded = configPartsDir.listFiles()
                 .orEmpty()
                 .filter { it.isFile && it.canRead() }

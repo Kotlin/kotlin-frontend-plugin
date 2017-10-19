@@ -114,7 +114,7 @@ open class GenerateWebPackConfigTask : DefaultTask() {
             out.appendln("module.exports = config;")
             out.appendln()
 
-            val p = "\\d+$".toRegex()
+            val p = "^\\d+".toRegex()
             configsDir.listFiles()?.sortedBy { p.find(it.nameWithoutExtension)?.value?.toInt() ?: 0 }?.forEach {
                 out.appendln("// from file ${it.path}")
                 it.reader().use {
