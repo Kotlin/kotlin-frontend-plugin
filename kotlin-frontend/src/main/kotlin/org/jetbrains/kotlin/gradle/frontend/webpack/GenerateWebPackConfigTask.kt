@@ -79,9 +79,13 @@ open class GenerateWebPackConfigTask : DefaultTask() {
             dceOutputFiles.first().absolutePath
         }
 
-        val resources = project.convention.findPlugin(JavaPluginConvention::class.java).sourceSets.getByName("main").output.resourcesDir
+        val sourceSets: SourceSetContainer? = project.convention.findPlugin(JavaPluginConvention::class.java)?.sourceSets
+        val mainSourceSet: SourceSet? = sourceSets?.findByName("main")
+        val resources = mainSourceSet?.output?.resourcesDir
 
-        resolveRoots.add(resources.toRelativeString(project.buildDir))
+        if (resources != null) {
+            resolveRoots.add(resources.toRelativeString(project.buildDir))
+        }
 
         // node modules
         resolveRoots.add(project.buildDir.resolve("node_modules").toRelativeString(project.buildDir))

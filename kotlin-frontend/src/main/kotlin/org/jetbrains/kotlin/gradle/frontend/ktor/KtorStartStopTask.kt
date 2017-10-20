@@ -62,7 +62,7 @@ open class KtorStartStopTask : AbstractStartStopTask<Int>() {
         return ProcessBuilder(
                 listOf(whereIs("java", gradleJavaHome).first().absolutePath, "-cp")
                         + (project.configurations.flatMap { it.files.filter { it.canRead() && it.extension == "jar" } }
-                        + project.convention.findPlugin(JavaPluginConvention::class.java).sourceSets.getByName("main").output.toList()
+                        + project.convention.findPlugin(JavaPluginConvention::class.java)?.sourceSets?.getByName("main")?.output?.toList().orEmpty()
                         )
                         .distinct().joinToString(File.pathSeparator) { it.absolutePath }
                         + listOf(

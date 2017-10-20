@@ -84,9 +84,9 @@ class FrontendPlugin : Plugin<Project> {
                 }
 
                 if (frontend.sourceMaps) {
-                    val kotlinVersion = project.plugins.findPlugin(Kotlin2JsPluginWrapper::class.java).kotlinPluginVersion
+                    val kotlinVersion = project.plugins.findPlugin(Kotlin2JsPluginWrapper::class.java)?.kotlinPluginVersion
 
-                    if (compareVersions(kotlinVersion, "1.1.4") < 0) {
+                    if (kotlinVersion != null && compareVersions(kotlinVersion, "1.1.4") < 0) {
                         project.tasks.withType(KotlinJsCompile::class.java).toList().mapNotNull { compileTask ->
                             val task = project.tasks.create(compileTask.name + "RelativizeSMAP", RelativizeSourceMapTask::class.java) {
                                 it.compileTask = compileTask

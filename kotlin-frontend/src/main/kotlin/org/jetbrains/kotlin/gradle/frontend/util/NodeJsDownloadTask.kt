@@ -81,7 +81,7 @@ open class NodeJsDownloadTask : DefaultTask() {
         }
 
         val version = versions.firstOrNull() ?: throw GradleException("Failed to detect versions from")
-        op.completed("Got $version")
+        completed(op, "Got $version")
 
         return version
     }
@@ -160,10 +160,10 @@ open class NodeJsDownloadTask : DefaultTask() {
                         }
                     }
 
-                    op.completed("Completed.")
+                    completed(op, "Completed.")
                     result.put("OK")
                 } catch (t: Throwable) {
-                    op.completed("Failed.")
+                    completed(op, "Failed.")
                     result.put(t)
                 } finally {
                     c.disconnect()
@@ -219,6 +219,27 @@ open class NodeJsDownloadTask : DefaultTask() {
         } else {
             progress("${format(bytesRead)} downloaded")
         }
+    }
+
+    private val completed by lazy<(ProgressLogger, String) -> Unit> {
+        val all = logger.javaClass.methods.filter { it.name == "completed" }
+
+        val singleParam = all.firstOrNull { it.parameterCount == 1 && it.parameterTypes[0] == String::class.java }
+        if (singleParam != null) {
+            return@lazy { logger, message -> singleParam.invoke(logger, message) }
+        }
+
+        val messageWithFlag = all.firstOrNull { it.parameterCount == 2 && it.parameterTypes[0] == String::class.java }
+        if (messageWithFlag != null) {
+            return@lazy { logger, message -> messageWithFlag.invoke(logger, message, false) }
+        }
+
+        val withNoArgs = all.firstOrNull { it.parameterCount == 0 }
+        if (withNoArgs != null) {
+            return@lazy { logger, _ -> withNoArgs.invoke(logger) }
+        }
+
+        { _, _ -> Unit }
     }
 
     private val sizes = arrayOf("kb", "mb", "gb", "tb")
