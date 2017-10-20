@@ -39,7 +39,10 @@ class NpmPackageManager(val project: Project) : PackageManager {
     override fun apply(containerTask: Task) {
         project.extensions.create("npm", NpmExtension::class.java)
 
-        defineTasks()
+        injectDependencies()
+        project.afterEvaluate {
+            defineTasks()
+        }
     }
 
     private fun withConfiguration(name: String, block: (Configuration) -> Unit) {
@@ -50,22 +53,25 @@ class NpmPackageManager(val project: Project) : PackageManager {
         }
     }
 
+    private fun injectDependencies() {
+        withConfiguration("compile") { configuration ->
+            configuration.dependencies.add(DefaultSelfResolvingDependency(object : AbstractFileCollection() {
+                override fun getFiles(): MutableSet<File> {
+                    return project.tasks.filterIsInstance<NpmDependenciesTask>().flatMap { it.results }.toMutableSet()
+                }
+
+                override fun getDisplayName(): String {
+                    return "npm-dependencies"
+                }
+            }))
+        }
+    }
+
     private fun defineTasks() {
         if (!tasksDefined) {
             val npm = project.extensions.getByType(NpmExtension::class.java)!!
 
             if (npm.dependencies.isNotEmpty() || npm.developmentDependencies.isNotEmpty() || project.projectDir.resolve("package.json.d").exists() || requiredDependencies.isNotEmpty()) {
-                withConfiguration("compile") { configuration ->
-                    configuration.dependencies.add(DefaultSelfResolvingDependency(object : AbstractFileCollection() {
-                        override fun getFiles(): MutableSet<File> {
-                            return project.tasks.filterIsInstance<NpmDependenciesTask>().flatMap { it.results }.toMutableSet()
-                        }
-
-                        override fun getDisplayName(): String {
-                            return "npm-dependencies"
-                        }
-                    }))
-                }
 
                 val unpack = project.tasks.create("npm-preunpack", UnpackGradleDependenciesTask::class.java) { task ->
                     task.dependenciesProvider = { requiredDependencies }
