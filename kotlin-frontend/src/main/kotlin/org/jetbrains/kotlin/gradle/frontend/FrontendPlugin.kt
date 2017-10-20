@@ -44,6 +44,9 @@ class FrontendPlugin : Plugin<Project> {
         project.plugins.apply("java")
         withKotlinPlugin(project) { kotlin2js, testKotlin2js ->
             testKotlin2js.dependsOn(kotlin2js)
+            if (!KotlinVersion.CURRENT.isAtLeast(1, 1, 4)) {
+                throw InvalidUserCodeException("Frontend plugin requires at least kotlin 1.1.4")
+            }
         }
 
         val frontend = project.extensions.create("kotlinFrontend", KotlinFrontendExtension::class.java, project)
