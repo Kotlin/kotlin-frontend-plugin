@@ -88,6 +88,57 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
     }
 
     @Test
+    fun testSimpleProjectWebPackBundleWithDce() {
+        builder.applyDcePlugin()
+        builder.applyFrontendPlugin()
+
+        buildGradleFile.writeText(builder.build {
+            kotlinFrontend {
+                block("webpackBundle") {
+                    line("port = $port")
+                    line("bundleName = \"main\"")
+                }
+            }
+
+            compileKotlin2Js {
+                line("kotlinOptions.outputFile = \"\${project.buildDir.path}/js/script.js\"")
+            }
+        })
+
+        srcDir.mkdirsOrFail()
+        srcDir.resolve("main.kt").writeText("""
+        fun main(args: Array<String>) {
+            usedFunction2222()
+        }
+
+        private fun usedFunction2222() {
+        }
+
+        private fun unusedFunction1111() {
+        }
+        """)
+
+        val result = runner.withArguments("bundle").build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":npm-preunpack")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":npm-install")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":webpack-config")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":webpack-bundle")?.outcome)
+
+        assertTrue { projectDir.root.resolve("build/js/script.js").isFile }
+        assertTrue { projectDir.root.resolve("build/js/min/script.js").isFile }
+        assertTrue { projectDir.root.resolve("build/bundle/main.bundle.js").isFile }
+
+        assertTrue { "unusedFunction1111" in projectDir.root.resolve("build/js/script.js").readText() }
+        assertTrue { "unusedFunction1111" !in projectDir.root.resolve("build/js/min/script.js").readText() }
+        assertTrue { "unusedFunction1111" !in projectDir.root.resolve("build/bundle/main.bundle.js").readText() }
+
+        assertTrue { "usedFunction2222" in projectDir.root.resolve("build/js/script.js").readText() }
+        assertTrue { "usedFunction2222" in projectDir.root.resolve("build/js/min/script.js").readText() }
+        assertTrue { "usedFunction2222" in projectDir.root.resolve("build/bundle/main.bundle.js").readText() }
+    }
+
+    @Test
     fun testSimpleProjectWebPackBundleFail() {
         builder.applyFrontendPlugin()
         buildGradleFile.writeText(builder.build {

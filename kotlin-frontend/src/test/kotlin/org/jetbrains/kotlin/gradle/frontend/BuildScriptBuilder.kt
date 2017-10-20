@@ -20,6 +20,10 @@ class BuildScriptBuilder {
         applyPlugins += "kotlin2js"
     }
 
+    fun applyDcePlugin() {
+        applyPlugins += "kotlin-dce-js"
+    }
+
     fun addJsDependency() {
         if (kotlinVersion.startsWith("1.0."))
             compileDependencies += "org.jetbrains.kotlin:kotlin-js-library:$kotlinVersion"
