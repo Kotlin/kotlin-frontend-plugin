@@ -4,6 +4,7 @@ import groovy.json.*
 import groovy.lang.*
 import org.gradle.api.*
 import org.gradle.api.artifacts.*
+import org.gradle.api.plugins.*
 import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
 import org.jetbrains.kotlin.gradle.tasks.*
@@ -55,23 +56,39 @@ open class GenerateWebPackConfigTask : DefaultTask() {
     fun generateConfig() {
         val bundle = bundles.singleOrNull() ?: throw GradleException("Only single webpack bundle supported")
 
-        val resolveRoots = mutableListOf(
-                File(contextDir).toRelativeString(project.buildDir),
-                project.buildDir.resolve("node_modules").toRelativeString(project.buildDir),
-                project.buildDir.resolve("node_modules").absolutePath
-        )
+        val resolveRoots = mutableListOf<String>()
 
-        project.configurations.findByName("compile")?.allDependencies
-                ?.filterIsInstance<ProjectDependency>().orEmpty()
-                .mapNotNull { it.dependencyProject }
-                .flatMap { it.tasks.filterIsInstance<Kotlin2JsCompile>() }
-                .filter { !it.name.contains("test", ignoreCase = true) }
-                .mapNotNull { it.outputFile }
-                .map { project.file(it) }
-                .map { resolveRoots.add(it.parentFile.toRelativeString(project.buildDir)) }
+        val dceOutputFiles = project.tasks
+                .withType(KotlinJsDce::class.java)
+                .filter { it.isEnabled && !it.name.contains("test", ignoreCase = true) }
+                .flatMap { it.outputs.files }
+
+        val entryDir = if (dceOutputFiles.isEmpty()) {
+            project.configurations.findByName("compile")?.allDependencies
+                    ?.filterIsInstance<ProjectDependency>().orEmpty()
+                    .mapNotNull { it.dependencyProject }
+                    .flatMap { it.tasks.filterIsInstance<Kotlin2JsCompile>() }
+                    .filter { !it.name.contains("test", ignoreCase = true) }
+                    .map { project.file(it.outputFile) }
+                    .map { resolveRoots.add(it.parentFile.toRelativeString(project.buildDir)) }
+
+            resolveRoots.add(0, File(contextDir).toRelativeString(project.buildDir))
+            contextDir
+        } else {
+            resolveRoots.addAll(dceOutputFiles.map { it.toRelativeString(project.buildDir) })
+            dceOutputFiles.first().absolutePath
+        }
+
+        val resources = project.convention.findPlugin(JavaPluginConvention::class.java).sourceSets.getByName("main").output.resourcesDir
+
+        resolveRoots.add(resources.toRelativeString(project.buildDir))
+
+        // node modules
+        resolveRoots.add(project.buildDir.resolve("node_modules").toRelativeString(project.buildDir))
+        resolveRoots.add(project.buildDir.resolve("node_modules").absolutePath)
 
         val json = linkedMapOf(
-                "context" to contextDir,
+                "context" to entryDir,
                 "entry" to mapOf(
                         bundle.bundleName to kotlinOutput(project).nameWithoutExtension.let { "./$it" }
                 ),

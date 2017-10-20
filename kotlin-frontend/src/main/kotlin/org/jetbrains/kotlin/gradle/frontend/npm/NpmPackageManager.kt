@@ -39,9 +39,7 @@ class NpmPackageManager(val project: Project) : PackageManager {
     override fun apply(containerTask: Task) {
         project.extensions.create("npm", NpmExtension::class.java)
 
-        project.afterEvaluate {
-            defineTasks()
-        }
+        defineTasks()
     }
 
     private fun withConfiguration(name: String, block: (Configuration) -> Unit) {
