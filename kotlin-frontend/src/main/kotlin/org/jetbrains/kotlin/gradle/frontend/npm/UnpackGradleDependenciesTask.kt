@@ -19,7 +19,7 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
 
     @get:Input
     val compileConfiguration: Configuration
-        get() = project.configurations.getByName("compile")!!
+        get() = project.configurations.getByName("compile")
 
     @OutputFile
     val resultFile = unpackFile(project)
@@ -96,7 +96,7 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
                     }
                 }
 
-        resultFile.bufferedWriter().use { out -> resultNames?.joinTo(out, separator = "\n", postfix = "\n") { "${it.name}/${it.version}/${it.semver}/${it.uri}" } }
+        resultFile.bufferedWriter().use { writer -> resultNames?.joinTo(writer, separator = "\n", postfix = "\n") { "${it.name}/${it.version}/${it.semver}/${it.uri}" } }
     }
 
     data class NameVersionsUri(val name: String, val version: String, val semver: String, val uri: String)

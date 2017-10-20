@@ -29,7 +29,7 @@ class FrontendPlugin : Plugin<Project> {
             block(kotlin2js, testKotlin2js)
         }
 
-        fun tryCallBlock(appliedPlugin: AppliedPlugin) {
+        fun tryCallBlock(@Suppress("UNUSED_PARAMETER") appliedPlugin: AppliedPlugin) {
             if (!fired) {
                 fired = true
                 callBlock()
@@ -74,7 +74,7 @@ class FrontendPlugin : Plugin<Project> {
             description = "Stops dev-server running in background if running"
         }
 
-        withKotlinPlugin(project, { kotlin2js, testKotlin2js ->
+        withKotlinPlugin(project, { kotlin2js, _ ->
             project.afterEvaluate {
                 // TODO this need to be done in kotlin plugin itself
                 (kotlin2js as KotlinJsCompile).kotlinOptions.outputFile?.let { output ->

@@ -23,8 +23,8 @@ abstract class AbstractFrontendTest(val gradleVersion: String, val kotlinVersion
     val failedRule = object : TestWatcher() {
         override fun failed(e: Throwable?, description: Description?) {
             val dst = File("build/tests/${testName.methodName.replace("[", "-").replace("]", "")}").apply { mkdirsOrFail() }
-            projectDir.root.copyRecursively(dst, true) { file, e ->
-                System.err.println("Failed to copy $file due to ${e.message}")
+            projectDir.root.copyRecursively(dst, true) { file, copyError ->
+                System.err.println("Failed to copy $file due to ${copyError.message}")
                 OnErrorAction.SKIP
             }
             println("Copied project to ${dst.absolutePath}")
