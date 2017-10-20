@@ -1,8 +1,10 @@
 package org.jetbrains.kotlin.gradle.frontend.webpack
 
 import org.gradle.api.*
+import org.gradle.language.jvm.tasks.*
 import org.jetbrains.kotlin.gradle.frontend.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
+import org.jetbrains.kotlin.gradle.tasks.*
 
 object WebPackLauncher : Launcher {
     override fun apply(packageManager: PackageManager, project: Project, startTask: Task, stopTask: Task) {
@@ -23,6 +25,13 @@ object WebPackLauncher : Launcher {
                     run.dependsOn(task)
                 }
                 project.withTask(RelativizeSourceMapTask::class) { task ->
+                    run.dependsOn(task)
+                }
+
+                project.withTask<KotlinJsDce> { task ->
+                    run.dependsOn(task)
+                }
+                project.withTask<ProcessResources> { task ->
                     run.dependsOn(task)
                 }
 
