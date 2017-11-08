@@ -1,6 +1,5 @@
 package test
 
-import org.junit.*
 import test.hello.*
 import kotlin.test.*
 
