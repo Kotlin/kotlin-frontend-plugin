@@ -1,4 +1,4 @@
-# kotlin-frontend-plugin  [ ![Download](https://api.bintray.com/packages/kotlin/kotlin-eap/kotlin-frontend/images/download.svg) ](https://bintray.com/kotlin/kotlin-eap/kotlin-frontend/_latestVersion)
+# kotlin-frontend-plugin  [ ![Download](https://api.bintray.com/packages/kotlin/kotlin-eap/kotlin-frontend/images/download.svg) ](https://bintray.com/kotlin/kotlin-eap/kotlin-frontend/_latestVersion) [![TeamCity (simple build status)](https://img.shields.io/teamcity/http/teamcity.jetbrains.com/s/KotlinTools_KotlinFrontendPlugin_Build.svg)](https://teamcity.jetbrains.com/viewType.html?buildTypeId=KotlinTools_KotlinFrontendPlugin_Build)
 Gradle plugin for Kotlin frontend development
 
 The plugin provides an easy way to gather Maven and npm dependencies, pack bundles (via [webpack](https://webpack.github.io/)) and test a frontend application using [Karma](http://karma-runner.github.io/1.0/index.html). By default the plugin generates all required configs for webpack, karma and manages the corresponding daemons.
