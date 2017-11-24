@@ -2,6 +2,7 @@ package test
 
 import test.hello.*
 import kotlin.test.*
+import kotlin.test.Test
 
 class TestLinesPresenter {
     @Test
