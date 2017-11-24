@@ -5,6 +5,8 @@ apply plugin: 'org.jetbrains.kotlin.frontend'
 apply plugin: 'kotlin2js'
 
 kotlinFrontend {
+    downloadNodeJsVersion = 'latest'
+
     npm {
         //dependency("kotlin", "1.1.0-dev-4546")
         dependency "style-loader"
