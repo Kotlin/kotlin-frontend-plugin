@@ -15,19 +15,36 @@ object KarmaLauncher : Launcher {
             val compileTestKotlin = project.tasks.findByPath("compileTestKotlin2Js")
 
             if (compileTestKotlin != null && (compileTestKotlin as? Kotlin2JsCompile)?.kotlinOptions?.outputFile != null) {
-                val karmaStart = project.tasks.create("karma-start", KarmaStartStopTask::class.java) {
-                    it.start = true
+                val karmaConfigTask = project.tasks.create("karma-config", KarmaConfigTask::class.java) {
                     it.onlyIf {
-                        project.tasks.filterIsInstance<KotlinJsCompile>()
-                                .filter { it.name.contains("test", ignoreCase = true) && it.kotlinOptions.outputFile != null }
-                                .any { File(it.kotlinOptions.outputFile).exists() }
+                        checkTestsExist(project)
                     }
                 }
+
+                val karmaStart = project.tasks.create("karma-start", KarmaStartStopTask::class.java) {
+                    it.start = true
+
+                    it.onlyIf {
+                        checkTestsExist(project)
+                    }
+                }
+                val karmaRunSingle = project.tasks.create("karma-run-single", RunKarmaSingleTask::class.java) {
+                    it.description = "Runs single karma test run"
+                    it.onlyIf {
+                        checkTestsExist(project)
+                    }
+                }
+
                 val karmaStop = project.tasks.create("karma-stop", KarmaStartStopTask::class.java) { it.start = false }
 
-                project.tasks.getByName("test").dependsOn(karmaStart)
+                project.tasks.getByName("test").dependsOn(karmaRunSingle)
+
+                karmaStart.dependsOn(karmaConfigTask)
+                karmaRunSingle.dependsOn(karmaConfigTask)
 
                 karmaStart.dependsOn(compileTestKotlin)
+                karmaRunSingle.dependsOn(compileTestKotlin)
+
                 startTask.dependsOn(karmaStart)
                 stopTask.dependsOn(karmaStop)
 
@@ -37,7 +54,7 @@ object KarmaLauncher : Launcher {
                     require("qunitjs", "1.23.1")
                     require("karma-qunit")
 
-//            require("karma-junit-reporter")
+                    require("karma-junit-reporter")
                     require("karma-sourcemap-loader")
 
                     require("karma-phantomjs-launcher")
@@ -52,6 +69,7 @@ object KarmaLauncher : Launcher {
 
                         karma.enableWebPack = true
                         karmaStart.dependsOn(task)
+                        karmaRunSingle.dependsOn(task)
                     }
 
                     if (project.extensions.getByType(KotlinFrontendExtension::class.java).sourceMaps) {
@@ -61,5 +79,11 @@ object KarmaLauncher : Launcher {
             }
         }
 
+    }
+
+    private fun checkTestsExist(project: Project): Boolean {
+        return project.tasks.filterIsInstance<KotlinJsCompile>()
+                                .filter { it.name.contains("test", ignoreCase = true) && it.kotlinOptions.outputFile != null }
+                                .any { File(it.kotlinOptions.outputFile).exists() }
     }
 }

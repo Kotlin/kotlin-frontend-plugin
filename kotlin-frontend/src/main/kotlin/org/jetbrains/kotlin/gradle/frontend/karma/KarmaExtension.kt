@@ -13,10 +13,13 @@ open class KarmaExtension {
     var runnerPort: Int = 9100
 
     @Input
-    var reporters: MutableList<String> = mutableListOf("progress")
+    var reporters: MutableList<String> = mutableListOf("progress", "junit")
 
     @Input
     var frameworks: MutableList<String> = mutableListOf("qunit")
+
+    @Input
+    var plugins: MutableList<String> = mutableListOf()
 
     @Input
     var preprocessors: MutableList<String> = mutableListOf()
