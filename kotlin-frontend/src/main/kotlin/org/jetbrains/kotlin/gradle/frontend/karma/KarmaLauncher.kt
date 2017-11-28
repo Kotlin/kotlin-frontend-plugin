@@ -68,8 +68,7 @@ object KarmaLauncher : Launcher {
                         }
 
                         karma.enableWebPack = true
-                        karmaStart.dependsOn(task)
-                        karmaRunSingle.dependsOn(task)
+                        karmaConfigTask.dependsOn(task)
                     }
 
                     if (project.extensions.getByType(KotlinFrontendExtension::class.java).sourceMaps) {
