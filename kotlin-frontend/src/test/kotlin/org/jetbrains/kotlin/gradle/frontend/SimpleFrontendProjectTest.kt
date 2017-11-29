@@ -518,9 +518,9 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
                 arrayOf("3.4.1", "1.1.4-3"),
                 arrayOf("3.5", "1.1.4-3"),
                 arrayOf("4.1", "1.1.4-3"),
-                arrayOf("4.2.1", "1.1.4-3"),
                 arrayOf("4.2.1", "1.1.51"),
-                arrayOf("4.3.1", "1.1.60")
+                arrayOf("4.3.1", "1.1.60"),
+                arrayOf("4.3.1", "1.2.0")
         )
     }
 }
