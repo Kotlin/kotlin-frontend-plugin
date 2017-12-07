@@ -29,4 +29,7 @@ open class KarmaExtension {
 
     @Input
     var enableWebPack = false
+
+    @Input
+    var captureTimeout: Int = 60000
 }

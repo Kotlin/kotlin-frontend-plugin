@@ -42,7 +42,7 @@ open class KarmaConfigTask : DefaultTask() {
                 "colors" to false,
                 "autoWatch" to true,
                 "browsers" to listOf("PhantomJS"),
-                "captureTimeout" to 5000,
+                "captureTimeout" to extension.captureTimeout,
                 "singleRun" to false,
                 "preprocessors" to mapOf(
                     kotlinTestOutput(project).absolutePath to preprocessors
