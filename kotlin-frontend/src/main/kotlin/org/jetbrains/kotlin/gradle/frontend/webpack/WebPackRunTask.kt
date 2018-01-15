@@ -85,7 +85,7 @@ open class WebPackRunTask : AbstractStartStopTask<WebPackRunTask.State>() {
         } catch (ignore: UnsupportedOperationException) {
         }
 
-        return State(config.port, exts, hashes)
+        return State(config.host, config.port, exts, hashes)
     }
 
     override fun builder(): ProcessBuilder {
@@ -94,6 +94,7 @@ open class WebPackRunTask : AbstractStartStopTask<WebPackRunTask.State>() {
 
     override fun readState(file: File): State? {
         val j = JsonSlurper().parse(file) as? Map<*, *> ?: return null
+        val host = j["host"]?.toString() ?: return null
         val port = j["port"]?.toString()?.toInt() ?: return null
 
         @Suppress("UNCHECKED_CAST")
@@ -102,7 +103,7 @@ open class WebPackRunTask : AbstractStartStopTask<WebPackRunTask.State>() {
         @Suppress("UNCHECKED_CAST")
         val exts = j["exts"] as? Map<String, String> ?: return null
 
-        return State(port, exts, hashes)
+        return State(host, port, exts, hashes)
     }
 
     override fun writeState(file: File, state: State) {
@@ -114,7 +115,7 @@ open class WebPackRunTask : AbstractStartStopTask<WebPackRunTask.State>() {
     override fun stop(state: State?) {
         if (state != null) {
             try {
-                URL("http://localhost:${state.port}${WebPackRunTask.ShutDownPath}").readText()
+                URL("http://${state.host}:${state.port}${WebPackRunTask.ShutDownPath}").readText()
             } catch (e: IOException) {
                 logger.info("Couldn't stop server on port ${state.port}")
             }
@@ -130,14 +131,14 @@ open class WebPackRunTask : AbstractStartStopTask<WebPackRunTask.State>() {
     }
 
     override fun startedMessage() {
-        logger.lifecycle("webpack started, see http://localhost:${config.port}/")
+        logger.lifecycle("webpack started, see http://${config.host}:${config.port}/")
     }
 
     override fun alreadyRunningMessage() {
-        logger.warn("webpack is already running at http://localhost:${config.port}/")
+        logger.warn("webpack is already running at http://${config.host}:${config.port}/")
     }
 
-    data class State(val port: Int, val exts: Map<String, Any?>, val hashes: Map<String, String>)
+    data class State(val host: String, val port: Int, val exts: Map<String, Any?>, val hashes: Map<String, String>)
 
     companion object {
         private fun hashOf(vararg files: File) = files.filter(File::canRead).associateBy({ it.name }, { it.sha1() })

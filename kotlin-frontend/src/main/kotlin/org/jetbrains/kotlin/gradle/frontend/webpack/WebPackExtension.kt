@@ -18,6 +18,8 @@ open class WebPackExtension(project: Project) : BundleConfig {
 
     var publicPath: String = "/"
 
+    var host: String = "localhost"
+
     var port: Int = 8088
 
     var proxyUrl: String = ""
