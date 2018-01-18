@@ -44,6 +44,13 @@ open class GenerateWebPackConfigTask : DefaultTask() {
     @Input
     val exts = project.frontendExtension.defined
 
+    @get:Input
+    private val isDceEnabled: Boolean by lazy {
+        !project.tasks
+                .withType(KotlinJsDce::class.java)
+                .filter { it.isEnabled }.isEmpty()
+    }
+
     init {
         (inputs as TaskInputs).dir(configsDir).optional()
 
