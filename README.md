@@ -104,6 +104,7 @@ kotlinFrontend {
         sourceMapEnabled = true | false   // enable/disable source maps 
         contentPath = file(...) // a file that represents a directory to be served by dev server)
         publicPath = "/"  // web prefix
+        host = "localhost" // dev server host
         port = 8088   // dev server port
         proxyUrl = "" | "http://...."  // URL to be proxied, useful to proxy backend webserver
         stats = "errors-only"  // log level

@@ -34,6 +34,7 @@ open class GenerateWebpackHelperTask : DefaultTask() {
 
     companion object {
         fun config(project: Project, config: WebPackExtension, webPackConfigFile: File) = mapOf(
+                "host" to config.host,
                 "port" to config.port,
                 "shutDownPath" to WebPackRunTask.ShutDownPath,
                 "webPackConfig" to webPackConfigFile.absolutePath,
