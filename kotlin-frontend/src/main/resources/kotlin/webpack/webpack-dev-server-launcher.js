@@ -12,7 +12,7 @@ var config = require(RunConfig.webPackConfig);
 
 for (var name in config.entry) {
     if (config.entry.hasOwnProperty(name)) {
-        config.entry[name] = [ "webpack-dev-server/client?http://localhost:" + RunConfig.port + "/", "webpack/hot/dev-server", config.entry[name] ];
+        config.entry[name] = [ "webpack-dev-server/client?http://" + RunConfig.host + ":" + RunConfig.port + "/", "webpack/hot/dev-server", config.entry[name] ];
     }
 }
 
@@ -43,6 +43,7 @@ var devServer = new WebpackDevServer(
         publicPath: RunConfig.publicPath,
         contentBase: (RunConfig.contentPath ? RunConfig.contentPath : undefined),
         stats: RunConfig.stats || "errors-only",
+        host: RunConfig.host,
         hot: true,
         setup: function(app) {
             app.get(RunConfig.shutDownPath, function(req, res) {
@@ -66,4 +67,4 @@ var devServer = new WebpackDevServer(
         } : undefined
     }
 );
-devServer.listen(RunConfig.port, 'localhost');
+devServer.listen(RunConfig.port, RunConfig.host);
