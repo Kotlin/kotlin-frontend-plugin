@@ -8,6 +8,11 @@ import org.jetbrains.kotlin.gradle.frontend.webpack.*
 import java.io.*
 
 open class KarmaConfigTask : DefaultTask() {
+    @get:InputDirectory
+    @get:Optional
+    val configsDir: File
+        get() = project.projectDir.resolve("karma.config.d")
+
     @get:Input
     val sourceMaps: Boolean
         get() = project.frontendExtension.sourceMaps
@@ -96,7 +101,21 @@ open class KarmaConfigTask : DefaultTask() {
                   .replace("#PREPARES", prepares.joinToString(";\n", postfix = ";\n"))
                   .replace("\"\\\$([^\"]+)\"".toRegex()) { m -> m.groupValues[1] }
 
-            karmaConfigFile.writeText(configText)
+            karmaConfigFile.bufferedWriter().use { out ->
+                out.append(configText)
+                out.appendln()
+
+                val p = "^\\d+".toRegex()
+                configsDir.listFiles()?.sortedBy { p.find(it.nameWithoutExtension)?.value?.toInt() ?: 0 }?.forEach {
+                    out.append("// from file ${it.path}")
+                    out.appendln()
+
+                    it.reader().use {
+                        it.copyTo(out)
+                    }
+                    out.appendln()
+                }
+            }
         }
     }
 
