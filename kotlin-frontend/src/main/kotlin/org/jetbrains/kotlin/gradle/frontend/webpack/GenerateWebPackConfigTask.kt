@@ -69,7 +69,7 @@ open class GenerateWebPackConfigTask : DefaultTask() {
                     .mapNotNull { it.dependencyProject }
                     .flatMap { it.tasks.filterIsInstance<Kotlin2JsCompile>() }
                     .filter { !it.name.contains("test", ignoreCase = true) }
-                    .map { project.file(it.outputFile) }
+                    .map { it.outputFile }
                     .map { resolveRoots.add(it.parentFile.toRelativeString(project.buildDir)) }
 
             resolveRoots.add(0, File(contextDir).toRelativeString(project.buildDir))
