@@ -51,8 +51,20 @@ object KarmaLauncher : Launcher {
                 packageManager.apply {
                     require("karma")
 
-                    require("qunitjs", "1.23.1")
-                    require("karma-qunit")
+                    if (karma.frameworks.contains("qunit")) {
+                        require("qunitjs", "1.23.1")
+                        require("karma-qunit")
+                    }
+
+                    if (karma.frameworks.contains("jasmine")) {
+                        require("karma-jasmine")
+                        require("jasmine-core")
+                    }
+
+                    if (karma.frameworks.contains("mocha")) {
+                        require("karma-mocha")
+                        require("mocha")
+                    }
 
                     require("karma-junit-reporter")
                     require("karma-sourcemap-loader")

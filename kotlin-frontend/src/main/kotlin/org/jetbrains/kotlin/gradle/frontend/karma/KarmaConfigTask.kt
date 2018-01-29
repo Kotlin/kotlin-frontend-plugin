@@ -74,6 +74,19 @@ open class KarmaConfigTask : DefaultTask() {
                     "testTimeout" to 5000
                 )
             }
+
+            if ("jasmine" in extension.frameworks) {
+                if ("karma-jasmine" !in plugins) {
+                    plugins += "karma-jasmine"
+                }
+            }
+
+            if ("mocha" in extension.frameworks) {
+                if ("karma-mocha" !in plugins) {
+                    plugins += "karma-mocha"
+                }
+            }
+
             if (sourceMaps) {
                 preprocessors += "sourcemap"
                 plugins += "karma-sourcemap-loader"
