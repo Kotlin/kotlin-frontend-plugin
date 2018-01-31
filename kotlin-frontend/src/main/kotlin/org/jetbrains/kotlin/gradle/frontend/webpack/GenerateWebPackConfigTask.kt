@@ -14,6 +14,7 @@ import java.io.*
  * @author Sergey Mashkov
  */
 open class GenerateWebPackConfigTask : DefaultTask() {
+    @get:Internal
     private val configsDir: File
         get() = project.projectDir.resolve("webpack.config.d")
 
@@ -76,7 +77,7 @@ open class GenerateWebPackConfigTask : DefaultTask() {
                     .mapNotNull { it.dependencyProject }
                     .flatMap { it.tasks.filterIsInstance<Kotlin2JsCompile>() }
                     .filter { !it.name.contains("test", ignoreCase = true) }
-                    .map { project.file(it.outputFile) }
+                    .map { project.file(it.outputFileBridge()) }
                     .map { resolveRoots.add(it.parentFile.toRelativeString(project.buildDir)) }
 
             resolveRoots.add(0, File(contextDir).toRelativeString(project.buildDir))
@@ -151,6 +152,14 @@ open class GenerateWebPackConfigTask : DefaultTask() {
                 out.appendln()
             }
         }
+    }
+
+    private fun Kotlin2JsCompile.outputFileBridge(): File {
+        kotlinOptions.outputFile?.let { return project.file(it) }
+
+        outputFile.javaClass.getMethod("getOutputFile")?.let { return project.file(it.invoke(outputFile)) }
+
+        throw IllegalStateException("Unable to locate kotlin2js output file")
     }
 
     companion object {
