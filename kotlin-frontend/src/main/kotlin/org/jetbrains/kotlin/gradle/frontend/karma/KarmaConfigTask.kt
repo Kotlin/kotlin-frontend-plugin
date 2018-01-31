@@ -46,7 +46,7 @@ open class KarmaConfigTask : DefaultTask() {
                 "runnerPort" to extension.runnerPort,
                 "colors" to false,
                 "autoWatch" to true,
-                "browsers" to listOf("PhantomJS"),
+                "browsers" to extension.browsers,
                 "captureTimeout" to extension.captureTimeout,
                 "singleRun" to false,
                 "preprocessors" to mapOf(
