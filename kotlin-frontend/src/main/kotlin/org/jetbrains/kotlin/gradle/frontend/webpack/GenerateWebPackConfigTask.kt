@@ -167,8 +167,8 @@ open class GenerateWebPackConfigTask : DefaultTask() {
             return when (dir) {
                 is String -> File(dir).let { if (it.isAbsolute) it else project.buildDir.resolve(it) }
                 is File -> dir
-                is Function0<*> -> handleFile(project, dir() ?: throw IllegalArgumentException("function for webPackConfig.bundleDirectory shoudln't return null"))
-                is Closure<*> -> handleFile(project, dir.call() ?: throw IllegalArgumentException("closure for webPackConfig.bundleDirectory shoudln't return null"))
+                is Function0<*> -> handleFile(project, dir() ?: throw IllegalArgumentException("function for webPackConfig.bundleDirectory shouldn't return null"))
+                is Closure<*> -> handleFile(project, dir.call() ?: throw IllegalArgumentException("closure for webPackConfig.bundleDirectory shouldn't return null"))
                 else -> project.file(dir)
             }
         }
