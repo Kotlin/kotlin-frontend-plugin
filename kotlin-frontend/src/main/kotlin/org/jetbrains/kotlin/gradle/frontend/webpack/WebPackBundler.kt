@@ -14,7 +14,7 @@ object WebPackBundler : Bundler<WebPackExtension> {
 
     override fun apply(project: Project, packageManager: PackageManager, bundleTask: Task, runTask: Task, stopTask: Task) {
         packageManager.require(
-                listOf("webpack", "webpack-dev-server")
+                listOf("webpack", "webpack-cli", "webpack-dev-server")
                         .map { Dependency(it, "*", Dependency.DevelopmentScope) }
         )
         if (project.frontendExtension.sourceMaps) {
