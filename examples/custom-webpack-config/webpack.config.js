@@ -13,9 +13,9 @@ module.exports = {
     extensions: ['.js', '.css', '.vue']
   },
   module: {
-    loaders: [
+    rules: [
       { test: /\.vue$/, loader: 'vue-loader' },
-      { test: /\.css$/, loader: 'style-loader!css-loader' }
+      { test: /\.css$/, use: [ 'style-loader', 'css-loader' ] }
     ]
   },
   devtool: '#source-map'

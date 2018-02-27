@@ -1,15 +1,14 @@
 buildscript {
-    ext.kotlin_version = '1.1.1'
+    ext.kotlin_version = '1.2.21'
 
     repositories {
-        mavenLocal()
         jcenter()
         maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
     }
 
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "org.jetbrains.kotlin:kotlin-frontend:0.0.18-SNAPSHOT"
+        classpath "org.jetbrains.kotlin:kotlin-frontend-plugin:0.0.29"
     }
 }
 
@@ -39,6 +38,8 @@ kotlinFrontend {
         devDependency("vue-template-compiler")
 
         dependency("vue", "*")
+        devDependency("css-loader", "*")
+        devDependency("style-loader", "*")
         devDependency("vue-loader", "*")
         devDependency("vue-hot-reload-api", "*")
         devDependency("vue-html-loader", "*")
