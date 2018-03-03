@@ -26,7 +26,8 @@ open class WebPackBundleTask : DefaultTask() {
         ProcessBuilder(
                 nodePath(project, "node").first().absolutePath,
                 project.buildDir.resolve("node_modules/webpack/bin/webpack.js").absolutePath,
-                "--config", webPackConfigFile.absolutePath
+                "--config", webPackConfigFile.absolutePath,
+                "--mode", config.mode
         )
                 .directory(project.buildDir)
                 .startWithRedirectOnFail(project, "node webpack.js")
