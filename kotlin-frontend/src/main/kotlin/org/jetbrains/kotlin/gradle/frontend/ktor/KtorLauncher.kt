@@ -1,7 +1,9 @@
 package org.jetbrains.kotlin.gradle.frontend.ktor
 
-import org.gradle.api.*
-import org.jetbrains.kotlin.gradle.frontend.*
+import org.gradle.api.Project
+import org.gradle.api.Task
+import org.jetbrains.kotlin.gradle.frontend.Launcher
+import org.jetbrains.kotlin.gradle.frontend.dependencies.PackageManager
 
 object KtorLauncher : Launcher {
     override fun apply(packageManager: PackageManager, project: Project,

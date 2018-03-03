@@ -1,8 +1,11 @@
-package org.jetbrains.kotlin.gradle.frontend.npm
+package org.jetbrains.kotlin.gradle.frontend.dependencies
 
-import groovy.json.*
-import org.gradle.api.*
-import org.gradle.api.artifacts.*
+import groovy.json.JsonBuilder
+import groovy.json.JsonSlurper
+import org.gradle.api.DefaultTask
+import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.gradle.frontend.Dependency
 import org.jetbrains.kotlin.gradle.frontend.util.*
@@ -31,15 +34,27 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
     var resultNames: MutableList<NameVersionsUri>? = null
 
     @Internal
-    private val npm: NpmExtension = project.extensions.findByType(NpmExtension::class.java)!!
+    private val npm: DependencyExtension? = project.extensions.findByName("npm") as DependencyExtension?
+
+    @Internal
+    private val yarn: DependencyExtension? = project.extensions.findByName("yarn") as DependencyExtension?
+
+    private val dependenciesExtension : DependencyExtension
+        get() {
+            return if (yarn != null && (yarn.dependencies.isNotEmpty() || yarn.developmentDependencies.isNotEmpty())) {
+                yarn
+            } else {
+                npm!!
+            }
+        }
 
     @get:Input
     val replacementsInput: String
-        get() = npm.versionReplacements.joinToString()
+        get() = dependenciesExtension.versionReplacements.joinToString()
 
     init {
         onlyIf {
-            npm.dependencies.isNotEmpty() || npm.developmentDependencies.isNotEmpty() || dependenciesProvider().isNotEmpty()
+            dependenciesExtension.dependencies.isNotEmpty() || dependenciesExtension.developmentDependencies.isNotEmpty() || dependenciesProvider().isNotEmpty()
         }
     }
 
@@ -94,7 +109,7 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
                         )
 
                         for (name in modules) {
-                            val version = npm.versionReplacements.singleOrNull { it.name == artifact.name || it.name == name }?.versionOrUri
+                            val version = dependenciesExtension.versionReplacements.singleOrNull { it.name == artifact.name || it.name == name }?.versionOrUri
                                     ?: toSemver(artifact.moduleVersion.id.version)
 
                             val outDir = out.resolve(name)

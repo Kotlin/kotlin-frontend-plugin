@@ -1,8 +1,9 @@
-package org.jetbrains.kotlin.gradle.frontend.npm
+package org.jetbrains.kotlin.gradle.frontend.dependencies
 
-import groovy.json.*
-import org.gradle.api.*
-import org.gradle.api.plugins.*
+import groovy.json.JsonBuilder
+import groovy.json.JsonSlurper
+import org.gradle.api.DefaultTask
+import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.frontend.*
@@ -33,22 +34,34 @@ open class GeneratePackagesJsonTask : DefaultTask() {
     val configPartsDir = project.projectDir.resolve("package.json.d")
 
     @Internal
-    private val npm = project.extensions.getByType(NpmExtension::class.java)!!
+    private val npm = project.extensions.findByName("npm") as DependencyExtension?
+
+    @Internal
+    private val yarn = project.extensions.findByName("yarn") as DependencyExtension?
+
+    private val dependenciesExtension : DependencyExtension
+        get() {
+        return if (yarn != null && (yarn.dependencies.isNotEmpty() || yarn.developmentDependencies.isNotEmpty())) {
+            yarn
+        } else {
+            npm!!
+        }
+    }
 
     @get:Input
     @Suppress("unused")
     val dependenciesInput: String
-        get() = npm.dependencies.joinToString()
+        get() = dependenciesExtension.dependencies.joinToString()
 
     @get:Input
     @Suppress("unused")
     val devDependenciesInput: String
-        get() = npm.developmentDependencies.joinToString()
+        get() = dependenciesExtension.developmentDependencies.joinToString()
 
     @Suppress("unused")
     @get:Input
     val versionReplacementsInput: String
-        get() = npm.versionReplacements.joinToString()
+        get() = dependenciesExtension.versionReplacements.joinToString()
 
     @get:Input
     val moduleNames: List<String> by lazy { project.tasks.withType(KotlinJsCompile::class.java)
@@ -77,7 +90,7 @@ open class GeneratePackagesJsonTask : DefaultTask() {
         }
 
         onlyIf {
-            npm.dependencies.isNotEmpty() || npm.developmentDependencies.isNotEmpty() || toolsDependencies.isNotEmpty()
+            dependenciesExtension.dependencies.isNotEmpty() || dependenciesExtension.developmentDependencies.isNotEmpty() || toolsDependencies.isNotEmpty()
         }
     }
 
@@ -85,14 +98,14 @@ open class GeneratePackagesJsonTask : DefaultTask() {
     fun generate() {
         logger.info("Configuring npm")
 
-        val dependencies = npm.dependencies + (project.tasks.filterIsInstance<UnpackGradleDependenciesTask>().map { task ->
+        val dependencies = dependenciesExtension.dependencies + (project.tasks.filterIsInstance<UnpackGradleDependenciesTask>().map { task ->
             task.resultNames?.map { Dependency(it.name, it.semver, Dependency.RuntimeScope) } ?: task.resultFile.readLinesOrEmpty()
                     .map { it.split("/", limit = 4).map(String::trim) }
                     .filter { it.size == 4 }
                     .map { Dependency(it[0], it[2], Dependency.RuntimeScope) }
         }).flatten() + toolsDependencies.filter { it.scope == Dependency.RuntimeScope }
 
-        val devDependencies = mutableListOf(*npm.developmentDependencies.toTypedArray())
+        val devDependencies = mutableListOf(*dependenciesExtension.developmentDependencies.toTypedArray())
 
         devDependencies.addAll(toolsDependencies.filter {
             (it.scope == Dependency.DevelopmentScope) && devDependencies.all { dep ->  dep.name != it.name }

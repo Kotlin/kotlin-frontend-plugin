@@ -1,8 +1,11 @@
 package org.jetbrains.kotlin.gradle.frontend.rollup
 
-import org.gradle.api.*
+import org.gradle.api.Project
+import org.gradle.api.Task
+import org.jetbrains.kotlin.gradle.frontend.Bundler
 import org.gradle.api.file.*
-import org.jetbrains.kotlin.gradle.frontend.*
+import org.jetbrains.kotlin.gradle.frontend.Dependency
+import org.jetbrains.kotlin.gradle.frontend.dependencies.PackageManager
 
 object RollupBundler : Bundler<RollupExtension> {
     override val bundlerId = "rollup"

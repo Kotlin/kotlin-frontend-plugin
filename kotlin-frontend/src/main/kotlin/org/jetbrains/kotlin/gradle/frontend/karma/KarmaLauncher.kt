@@ -1,12 +1,15 @@
 package org.jetbrains.kotlin.gradle.frontend.karma
 
-import org.gradle.api.*
-import org.jetbrains.kotlin.gradle.dsl.*
-import org.jetbrains.kotlin.gradle.frontend.*
-import org.jetbrains.kotlin.gradle.frontend.util.*
-import org.jetbrains.kotlin.gradle.frontend.webpack.*
-import org.jetbrains.kotlin.gradle.tasks.*
-import java.io.*
+import org.gradle.api.Project
+import org.gradle.api.Task
+import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
+import org.jetbrains.kotlin.gradle.frontend.KotlinFrontendExtension
+import org.jetbrains.kotlin.gradle.frontend.Launcher
+import org.jetbrains.kotlin.gradle.frontend.dependencies.PackageManager
+import org.jetbrains.kotlin.gradle.frontend.util.withTask
+import org.jetbrains.kotlin.gradle.frontend.webpack.GenerateWebPackConfigTask
+import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
+import java.io.File
 
 object KarmaLauncher : Launcher {
     override fun apply(packageManager: PackageManager, project: Project,

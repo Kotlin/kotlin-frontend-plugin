@@ -1,4 +1,4 @@
-package org.jetbrains.kotlin.gradle.frontend.npm
+package org.jetbrains.kotlin.gradle.frontend.yarn
 
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.gradle.frontend.dependencies.UnpackGradleDependencie
 import org.jetbrains.kotlin.gradle.frontend.util.NodeJsDownloadTask
 import java.io.File
 
-class NpmPackageManager(val project: Project) : PackageManager {
+class YarnPackageManager(val project: Project) : PackageManager {
     private val packageJsonFile: File
         get() = project.buildDir.resolve("package.json")
 
@@ -29,9 +29,9 @@ class NpmPackageManager(val project: Project) : PackageManager {
         listOf(
             UnpackGradleDependenciesTask::class.java,
             GeneratePackagesJsonTask::class.java,
-            NpmInstallTask::class.java,
-            NpmIndexTask::class.java,
-            NpmDependenciesTask::class.java
+            YarnInstallTask::class.java,
+            YarnIndexTask::class.java,
+            YarnDependenciesTask::class.java
         ).flatMap { project.tasks.withType(it) }
             .filterNot { it.state.executed || it.state.skipped || it.state.upToDate }
             .forEach { t ->
@@ -41,7 +41,7 @@ class NpmPackageManager(val project: Project) : PackageManager {
     }
 
     override fun apply() {
-        project.extensions.create("npm", DependencyExtension::class.java)
+        project.extensions.create("yarn", DependencyExtension::class.java)
         injectDependencies()
         project.afterEvaluate {
             defineTasks()
@@ -60,11 +60,11 @@ class NpmPackageManager(val project: Project) : PackageManager {
         withConfiguration("compile") { configuration ->
             configuration.dependencies.add(DefaultSelfResolvingDependency(object : AbstractFileCollection() {
                 override fun getFiles(): MutableSet<File> {
-                    return project.tasks.filterIsInstance<NpmDependenciesTask>().flatMap { it.results }.toMutableSet()
+                    return project.tasks.filterIsInstance<YarnDependenciesTask>().flatMap { it.results }.toMutableSet()
                 }
 
                 override fun getDisplayName(): String {
-                    return "npm-dependencies"
+                    return "yarn-dependencies"
                 }
             }))
         }
@@ -74,29 +74,29 @@ class NpmPackageManager(val project: Project) : PackageManager {
         if (!tasksDefined) {
             if (hasDependencies() || project.projectDir.resolve("package.json.d").exists() || requiredDependencies.isNotEmpty()) {
                 val unpack =
-                    project.tasks.create("npm-preunpack", UnpackGradleDependenciesTask::class.java) { task ->
+                    project.tasks.create("yarn-preunpack", UnpackGradleDependenciesTask::class.java) { task ->
                         task.dependenciesProvider = { requiredDependencies }
                     }
                 val configure =
-                    project.tasks.create("npm-configure", GeneratePackagesJsonTask::class.java) { task ->
-                        task.description = "Generate package.json and prepare for npm"
-                        task.group = NpmGroup
+                    project.tasks.create("yarn-configure", GeneratePackagesJsonTask::class.java) { task ->
+                        task.description = "Generate package.json and prepare for yarn"
+                        task.group = YarnGroup
 
                         task.dependenciesProvider = { requiredDependencies }
                         task.packageJsonFile = packageJsonFile
                         task.npmrcFile = packageJsonFile.resolveSibling(".npmrc")
                     }
-                val install = project.tasks.create("npm-install", NpmInstallTask::class.java) { task ->
-                    task.description = "Install npm packages"
-                    task.group = NpmGroup
+                val install = project.tasks.create("yarn-install", YarnInstallTask::class.java) { task ->
+                    task.description = "Install yarn packages"
+                    task.group = YarnGroup
 
                     task.packageJsonFile = packageJsonFile
                 }
-                val index = project.tasks.create("npm-index", NpmIndexTask::class.java)
-                val setup = project.tasks.create("npm-deps", NpmDependenciesTask::class.java)
-                val npmAll = project.tasks.create("npm") { task ->
-                    task.description = "Configure npm and install packages"
-                    task.group = NpmGroup
+                val index = project.tasks.create("yarn-index", YarnIndexTask::class.java)
+                val setup = project.tasks.create("yarn-deps", YarnDependenciesTask::class.java)
+                val yarnAll = project.tasks.create("yarn") { task ->
+                    task.description = "Configure yarn and install packages"
+                    task.group = YarnGroup
                 }
 
                 if (hasDependencies()) {
@@ -105,8 +105,9 @@ class NpmPackageManager(val project: Project) : PackageManager {
                     install.dependsOn(configure)
                     index.dependsOn(install)
                     setup.dependsOn(index)
-                    npmAll.dependsOn(setup)
-                    project.tasks.getByName("packages").dependsOn(npmAll)
+                    yarnAll.dependsOn(setup)
+
+                    project.tasks.getByName("packages").dependsOn(yarnAll)
                 }
 
                 tasksDefined = true
@@ -115,11 +116,11 @@ class NpmPackageManager(val project: Project) : PackageManager {
     }
 
     override fun hasDependencies(): Boolean {
-        val npm = project.extensions.findByName("npm") as DependencyExtension?
-        return npm != null && (npm.dependencies.isNotEmpty() || npm.developmentDependencies.isNotEmpty())
+        val yarn = project.extensions.findByName("yarn") as DependencyExtension?
+        return yarn != null && (yarn.dependencies.isNotEmpty() || yarn.developmentDependencies.isNotEmpty())
     }
 
     companion object {
-        val NpmGroup = "NPM"
+        val YarnGroup = "YARN"
     }
 }

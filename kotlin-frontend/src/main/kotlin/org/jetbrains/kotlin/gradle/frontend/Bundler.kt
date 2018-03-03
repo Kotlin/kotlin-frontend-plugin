@@ -1,8 +1,10 @@
 package org.jetbrains.kotlin.gradle.frontend
 
-import org.gradle.api.*
+import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.file.*
-import org.jetbrains.kotlin.gradle.frontend.config.*
+import org.jetbrains.kotlin.gradle.frontend.config.BundleConfig
+import org.jetbrains.kotlin.gradle.frontend.dependencies.PackageManager
 
 /**
  * @author Sergey Mashkov

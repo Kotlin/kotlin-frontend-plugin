@@ -1,10 +1,14 @@
 package org.jetbrains.kotlin.gradle.frontend.webpack
 
-import org.gradle.api.*
-import org.gradle.language.jvm.tasks.*
+import org.gradle.api.Project
+import org.gradle.api.Task
+import org.gradle.language.jvm.tasks.ProcessResources
+import org.jetbrains.kotlin.gradle.frontend.Launcher
+import org.jetbrains.kotlin.gradle.frontend.RelativizeSourceMapTask
 import org.jetbrains.kotlin.gradle.dsl.*
-import org.jetbrains.kotlin.gradle.frontend.*
-import org.jetbrains.kotlin.gradle.frontend.util.*
+import org.jetbrains.kotlin.gradle.frontend.dependencies.PackageManager
+import org.jetbrains.kotlin.gradle.frontend.util.frontendExtension
+import org.jetbrains.kotlin.gradle.frontend.util.withTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinJsDce
 
 object WebPackLauncher : Launcher {

@@ -1,20 +1,28 @@
 package org.jetbrains.kotlin.gradle.frontend
 
-import org.gradle.*
-import org.gradle.api.*
-import org.gradle.api.artifacts.*
-import org.gradle.api.initialization.*
-import org.gradle.api.invocation.*
-import org.gradle.api.plugins.*
-import org.jetbrains.kotlin.gradle.dsl.*
-import org.jetbrains.kotlin.gradle.frontend.karma.*
-import org.jetbrains.kotlin.gradle.frontend.ktor.*
-import org.jetbrains.kotlin.gradle.frontend.npm.*
-import org.jetbrains.kotlin.gradle.frontend.rollup.*
-import org.jetbrains.kotlin.gradle.frontend.util.*
-import org.jetbrains.kotlin.gradle.frontend.webpack.*
-import org.jetbrains.kotlin.gradle.plugin.*
-import java.io.*
+import org.gradle.BuildListener
+import org.gradle.BuildResult
+import org.gradle.api.GradleException
+import org.gradle.api.Plugin
+import org.gradle.api.Project
+import org.gradle.api.Task
+import org.gradle.api.artifacts.DependencyResolutionListener
+import org.gradle.api.artifacts.ResolvableDependencies
+import org.gradle.api.initialization.Settings
+import org.gradle.api.invocation.Gradle
+import org.gradle.api.plugins.AppliedPlugin
+import org.gradle.api.plugins.JavaPluginConvention
+import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
+import org.jetbrains.kotlin.gradle.frontend.karma.KarmaLauncher
+import org.jetbrains.kotlin.gradle.frontend.ktor.KtorLauncher
+import org.jetbrains.kotlin.gradle.frontend.npm.NpmPackageManager
+import org.jetbrains.kotlin.gradle.frontend.rollup.RollupBundler
+import org.jetbrains.kotlin.gradle.frontend.util.NodeJsDownloadTask
+import org.jetbrains.kotlin.gradle.frontend.webpack.WebPackBundler
+import org.jetbrains.kotlin.gradle.frontend.webpack.WebPackLauncher
+import org.jetbrains.kotlin.gradle.frontend.yarn.YarnPackageManager
+import org.jetbrains.kotlin.gradle.plugin.Kotlin2JsPluginWrapper
+import java.io.File
 
 class FrontendPlugin : Plugin<Project> {
     val bundlers = mapOf("webpack" to WebPackBundler, "rollup" to RollupBundler)
@@ -53,12 +61,12 @@ class FrontendPlugin : Plugin<Project> {
             description = "Gather and install all JS dependencies (npm)"
         }
 
-        val managers = listOf<PackageManager>(NpmPackageManager(project))
-        val packageManager: PackageManager = managers.first()
-
+        val managers = listOf(NpmPackageManager(project), YarnPackageManager(project))
         for (manager in managers) {
-            manager.apply(packages)
+            manager.apply()
         }
+
+        val packageManager = managers.find { it.hasDependencies() } ?: managers.first()
 
         val bundle = project.task("bundle").apply {
             group = "build"
@@ -104,7 +112,8 @@ class FrontendPlugin : Plugin<Project> {
                 }
 
                 for ((id, bundles) in frontend.bundles().groupBy { it.bundlerId }) {
-                    val bundler = frontend.bundlers[id] ?: throw GradleException("Bundler $id is not supported (or not plugged-in), required for bundles: ${bundles.map { it.bundleName }}")
+                    val bundler = frontend.bundlers[id]
+                            ?: throw GradleException("Bundler $id is not supported (or not plugged-in), required for bundles: ${bundles.map { it.bundleName }}")
 
                     bundler.apply(project, packageManager, packages, bundle, run, stop)
                 }
