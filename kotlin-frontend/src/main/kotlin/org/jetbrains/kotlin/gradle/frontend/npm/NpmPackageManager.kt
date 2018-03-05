@@ -1,13 +1,15 @@
 package org.jetbrains.kotlin.gradle.frontend.npm
 
-import org.gradle.api.*
-import org.gradle.api.artifacts.*
-import org.gradle.api.internal.artifacts.dependencies.*
-import org.gradle.api.internal.file.*
-import org.jetbrains.kotlin.gradle.frontend.*
+import org.gradle.api.Project
+import org.gradle.api.Task
+import org.gradle.api.artifacts.Configuration
+import org.gradle.api.internal.artifacts.dependencies.DefaultSelfResolvingDependency
+import org.gradle.api.internal.file.AbstractFileCollection
 import org.jetbrains.kotlin.gradle.frontend.Dependency
-import org.jetbrains.kotlin.gradle.frontend.util.*
-import java.io.*
+import org.jetbrains.kotlin.gradle.frontend.PackageManager
+import org.jetbrains.kotlin.gradle.frontend.util.NodeJsDownloadTask
+import org.jetbrains.kotlin.gradle.frontend.yarn.YarnInstallTask
+import java.io.File
 
 class NpmPackageManager(val project: Project) : PackageManager {
     private val packageJsonFile: File
@@ -38,6 +40,7 @@ class NpmPackageManager(val project: Project) : PackageManager {
 
     override fun apply(containerTask: Task) {
         project.extensions.create("npm", NpmExtension::class.java)
+        project.extensions.create("yarn", NpmExtension::class.java)
 
         injectDependencies()
         project.afterEvaluate {
@@ -69,43 +72,58 @@ class NpmPackageManager(val project: Project) : PackageManager {
 
     private fun defineTasks() {
         if (!tasksDefined) {
-            val npm = project.extensions.getByType(NpmExtension::class.java)!!
+            val npm = project.extensions.getByName("npm") as NpmExtension
+            val yarn = project.extensions.getByName("yarn") as NpmExtension
+            if (project.projectDir.resolve("package.json.d").exists() || requiredDependencies.isNotEmpty()) {
+                val install = if (npm.dependencies.isNotEmpty() || npm.developmentDependencies.isNotEmpty()) {
+                    project.tasks.create("npm-install", NpmInstallTask::class.java) { task ->
+                        task.description = "Install npm packages"
+                        task.group = NpmGroup
 
-            if (npm.dependencies.isNotEmpty() || npm.developmentDependencies.isNotEmpty() || project.projectDir.resolve("package.json.d").exists() || requiredDependencies.isNotEmpty()) {
+                        task.packageJsonFile = packageJsonFile
+                    }
+                } else if (yarn.dependencies.isNotEmpty() || yarn.developmentDependencies.isNotEmpty()) {
+                    project.tasks.create("yarn-install", YarnInstallTask::class.java) { task ->
+                        task.description = "Install npm packages with yarn"
+                        task.group = NpmGroup
 
-                val unpack = project.tasks.create("npm-preunpack", UnpackGradleDependenciesTask::class.java) { task ->
-                    task.dependenciesProvider = { requiredDependencies }
-                }
-                val configure = project.tasks.create("npm-configure", GeneratePackagesJsonTask::class.java) { task ->
-                    task.description = "Generate package.json and prepare for npm"
-                    task.group = NpmGroup
-
-                    task.dependenciesProvider = { requiredDependencies }
-                    task.packageJsonFile = packageJsonFile
-                    task.npmrcFile = packageJsonFile.resolveSibling(".npmrc")
-                }
-                val install = project.tasks.create("npm-install", NpmInstallTask::class.java) { task ->
-                    task.description = "Install npm packages"
-                    task.group = NpmGroup
-
-                    task.packageJsonFile = packageJsonFile
-                }
-                val index = project.tasks.create("npm-index", NpmIndexTask::class.java)
-                val setup = project.tasks.create("npm-deps", NpmDependenciesTask::class.java)
-                val npmAll = project.tasks.create("npm") { task ->
-                    task.description = "Configure npm and install packages"
-                    task.group = NpmGroup
+                        task.packageJsonFile = packageJsonFile
+                    }
+                } else {
+                    null
                 }
 
-                project.tasks.withType(NodeJsDownloadTask::class.java)?.let { configure.dependsOn(it) }
-                configure.dependsOn(unpack)
-                install.dependsOn(configure)
-                index.dependsOn(install)
-                setup.dependsOn(index)
-                npmAll.dependsOn(setup)
+                if (install != null) {
+                    val unpack =
+                        project.tasks.create("npm-preunpack", UnpackGradleDependenciesTask::class.java) { task ->
+                            task.dependenciesProvider = { requiredDependencies }
+                        }
+                    val configure =
+                        project.tasks.create("npm-configure", GeneratePackagesJsonTask::class.java) { task ->
+                            task.description = "Generate package.json and prepare for npm"
+                            task.group = NpmGroup
 
-                project.tasks.getByName("packages").dependsOn(npmAll)
-                tasksDefined = true
+                            task.dependenciesProvider = { requiredDependencies }
+                            task.packageJsonFile = packageJsonFile
+                            task.npmrcFile = packageJsonFile.resolveSibling(".npmrc")
+                        }
+                    val index = project.tasks.create("npm-index", NpmIndexTask::class.java)
+                    val setup = project.tasks.create("npm-deps", NpmDependenciesTask::class.java)
+                    val npmAll = project.tasks.create("npm") { task ->
+                        task.description = "Configure npm and install packages"
+                        task.group = NpmGroup
+                    }
+
+                    project.tasks.withType(NodeJsDownloadTask::class.java)?.let { configure.dependsOn(it) }
+                    configure.dependsOn(unpack)
+                    install.dependsOn(configure)
+                    index.dependsOn(install)
+                    setup.dependsOn(index)
+                    npmAll.dependsOn(setup)
+
+                    project.tasks.getByName("packages").dependsOn(npmAll)
+                    tasksDefined = true
+                }
             }
         }
     }

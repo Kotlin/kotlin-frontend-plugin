@@ -1,14 +1,18 @@
 package org.jetbrains.kotlin.gradle.frontend.npm
 
-import groovy.json.*
-import org.gradle.api.*
-import org.gradle.api.artifacts.*
+import groovy.json.JsonBuilder
+import groovy.json.JsonSlurper
+import org.gradle.api.DefaultTask
+import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.gradle.frontend.Dependency
-import org.jetbrains.kotlin.gradle.frontend.util.*
-import org.jetbrains.kotlin.preprocessor.*
-import org.jetbrains.kotlin.utils.*
-import java.io.*
+import org.jetbrains.kotlin.gradle.frontend.util.toLocalURI
+import org.jetbrains.kotlin.gradle.frontend.util.toSemver
+import org.jetbrains.kotlin.preprocessor.mkdirsOrFail
+import org.jetbrains.kotlin.utils.LibraryUtils
+import java.io.File
 
 /**
  * @author Sergey Mashkov
@@ -28,15 +32,26 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
     var resultNames: MutableList<NameVersionsUri>? = null
 
     @Internal
-    private val npm: NpmExtension = project.extensions.findByType(NpmExtension::class.java)!!
+    private val npm: NpmExtension = project.extensions.findByName("npm") as NpmExtension
+
+    @Internal
+    private val yarn: NpmExtension = project.extensions.findByName("yarn") as NpmExtension
 
     @get:Input
     val replacementsInput: String
-        get() = npm.versionReplacements.joinToString()
+        get() {
+            return when {
+                npm.versionReplacements.isNotEmpty() -> npm.versionReplacements.joinToString()
+                yarn.versionReplacements.isNotEmpty() -> yarn.versionReplacements.joinToString()
+                else -> ""
+            }
+        }
 
     init {
         onlyIf {
-            npm.dependencies.isNotEmpty() || npm.developmentDependencies.isNotEmpty() || dependenciesProvider().isNotEmpty()
+            npm.dependencies.isNotEmpty() || npm.developmentDependencies.isNotEmpty()
+                    || yarn.dependencies.isNotEmpty() || yarn.developmentDependencies.isNotEmpty()
+                    || dependenciesProvider().isNotEmpty()
         }
     }
 
@@ -74,8 +89,11 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
                     project.tasks.create("npm-unpack-$name", Copy::class.java).from(project.zipTree(artifact.file)).into(outDir).execute()
 
                     if (existingPackageJson == null) {
-                        val version = npm.versionReplacements.singleOrNull { it.name == artifact.name }?.versionOrUri
-                                ?: toSemver(artifact.moduleVersion.id.version)
+                        val version = when {
+                            npm.versionReplacements.isNotEmpty() -> npm.versionReplacements.singleOrNull { it.name == artifact.name }?.versionOrUri
+                            yarn.versionReplacements.isNotEmpty() -> yarn.versionReplacements.singleOrNull { it.name == artifact.name }?.versionOrUri
+                            else -> null
+                        } ?: toSemver(artifact.moduleVersion.id.version)
 
                         val packageJson = mapOf(
                                 "name" to name,
