@@ -27,4 +27,6 @@ open class WebPackExtension(project: Project) : BundleConfig {
     var stats: String = "errors-only"
 
     var webpackConfigFile: Any? = null
+
+    var mode: String = "development"
 }
