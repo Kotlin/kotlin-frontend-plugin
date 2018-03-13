@@ -61,38 +61,53 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
                     @Suppress("UNCHECKED_CAST")
                     val existingPackageJson = project.zipTree(artifact.file).firstOrNull { it.name == "package.json" }?.let { JsonSlurper().parse(it) as Map<String, Any> }
 
-                    val name = existingPackageJson?.get("name")?.toString()
-                            ?: getJsModuleName(artifact.file)
-                            ?: artifact.name
-                            ?: artifact.id.displayName
-                            ?: artifact.file.nameWithoutExtension
+                    if (existingPackageJson != null) {
+                        val name = existingPackageJson["name"]?.toString()
+                                ?: getJsModuleName(artifact.file)
+                                ?: artifact.name
+                                ?: artifact.id.displayName
+                                ?: artifact.file.nameWithoutExtension
 
-                    val outDir = out.resolve(name)
-                    outDir.mkdirsOrFail()
+                        val outDir = out.resolve(name)
+                        outDir.mkdirsOrFail()
 
-                    logger.debug("Unpack to node_modules from ${artifact.file} to $outDir")
-                    project.tasks.create("npm-unpack-$name", Copy::class.java).from(project.zipTree(artifact.file)).into(outDir).execute()
+                        logger.debug("Unpack to node_modules from ${artifact.file} to $outDir")
+                        project.tasks.create("npm-unpack-$name", Copy::class.java).from(project.zipTree(artifact.file)).into(outDir).execute()
 
-                    if (existingPackageJson == null) {
-                        val version = npm.versionReplacements.singleOrNull { it.name == artifact.name }?.versionOrUri
-                                ?: toSemver(artifact.moduleVersion.id.version)
-
-                        val packageJson = mapOf(
-                                "name" to name,
-                                "version" to version,
-                                "main" to "$name.js",
-                                "_source" to "gradle"
-                        )
-
-                        outDir.resolve("package.json").bufferedWriter().use { out ->
-                            out.appendln(JsonBuilder(packageJson).toPrettyString())
-                        }
-
-                        resultNames?.add(NameVersionsUri(name, artifact.moduleVersion.id.version, version, outDir.toLocalURI()))
-                    } else {
                         val existingVersion = existingPackageJson["version"]?.toString() ?: toSemver(null)
 
                         resultNames?.add(NameVersionsUri(name, artifact.moduleVersion.id.version, existingVersion, artifact.file.toLocalURI()))
+                    } else {
+                        val modules = getJsModuleNames(artifact.file)
+                                .takeIf { it.isNotEmpty() } ?: listOf(
+                                artifact.name
+                                        ?: artifact.id.displayName
+                                        ?: artifact.file.nameWithoutExtension
+                        )
+
+                        for (name in modules) {
+                            val version = npm.versionReplacements.singleOrNull { it.name == artifact.name || it.name == name }?.versionOrUri
+                                    ?: toSemver(artifact.moduleVersion.id.version)
+
+                            val outDir = out.resolve(name)
+                            outDir.mkdirsOrFail()
+
+                            logger.debug("Unpack to node_modules from ${artifact.file} to $outDir")
+                            project.tasks.create("npm-unpack-$name", Copy::class.java).from(project.zipTree(artifact.file)).into(outDir).execute()
+
+                            val packageJson = mapOf(
+                                    "name" to name,
+                                    "version" to version,
+                                    "main" to "$name.js",
+                                    "_source" to "gradle"
+                            )
+
+                            outDir.resolve("package.json").bufferedWriter().use { out ->
+                                out.appendln(JsonBuilder(packageJson).toPrettyString())
+                            }
+
+                            resultNames?.add(NameVersionsUri(name, artifact.moduleVersion.id.version, version, outDir.toLocalURI()))
+                        }
                     }
                 }
 
@@ -108,6 +123,13 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
                 .mapNotNull { moduleNamePattern.find(it.readText())?.groupValues?.get(1) }
                 .mapNotNull { JsonSlurper().parseText(it)?.toString() }
                 .singleOrNull()
+    }
+
+    private fun getJsModuleNames(file: File): List<String> {
+        return project.zipTree(file)
+                .filter { it.name.endsWith(".meta.js") && it.canRead() }
+                .mapNotNull { moduleNamePattern.find(it.readText())?.groupValues?.get(1) }
+                .mapNotNull { JsonSlurper().parseText(it)?.toString() }
     }
 
     companion object {
