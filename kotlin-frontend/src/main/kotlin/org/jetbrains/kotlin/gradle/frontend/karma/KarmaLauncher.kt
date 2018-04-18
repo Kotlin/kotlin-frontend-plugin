@@ -53,7 +53,7 @@ object KarmaLauncher : Launcher {
 
                     if (karma.frameworks.contains("qunit")) {
                         require("qunitjs", "1.23.1")
-                        require("karma-qunit")
+                        require("karma-qunit", "1.2.1")
                     }
 
                     if (karma.frameworks.contains("jasmine")) {
