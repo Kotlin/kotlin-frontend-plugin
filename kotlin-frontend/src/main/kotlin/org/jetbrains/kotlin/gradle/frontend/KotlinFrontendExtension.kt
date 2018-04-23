@@ -15,22 +15,27 @@ open class KotlinFrontendExtension(val project: Project) : GroovyObjectSupport()
         metaClass = mc
     }
 
+    @Internal
     private val _bundlers = linkedMapOf(
             "webpack" to WebPackBundler,
             "rollup" to RollupBundler
     )
 
+    @Input
     private val _ext = linkedMapOf<String, Any?>()
 
+    @get:Internal
     val bundlers: Map<String, Bundler<*>>
         get() = Collections.unmodifiableMap(_bundlers)
 
+    @get:Internal
     val defined: Map<String, Any?>
         get() = Collections.unmodifiableMap(_ext)
 
     @Input
     var sourceMaps: Boolean = false
 
+    @Internal
     var bundlesDirectory: Any = project.buildDir.resolve("bundle")
 
     @Input
