@@ -15,9 +15,11 @@ open class WebPackBundleTask : DefaultTask() {
                 ?: throw GradleException("Only one webpack bundle is supported")
     }
 
-    @InputFile
-    private val webPackConfigFile = config.webpackConfigFile?.let { project.file(it) }
-            ?: project.buildDir.resolve("webpack.config.js")
+    @get:InputFile
+    private val webPackConfigFile by lazy {
+        config.webpackConfigFile?.let { project.file(it) }
+                ?: project.buildDir.resolve("webpack.config.js")
+    }
 
     @get:OutputDirectory
     val bundleDir by lazy { GenerateWebPackConfigTask.handleFile(project, project.frontendExtension.bundlesDirectory) }
