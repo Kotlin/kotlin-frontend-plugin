@@ -1,5 +1,6 @@
-var config = require('./build/WebPackHelper.js')
-var path = require('path')
+var config = require('./build/WebPackHelper.js');
+var path = require('path');
+var VueLoaderPlugin = require('./build/node_modules/vue-loader/lib/plugin'); // NOTE ./build/node_modules prefix!
 
 module.exports = {
   entry: config.moduleName,
@@ -18,7 +19,10 @@ module.exports = {
       { test: /\.css$/, use: [ 'style-loader', 'css-loader' ] }
     ]
   },
-  devtool: '#source-map'
+  devtool: '#source-map',
+  plugins: [
+      new VueLoaderPlugin()
+  ]
 };
 
 console.log(module.exports.resolve.modules);
