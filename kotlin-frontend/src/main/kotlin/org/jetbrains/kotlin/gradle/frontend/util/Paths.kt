@@ -46,6 +46,12 @@ fun ProcessBuilder.addCommandPathToSystemPath() = apply {
     }
 }
 
+fun File.mkdirsOrFail() {
+    if (!mkdirs() && !exists()) {
+        throw IOException("Failed to create directories at $this")
+    }
+}
+
 private val Suffixes = if (Os.isFamily(Os.FAMILY_WINDOWS)) {
     listOf(".exe", ".bat", ".cmd")
 } else {

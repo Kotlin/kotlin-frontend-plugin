@@ -137,12 +137,6 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
                 .mapNotNull { JsonSlurper().parseText(it)?.toString() }
     }
 
-    private fun File.mkdirsOrFail() {
-        if (!mkdirs() && !exists()) {
-            throw IOException("Failed to create directories at $this")
-        }
-    }
-
     companion object {
         fun unpackFile(project: Project) = project.buildDir.resolve(".unpack.txt")
     }

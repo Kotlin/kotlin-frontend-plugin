@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.gradle.frontend.util
 import org.gradle.api.*
 import org.gradle.api.tasks.*
 import org.gradle.internal.logging.progress.*
-import org.jetbrains.kotlin.preprocessor.*
 import java.io.*
 import java.math.*
 import java.net.*
