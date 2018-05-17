@@ -60,12 +60,15 @@ var devServerDefaultOptions = {
     } : undefined
 };
 
-function before(app) {
-    app.get(RunConfig.shutDownPath, function (req, res) {
-        res.json({shutdown: 'ok'});
-        devServer.close();
-    });
-}
+var before = {
+    value: function (app) {
+        app.get(RunConfig.shutDownPath, function (req, res) {
+            res.json({shutdown: 'ok'});
+            devServer.close();
+        });
+    },
+    writable: true
+};
 
 if (semver.satisfies(devServerVersion, '>=2.9.0')) {
     Object.defineProperty(devServerDefaultOptions, 'before', before);
