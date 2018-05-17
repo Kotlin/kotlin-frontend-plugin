@@ -6,7 +6,6 @@ import org.gradle.api.artifacts.*
 import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.gradle.frontend.Dependency
 import org.jetbrains.kotlin.gradle.frontend.util.*
-import org.jetbrains.kotlin.preprocessor.*
 import org.jetbrains.kotlin.utils.*
 import java.io.*
 
@@ -130,6 +129,12 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
                 .filter { it.name.endsWith(".meta.js") && it.canRead() }
                 .mapNotNull { moduleNamePattern.find(it.readText())?.groupValues?.get(1) }
                 .mapNotNull { JsonSlurper().parseText(it)?.toString() }
+    }
+
+    private fun File.mkdirsOrFail() {
+        if (!mkdirs() && !exists()) {
+            throw IOException("Failed to create directories at $this")
+        }
     }
 
     companion object {
