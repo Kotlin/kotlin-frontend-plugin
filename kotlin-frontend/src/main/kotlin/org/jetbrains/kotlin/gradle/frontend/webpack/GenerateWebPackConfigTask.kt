@@ -60,10 +60,7 @@ open class GenerateWebPackConfigTask : DefaultTask() {
         }
     }
 
-    @TaskAction
-    fun generateConfig() {
-        val bundle = bundles.singleOrNull() ?: throw GradleException("Only single webpack bundle supported")
-
+    fun getModuleResolveRoots(testMode: Boolean): List<String> {
         val resolveRoots = mutableListOf<String>()
 
         val dceOutputFiles = project.tasks
@@ -71,20 +68,23 @@ open class GenerateWebPackConfigTask : DefaultTask() {
                 .filter { it.isEnabled && !it.name.contains("test", ignoreCase = true) }
                 .flatMap { it.outputs.files }
 
-        val entryDir = if (dceOutputFiles.isEmpty()) {
+        if (dceOutputFiles.isEmpty() || testMode) {
+            resolveRoots.add(File(contextDir).toRelativeString(project.buildDir))
+
             project.configurations.findByName("compile")?.allDependencies
                     ?.filterIsInstance<ProjectDependency>().orEmpty()
                     .mapNotNull { it.dependencyProject }
                     .flatMap { it.tasks.filterIsInstance<Kotlin2JsCompile>() }
                     .filter { !it.name.contains("test", ignoreCase = true) }
                     .map { project.file(it.outputFileBridge()) }
-                    .map { resolveRoots.add(it.parentFile.toRelativeString(project.buildDir)) }
-
-            resolveRoots.add(0, File(contextDir).toRelativeString(project.buildDir))
-            contextDir
+                    .forEach { resolveRoots.add(it.parentFile.toRelativeString(project.buildDir)) }
         } else {
             resolveRoots.addAll(dceOutputFiles.map { it.toRelativeString(project.buildDir) })
             dceOutputFiles.first().absolutePath
+        }
+
+        if (testMode) {
+            resolveRoots.add(kotlinOutput(project).absolutePath)
         }
 
         val sourceSets: SourceSetContainer? = project.convention.findPlugin(JavaPluginConvention::class.java)?.sourceSets
@@ -99,8 +99,18 @@ open class GenerateWebPackConfigTask : DefaultTask() {
         resolveRoots.add(project.buildDir.resolve("node_modules").toRelativeString(project.buildDir))
         resolveRoots.add(project.buildDir.resolve("node_modules").absolutePath)
 
+        return resolveRoots
+    }
+
+    @TaskAction
+    fun generateConfig() {
+        val bundle = bundles.singleOrNull() ?: throw GradleException("Only single webpack bundle supported")
+
+        val resolveRoots = getModuleResolveRoots(false)
+
         val json = linkedMapOf(
-                "context" to entryDir,
+                "mode" to bundle.mode,
+                "context" to File(contextDir).absolutePath,
                 "entry" to mapOf(
                         bundle.bundleName to kotlinOutput(project).nameWithoutExtension.let { "./$it" }
                 ),

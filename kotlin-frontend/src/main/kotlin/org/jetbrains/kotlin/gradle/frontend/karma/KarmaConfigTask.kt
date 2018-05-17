@@ -98,8 +98,28 @@ open class KarmaConfigTask : DefaultTask() {
                 project.tasks.withType(GenerateWebPackConfigTask::class.java).single().let { webpackTask ->
                     webpackTask.webPackConfigFile.ifCanRead { file ->
                         prepares += "var webpackConfig = require(${JsonOutput.toJson(file.absolutePath)})"
-                        prepares += "webpackConfig.resolve.modules.push(" + JsonOutput.toJson(kotlinTestOutput(project).absolutePath) + ")"
+
                         prepares += "webpackConfig.mode = 'development'"
+
+                        val roots = project.tasks.withType(GenerateWebPackConfigTask::class.java).flatMap {
+                            it.getModuleResolveRoots(testMode = true)
+                        }
+                        val webpackEntryContext = project.tasks.withType(GenerateWebPackConfigTask::class.java)
+                                .map { it.contextDir }
+                                .distinct()
+                                .singleOrNull()
+                                ?: throw GradleException("Failed to detect webpack root context")
+
+                        if (roots.isEmpty()) throw GradleException("No module roots founds")
+
+                        prepares += "webpackConfig.resolve.modules = " + roots.joinToString(
+                                prefix = "[",
+                                postfix = "]",
+                                separator = ", ",
+                                transform = { JsonOutput.toJson(it) }
+                        )
+
+                        prepares += "webpackConfig.context = ${JsonOutput.toJson(webpackEntryContext)}"
 
                         plugins += "karma-webpack"
                         preprocessors += "webpack"
