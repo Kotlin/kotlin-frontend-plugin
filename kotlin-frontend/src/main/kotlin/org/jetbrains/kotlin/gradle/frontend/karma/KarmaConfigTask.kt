@@ -99,6 +99,7 @@ open class KarmaConfigTask : DefaultTask() {
                     webpackTask.webPackConfigFile.ifCanRead { file ->
                         prepares += "var webpackConfig = require(${JsonOutput.toJson(file.absolutePath)})"
                         prepares += "webpackConfig.resolve.modules.push(" + JsonOutput.toJson(kotlinTestOutput(project).absolutePath) + ")"
+                        prepares += "webpackConfig.mode = 'development'"
 
                         plugins += "karma-webpack"
                         preprocessors += "webpack"
