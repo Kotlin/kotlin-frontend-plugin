@@ -23,7 +23,7 @@ fun ProcessBuilder.startWithRedirectOnFail(project: Project, name: String, exec:
     }
 
     val out = if (project.logger.isInfoEnabled) System.out else NullOutputStream
-    val buffered = OutputStreamWithBuffer(out, 1024)
+    val buffered = OutputStreamWithBuffer(out, 8192)
 
     val rc = try {
         ProcessHandler(process, buffered, buffered, exec).startAndWaitFor()
@@ -34,8 +34,7 @@ fun ProcessBuilder.startWithRedirectOnFail(project: Project, name: String, exec:
     }
 
     if (rc != 0) {
-        System.err.write(buffered.lines())
-        System.err.flush()
+        project.logger.error(buffered.lines().toString(Charsets.UTF_8))
 
         project.logger.debug("Command failed (exit code = $rc): ${command().joinToString(" ")}")
         throw GradleException("$name failed (exit code = $rc)")
