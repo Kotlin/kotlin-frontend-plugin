@@ -61,12 +61,12 @@ private object NullOutputStream : OutputStream() {
     }
 }
 
-private class OutputStreamWithBuffer(out: OutputStream, sizeLimit: Int) : FilterOutputStream(out) {
+internal class OutputStreamWithBuffer(out: OutputStream, sizeLimit: Int) : FilterOutputStream(out) {
     private val buffer = ByteBuffer.allocate(sizeLimit)
 
     @Synchronized
     override fun write(b: Int) {
-        if (ensure(1) > 1) {
+        if (ensure(1) >= 1) {
             buffer.put(b.toByte())
         }
         out.write(b)
