@@ -20,6 +20,10 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
     val compileConfiguration: Configuration
         get() = project.configurations.getByName("compile")
 
+    @get:Input
+    val testCompileConfiguration: Configuration
+        get() = project.configurations.getByName("testCompile")
+
     @OutputFile
     val resultFile = unpackFile(project)
 
@@ -53,7 +57,9 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
                 .map { it.file.canonicalFile.absolutePath }
                 .toSet()
 
-        compileConfiguration.resolvedConfiguration.resolvedArtifacts
+        (compileConfiguration.resolvedConfiguration.resolvedArtifacts +
+                testCompileConfiguration.resolvedConfiguration.resolvedArtifacts
+                )
                 .filter { it.file.canonicalFile.absolutePath !in projectArtifacts }
                 .filter { it.file.exists() && LibraryUtils.isKotlinJavascriptLibrary(it.file) }
                 .forEach { artifact ->
