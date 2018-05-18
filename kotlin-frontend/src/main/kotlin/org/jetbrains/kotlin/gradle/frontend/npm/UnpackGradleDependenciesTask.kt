@@ -77,7 +77,10 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
                         outDir.mkdirsOrFail()
 
                         logger.debug("Unpack to node_modules from ${artifact.file} to $outDir")
-                        project.tasks.create("npm-unpack-$name", Copy::class.java).from(project.zipTree(artifact.file)).into(outDir).execute()
+                        project.copy { copy ->
+                            copy.from(project.zipTree(artifact.file))
+                                    .into(outDir)
+                        }
 
                         val existingVersion = existingPackageJson["version"]?.toString() ?: toSemver(null)
 
@@ -98,7 +101,10 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
                             outDir.mkdirsOrFail()
 
                             logger.debug("Unpack to node_modules from ${artifact.file} to $outDir")
-                            project.tasks.create("npm-unpack-$name", Copy::class.java).from(project.zipTree(artifact.file)).into(outDir).execute()
+                            project.copy { copy ->
+                                copy.from(project.zipTree(artifact.file))
+                                        .into(outDir)
+                            }
 
                             val packageJson = mapOf(
                                     "name" to name,
