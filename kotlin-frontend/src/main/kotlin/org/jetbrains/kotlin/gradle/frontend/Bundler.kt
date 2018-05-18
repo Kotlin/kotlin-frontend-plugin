@@ -10,6 +10,13 @@ import org.jetbrains.kotlin.gradle.frontend.config.*
 interface Bundler<C : BundleConfig> {
     val bundlerId: String
     fun createConfig(project: Project): C
-    fun apply(project: Project, packageManager: PackageManager, bundleTask: Task, runTask: Task, stopTask: Task)
-    fun outputFiles(project: Project) : FileCollection
+
+    fun apply(project: Project,
+              packageManager: PackageManager,
+              packagesTask: Task,
+              bundleTask: Task,
+              runTask: Task,
+              stopTask: Task)
+
+    fun outputFiles(project: Project): FileCollection
 }

@@ -9,7 +9,8 @@ import org.jetbrains.kotlin.gradle.tasks.*
 import java.io.*
 
 object KarmaLauncher : Launcher {
-    override fun apply(packageManager: PackageManager, project: Project, startTask: Task, stopTask: Task) {
+    override fun apply(packageManager: PackageManager, project: Project,
+                       packagesTask: Task, startTask: Task, stopTask: Task) {
         val karma = project.extensions.create("karma", KarmaExtension::class.java)
         project.afterEvaluate {
             val compileTestKotlin = project.tasks.findByPath("compileTestKotlin2Js")
@@ -94,7 +95,7 @@ object KarmaLauncher : Launcher {
 
     private fun checkTestsExist(project: Project): Boolean {
         return project.tasks.filterIsInstance<KotlinJsCompile>()
-                                .filter { it.name.contains("test", ignoreCase = true) && it.kotlinOptions.outputFile != null }
-                                .any { File(it.kotlinOptions.outputFile).exists() }
+                .filter { it.name.contains("test", ignoreCase = true) && it.kotlinOptions.outputFile != null }
+                .any { File(it.kotlinOptions.outputFile).exists() }
     }
 }

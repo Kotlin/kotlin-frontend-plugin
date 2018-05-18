@@ -106,7 +106,7 @@ class FrontendPlugin : Plugin<Project> {
                 for ((id, bundles) in frontend.bundles().groupBy { it.bundlerId }) {
                     val bundler = frontend.bundlers[id] ?: throw GradleException("Bundler $id is not supported (or not plugged-in), required for bundles: ${bundles.map { it.bundleName }}")
 
-                    bundler.apply(project, packageManager, bundle, run, stop)
+                    bundler.apply(project, packageManager, packages, bundle, run, stop)
                 }
 
                 if (frontend.downloadNodeJsVersion.isNotBlank()) {
@@ -123,7 +123,7 @@ class FrontendPlugin : Plugin<Project> {
         }
 
         for (runner in listOf(WebPackLauncher, KtorLauncher, KarmaLauncher)) {
-            runner.apply(packageManager, project, run, stop)
+            runner.apply(packageManager, project, packages, run, stop)
         }
 
         withKotlinPlugin(project) { kotlin2js, testKotlin2js ->

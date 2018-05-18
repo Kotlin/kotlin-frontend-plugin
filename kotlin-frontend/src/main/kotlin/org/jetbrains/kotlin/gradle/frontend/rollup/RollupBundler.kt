@@ -9,7 +9,8 @@ object RollupBundler : Bundler<RollupExtension> {
 
     override fun createConfig(project: Project) = RollupExtension(project)
 
-    override fun apply(project: Project, packageManager: PackageManager, bundleTask: Task, runTask: Task, stopTask: Task) {
+    override fun apply(project: Project, packageManager: PackageManager,
+                       packagesTask: Task, bundleTask: Task, runTask: Task, stopTask: Task) {
         packageManager.require(
                 listOf("rollup", "rollup-plugin-node-resolve", "rollup-plugin-commonjs")
                         .map { Dependency(it, "*", Dependency.DevelopmentScope) })
@@ -24,7 +25,7 @@ object RollupBundler : Bundler<RollupExtension> {
             task.group = RollupGroup
         }
 
-        bundle.dependsOn(config)
+        bundle.dependsOn(config, packagesTask)
 
         bundleTask.dependsOn(bundle)
     }

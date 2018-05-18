@@ -13,7 +13,9 @@ object WebPackBundler : Bundler<WebPackExtension> {
 
     override fun createConfig(project: Project) = WebPackExtension(project)
 
-    override fun apply(project: Project, packageManager: PackageManager, bundleTask: Task, runTask: Task, stopTask: Task) {
+    override fun apply(project: Project, packageManager: PackageManager,
+                       packagesTask: Task, bundleTask: Task, runTask: Task, stopTask: Task) {
+
         packageManager.require(
                 listOf("webpack", "webpack-cli", "webpack-dev-server")
                         .map { Dependency(it, "*", Dependency.DevelopmentScope) }
@@ -32,7 +34,7 @@ object WebPackBundler : Bundler<WebPackExtension> {
             t.group = WebPackGroup
         }
 
-        bundle.dependsOn(config, helper)
+        bundle.dependsOn(config, helper, packagesTask)
         bundle.dependsOn(*project.tasks.withType(RelativizeSourceMapTask::class.java).toTypedArray())
 
         bundleTask.dependsOn(bundle)
