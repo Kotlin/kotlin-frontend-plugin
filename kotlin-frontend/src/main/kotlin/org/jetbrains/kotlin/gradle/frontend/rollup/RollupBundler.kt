@@ -1,6 +1,7 @@
 package org.jetbrains.kotlin.gradle.frontend.rollup
 
 import org.gradle.api.*
+import org.gradle.api.file.*
 import org.jetbrains.kotlin.gradle.frontend.*
 
 object RollupBundler : Bundler<RollupExtension> {
@@ -26,6 +27,16 @@ object RollupBundler : Bundler<RollupExtension> {
         bundle.dependsOn(config)
 
         bundleTask.dependsOn(bundle)
+    }
+
+    override fun outputFiles(project: Project): FileCollection {
+        return listOf(
+                project.tasks.withType(GenerateRollupConfigTask::class.java).map { it.outputs.files },
+                project.tasks.withType(RollupBundleTask::class.java).map { it.outputs.files }
+        ).flatten()
+                .filterNotNull()
+                .takeIf { it.isNotEmpty() }
+                ?.reduce { a, b -> a + b } ?: project.files()
     }
 
     val RollupGroup = "Rollup"

@@ -9,6 +9,7 @@ import java.io.*
 
 open class KarmaConfigTask : DefaultTask() {
     @get:Internal
+    @get:Optional
     val configsDir: File
         get() = project.projectDir.resolve("karma.config.d")
 
@@ -21,10 +22,6 @@ open class KarmaConfigTask : DefaultTask() {
 
     @OutputFile
     var karmaConfigFile: File = project.buildDir.resolve("karma.conf.js")
-
-    init {
-        (inputs as TaskInputs).dir(configsDir).optional()
-    }
 
     @TaskAction
     fun main() {

@@ -1,6 +1,7 @@
 package org.jetbrains.kotlin.gradle.frontend.webpack
 
 import org.gradle.api.*
+import org.gradle.api.file.*
 import org.gradle.language.jvm.tasks.*
 import org.jetbrains.kotlin.gradle.frontend.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
@@ -42,6 +43,16 @@ object WebPackBundler : Bundler<WebPackExtension> {
         project.withTask<ProcessResources> { task ->
             bundle.dependsOn(task)
         }
+    }
+
+    override fun outputFiles(project: Project): FileCollection {
+        return listOf(
+                project.tasks.withType(GenerateWebPackConfigTask::class.java).map { it.outputs.files },
+                project.tasks.withType(GenerateWebpackHelperTask::class.java).map { it.outputs.files },
+                project.tasks.withType(WebPackBundleTask::class.java).map { it.outputs.files }
+        ).flatten().filterNotNull()
+                .takeIf { it.isNotEmpty() }
+                ?.reduce { a, b -> a + b } ?: project.files()
     }
 
     val WebPackGroup = "webpack"
