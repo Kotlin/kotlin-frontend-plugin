@@ -74,7 +74,7 @@ class FrontendPlugin : Plugin<Project> {
             description = "Stops dev-server running in background if running"
         }
 
-        withKotlinPlugin(project, { kotlin2js, _ ->
+        withKotlinPlugin(project) { kotlin2js, _ ->
             project.afterEvaluate {
                 // TODO this need to be done in kotlin plugin itself
                 (kotlin2js as KotlinJsCompile).kotlinOptions.outputFile?.let { output ->
@@ -106,7 +106,7 @@ class FrontendPlugin : Plugin<Project> {
                 for ((id, bundles) in frontend.bundles().groupBy { it.bundlerId }) {
                     val bundler = frontend.bundlers[id] ?: throw GradleException("Bundler $id is not supported (or not plugged-in), required for bundles: ${bundles.map { it.bundleName }}")
 
-                    bundler.apply(project, packageManager, bundle, run, stop)
+                    bundler.apply(project, packageManager, packages, bundle, run, stop)
                 }
 
                 if (frontend.downloadNodeJsVersion.isNotBlank()) {
@@ -120,13 +120,13 @@ class FrontendPlugin : Plugin<Project> {
                     packages.dependsOn(downloadTask)
                 }
             }
-        })
-
-        for (runner in listOf(WebPackLauncher, KtorLauncher, KarmaLauncher)) {
-            runner.apply(packageManager, project, run, stop)
         }
 
-        withKotlinPlugin(project, { kotlin2js, testKotlin2js ->
+        for (runner in listOf(WebPackLauncher, KtorLauncher, KarmaLauncher)) {
+            runner.apply(packageManager, project, packages, run, stop)
+        }
+
+        withKotlinPlugin(project) { kotlin2js, testKotlin2js ->
             kotlin2js.dependsOn(packages)
             testKotlin2js.dependsOn(packages)
 
@@ -136,7 +136,7 @@ class FrontendPlugin : Plugin<Project> {
                 bundle.dependsOn(compileTask)
                 run.dependsOn(packages, compileTask)
             }
-        })
+        }
 
         bundle.dependsOn(packages)
 

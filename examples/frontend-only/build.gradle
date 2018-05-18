@@ -1,5 +1,5 @@
 buildscript {
-    ext.kotlin_version = '1.1.60'
+    ext.kotlin_version = '1.2.41'
 
     repositories {
         jcenter()
@@ -8,7 +8,7 @@ buildscript {
 
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "org.jetbrains.kotlin:kotlin-frontend-plugin:0.0.23"
+        classpath "org.jetbrains.kotlin:kotlin-frontend-plugin:0.0.31"
     }
 }
 
@@ -16,6 +16,7 @@ group = 'org.jetbrains.kotlin.example'
 version = '0.0.1-SNAPSHOT'
 
 apply plugin: 'kotlin2js'
+apply plugin: 'kotlin-dce-js'
 apply plugin: 'org.jetbrains.kotlin.frontend'
 
 repositories {
@@ -24,9 +25,7 @@ repositories {
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
-    compile "org.jetbrains.kotlin:kotlin-test-js:$kotlin_version" // for now only compile configuration is supported
-    testCompile "org.jetbrains.kotlin:kotlin-test-js:$kotlin_version" // for now only compile configuration is supported
-
+    testCompile "org.jetbrains.kotlin:kotlin-test-js:$kotlin_version"
 }
 
 kotlinFrontend {
@@ -42,9 +41,12 @@ kotlinFrontend {
     webpackBundle {
         bundleName = "main"
         contentPath = file('src/main/web')
+//        mode = 'development'
+        mode = 'production'
     }
 
     define "PRODUCTION", false
+    define "X", false
 
 //    rollupBundle {
 //        bundleName = "rolledUp"

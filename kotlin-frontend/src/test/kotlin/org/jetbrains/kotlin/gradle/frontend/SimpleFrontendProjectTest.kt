@@ -332,7 +332,6 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
 
             assertFalse { projectDir.root.resolve("build/bundle/main.bundle.js").exists() }
             val bundleContent = URL("http://localhost:$port/main.bundle.js").openStream().reader().use { it.readText() }
-            assertTrue { "webpackBootstrap" in bundleContent }
             assertTrue { "my script content" in bundleContent }
         } finally {
             val stopResult = runner.withArguments("stop").build()
@@ -509,17 +508,15 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
         @JvmStatic
         @Parameters
         fun versions() = listOf(
-//                arrayOf("3.1", "1.1.4-3"),
-                arrayOf("3.2.1", "1.1.4-3"),
-                arrayOf("3.3", "1.1.4-3"),
-                arrayOf("3.4.1", "1.1.4-3"),
-                arrayOf("3.5", "1.1.4-3"),
-                arrayOf("4.1", "1.1.4-3"),
-                arrayOf("4.2.1", "1.1.51"),
-                arrayOf("4.3.1", "1.1.60"),
-                arrayOf("4.3.1", "1.2.0"),
-                arrayOf("4.4", "1.2.0"),
-                arrayOf("4.4.1", "1.2.21")
+            arrayOf("3.5", "1.1.61"),
+            arrayOf("4.1", "1.1.61"),
+            arrayOf("4.2.1", "1.1.61"),
+            arrayOf("4.3.1", "1.1.61"),
+            arrayOf("4.3.1", "1.2.31"),
+            arrayOf("4.4.1", "1.2.21"),
+            arrayOf("4.4.1", "1.2.31"),
+            arrayOf("4.5", "1.2.31"),
+            arrayOf("4.6", "1.2.31")
         )
     }
 }

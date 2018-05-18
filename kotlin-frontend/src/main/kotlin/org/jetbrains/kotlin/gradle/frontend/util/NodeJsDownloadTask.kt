@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.gradle.frontend.util
 import org.gradle.api.*
 import org.gradle.api.tasks.*
 import org.gradle.internal.logging.progress.*
-import org.jetbrains.kotlin.preprocessor.*
 import java.io.*
 import java.math.*
 import java.net.*
@@ -57,9 +56,10 @@ open class NodeJsDownloadTask : DefaultTask() {
         val stdout = ByteArrayOutputStream()
         val stderr = ByteArrayOutputStream()
 
-        project.tasks.create("ask-nodejs-version", Exec::class.java) { execute ->
-            execute.executable(executable.absoluteFile).args("--version").setStandardOutput(stdout).setErrorOutput(stderr)
-        }.execute()
+        project.exec { execute ->
+            execute.executable(executable.absoluteFile)
+            execute.args("--version").setStandardOutput(stdout).setErrorOutput(stderr)
+        }
 
         return stdout.toByteArray().toString(Charsets.ISO_8859_1).trim()
     }
@@ -176,7 +176,7 @@ open class NodeJsDownloadTask : DefaultTask() {
 
     private fun extract(file: File): File {
         println("Extracting nodejs")
-        project.tasks.create("extract-nodejs", Copy::class.java) { copy ->
+        project.copy { copy ->
             val tree = when {
                 file.name.endsWith(".tar.gz") -> project.tarTree(project.resources.gzip(file))
                 file.name.endsWith(".zip") -> project.zipTree(file)
@@ -184,7 +184,7 @@ open class NodeJsDownloadTask : DefaultTask() {
             }
 
             copy.from(tree).into(target)
-        }.execute()
+        }
 
         val dir = expectedNodeJsDir(target, file) ?: throw GradleException("Failed to extract nodejs, check $target dir")
 

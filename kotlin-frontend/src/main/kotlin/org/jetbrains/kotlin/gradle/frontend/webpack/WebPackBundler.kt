@@ -1,6 +1,7 @@
 package org.jetbrains.kotlin.gradle.frontend.webpack
 
 import org.gradle.api.*
+import org.gradle.api.file.*
 import org.gradle.language.jvm.tasks.*
 import org.jetbrains.kotlin.gradle.frontend.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
@@ -12,7 +13,9 @@ object WebPackBundler : Bundler<WebPackExtension> {
 
     override fun createConfig(project: Project) = WebPackExtension(project)
 
-    override fun apply(project: Project, packageManager: PackageManager, bundleTask: Task, runTask: Task, stopTask: Task) {
+    override fun apply(project: Project, packageManager: PackageManager,
+                       packagesTask: Task, bundleTask: Task, runTask: Task, stopTask: Task) {
+
         packageManager.require(
                 listOf("webpack", "webpack-cli", "webpack-dev-server")
                         .map { Dependency(it, "*", Dependency.DevelopmentScope) }
@@ -31,7 +34,7 @@ object WebPackBundler : Bundler<WebPackExtension> {
             t.group = WebPackGroup
         }
 
-        bundle.dependsOn(config, helper)
+        bundle.dependsOn(config, helper, packagesTask)
         bundle.dependsOn(*project.tasks.withType(RelativizeSourceMapTask::class.java).toTypedArray())
 
         bundleTask.dependsOn(bundle)
@@ -42,6 +45,16 @@ object WebPackBundler : Bundler<WebPackExtension> {
         project.withTask<ProcessResources> { task ->
             bundle.dependsOn(task)
         }
+    }
+
+    override fun outputFiles(project: Project): FileCollection {
+        return listOf(
+                project.tasks.withType(GenerateWebPackConfigTask::class.java).map { it.outputs.files },
+                project.tasks.withType(GenerateWebpackHelperTask::class.java).map { it.outputs.files },
+                project.tasks.withType(WebPackBundleTask::class.java).map { it.outputs.files }
+        ).flatten().filterNotNull()
+                .takeIf { it.isNotEmpty() }
+                ?.reduce { a, b -> a + b } ?: project.files()
     }
 
     val WebPackGroup = "webpack"

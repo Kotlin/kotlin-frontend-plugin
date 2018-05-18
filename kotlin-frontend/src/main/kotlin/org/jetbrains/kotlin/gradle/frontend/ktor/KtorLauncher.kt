@@ -4,7 +4,8 @@ import org.gradle.api.*
 import org.jetbrains.kotlin.gradle.frontend.*
 
 object KtorLauncher : Launcher {
-    override fun apply(packageManager: PackageManager, project: Project, startTask: Task, stopTask: Task) {
+    override fun apply(packageManager: PackageManager, project: Project,
+                       packagesTask: Task, startTask: Task, stopTask: Task) {
         val ktor = project.extensions.create("ktor", KtorExtension::class.java)
 
         project.afterEvaluate {
