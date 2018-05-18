@@ -69,7 +69,7 @@ open class GenerateWebPackConfigTask : DefaultTask() {
                 .flatMap { it.outputs.files }
 
         if (dceOutputFiles.isEmpty() || testMode) {
-            resolveRoots.add(File(contextDir).toRelativeString(project.buildDir))
+            resolveRoots.add(getContextDir(testMode).toRelativeString(project.buildDir))
 
             project.configurations.findByName("compile")?.allDependencies
                     ?.filterIsInstance<ProjectDependency>().orEmpty()
@@ -80,7 +80,6 @@ open class GenerateWebPackConfigTask : DefaultTask() {
                     .forEach { resolveRoots.add(it.parentFile.toRelativeString(project.buildDir)) }
         } else {
             resolveRoots.addAll(dceOutputFiles.map { it.toRelativeString(project.buildDir) })
-            dceOutputFiles.first().absolutePath
         }
 
         if (testMode) {
@@ -102,6 +101,17 @@ open class GenerateWebPackConfigTask : DefaultTask() {
         return resolveRoots
     }
 
+    fun getContextDir(testMode: Boolean): File {
+        val dceOutputs = project.tasks
+                .withType(KotlinJsDce::class.java)
+                .filter { it.isEnabled && !it.name.contains("test", ignoreCase = true) }
+                .map { it.destinationDir }
+                .firstOrNull()
+
+        return if (dceOutputs == null || testMode) kotlinOutput(project).parentFile.absoluteFile!!
+        else dceOutputs.absoluteFile
+    }
+
     @TaskAction
     fun generateConfig() {
         val bundle = bundles.singleOrNull() ?: throw GradleException("Only single webpack bundle supported")
@@ -110,7 +120,7 @@ open class GenerateWebPackConfigTask : DefaultTask() {
 
         val json = linkedMapOf(
                 "mode" to bundle.mode,
-                "context" to File(contextDir).absolutePath,
+                "context" to getContextDir(false).absolutePath,
                 "entry" to mapOf(
                         bundle.bundleName to kotlinOutput(project).nameWithoutExtension.let { "./$it" }
                 ),

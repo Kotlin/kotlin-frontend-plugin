@@ -102,7 +102,7 @@ open class KarmaConfigTask : DefaultTask() {
                             it.getModuleResolveRoots(testMode = true)
                         }
                         val webpackEntryContext = project.tasks.withType(GenerateWebPackConfigTask::class.java)
-                                .map { it.contextDir }
+                                .map { it.getContextDir(testMode = true).absolutePath }
                                 .distinct()
                                 .singleOrNull()
                                 ?: throw GradleException("Failed to detect webpack root context")
