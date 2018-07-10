@@ -9,6 +9,7 @@ import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
 import org.jetbrains.kotlin.gradle.tasks.*
 import java.io.*
+import java.util.ArrayDeque
 
 /**
  * @author Sergey Mashkov
@@ -71,10 +72,20 @@ open class GenerateWebPackConfigTask : DefaultTask() {
         if (dceOutputFiles.isEmpty() || testMode) {
             resolveRoots.add(getContextDir(testMode).toRelativeString(project.buildDir))
 
-            project.configurations.findByName("compile")?.allDependencies
+            // Recursively walk the dependency graph and build a set of transitive local projects.
+            val allProjects = mutableSetOf<Project>()
+            val queue = ArrayDeque<Project>().apply { add(project) }
+            while (queue.isNotEmpty()) {
+                val current = queue.removeFirst()
+                val dependencies = current.configurations.findByName("compile")?.allDependencies
                     ?.filterIsInstance<ProjectDependency>().orEmpty()
                     .mapNotNull { it.dependencyProject }
-                    .flatMap { it.tasks.filterIsInstance<Kotlin2JsCompile>() }
+
+                allProjects.addAll(dependencies)
+                queue.addAll(dependencies)
+            }
+
+            allProjects.flatMap { it.tasks.filterIsInstance<Kotlin2JsCompile>() }
                     .filter { !it.name.contains("test", ignoreCase = true) }
                     .map { project.file(it.outputFileBridge()) }
                     .forEach { resolveRoots.add(it.parentFile.toRelativeString(project.buildDir)) }
