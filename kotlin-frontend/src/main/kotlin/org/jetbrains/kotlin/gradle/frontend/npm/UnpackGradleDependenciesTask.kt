@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.gradle.frontend.npm
 import groovy.json.*
 import org.gradle.api.*
 import org.gradle.api.artifacts.*
+import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.gradle.frontend.Dependency
 import org.jetbrains.kotlin.gradle.frontend.util.*
@@ -18,11 +19,11 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
 
     @get:Input
     val compileConfiguration: Configuration
-        get() = project.configurations.getByName("compile")
+        get() = project.configurations.getByName(JavaPlugin.COMPILE_CONFIGURATION_NAME)
 
     @get:Input
     val testCompileConfiguration: Configuration
-        get() = project.configurations.getByName("testCompile")
+        get() = project.configurations.getByName(JavaPlugin.TEST_COMPILE_CONFIGURATION_NAME)
 
     @OutputFile
     val resultFile = unpackFile(project)
