@@ -20,7 +20,7 @@ open class GenerateWebPackConfigTask : DefaultTask() {
         get() = project.projectDir.resolve("webpack.config.d")
 
     @Input
-    val projectDirectory = project.projectDir.absolutePath
+    val projectDirectory: String = project.projectDir.absolutePath
 
     @get:Input
     val contextDir by lazy { kotlinOutput(project).parentFile.absolutePath!! }
@@ -44,13 +44,13 @@ open class GenerateWebPackConfigTask : DefaultTask() {
     val webPackConfigFile: File = project.buildDir.resolve("webpack.config.js")
 
     @Input
-    val exts = project.frontendExtension.defined
+    val defined = project.frontendExtension.defined
 
     @get:Input
     private val isDceEnabled: Boolean by lazy {
         !project.tasks
                 .withType(KotlinJsDce::class.java)
-                .filter { it.isEnabled }.isEmpty()
+                .none { it.isEnabled }
     }
 
     init {
@@ -162,9 +162,9 @@ open class GenerateWebPackConfigTask : DefaultTask() {
             out.appendln(";")
 
 
-            if (exts.isNotEmpty()) {
+            if (defined.isNotEmpty()) {
                 out.append("var defined = ")
-                out.append(JsonBuilder(exts).toPrettyString())
+                out.append(JsonBuilder(defined).toPrettyString())
                 out.appendln(";")
 
                 out.appendln("config.plugins.push(new webpack.DefinePlugin(defined));")

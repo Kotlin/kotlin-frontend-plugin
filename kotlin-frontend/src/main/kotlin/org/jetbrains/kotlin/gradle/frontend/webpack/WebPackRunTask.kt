@@ -34,7 +34,7 @@ open class WebPackRunTask : AbstractStartStopTask<WebPackRunTask.State>() {
     val hashes by lazy { hashOf(devServerLauncherFile, webPackConfigFile) } // TODO get all the hashes of all included configs
 
     @Input
-    val exts = project.frontendExtension.defined
+    val defined = project.frontendExtension.defined
 
     override val identifier = "webpack-dev-server"
     override fun checkIsRunning(stopInfo: State?) = stopInfo != null && Companion.checkIsRunning(stopInfo.port)
@@ -85,7 +85,7 @@ open class WebPackRunTask : AbstractStartStopTask<WebPackRunTask.State>() {
         } catch (ignore: UnsupportedOperationException) {
         }
 
-        return State(config.host, config.port, exts, hashes)
+        return State(config.host, config.port, defined, hashes)
     }
 
     override fun builder(): ProcessBuilder {
@@ -101,7 +101,7 @@ open class WebPackRunTask : AbstractStartStopTask<WebPackRunTask.State>() {
         val hashes = j["hashes"] as? Map<String, String> ?: return null
 
         @Suppress("UNCHECKED_CAST")
-        val exts = j["exts"] as? Map<String, String> ?: return null
+        val exts = j["defined"] as? Map<String, String> ?: return null
 
         return State(host, port, exts, hashes)
     }
@@ -138,7 +138,7 @@ open class WebPackRunTask : AbstractStartStopTask<WebPackRunTask.State>() {
         logger.warn("webpack is already running at http://${config.host}:${config.port}/")
     }
 
-    data class State(val host: String, val port: Int, val exts: Map<String, Any?>, val hashes: Map<String, String>)
+    data class State(val host: String, val port: Int, val defined: Map<String, Any?>, val hashes: Map<String, String>)
 
     companion object {
         private fun hashOf(vararg files: File) = files.filter(File::canRead).associateBy({ it.name }, { it.sha1() })
