@@ -106,8 +106,8 @@ open class GenerateWebPackConfigTask : DefaultTask() {
         }
 
         // node modules
-        resolveRoots.add(project.buildDir.resolve("node_modules").toRelativeString(project.buildDir))
         resolveRoots.add(project.buildDir.resolve("node_modules").absolutePath)
+        resolveRoots.add(project.buildDir.resolve("node_modules").toRelativeString(project.buildDir))
 
         return resolveRoots
     }
