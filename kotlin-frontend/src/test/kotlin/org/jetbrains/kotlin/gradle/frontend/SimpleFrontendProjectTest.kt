@@ -198,12 +198,12 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
         val expectedKotlinVersion = toSemver(kotlinVersion)
 
         @Suppress("UNCHECKED_CAST")
-        val packageJsonKotlinLocation = projectDir.root.resolve("build/package.json")
+        val packageJsonKotlinVersion = projectDir.root.resolve("build/package.json")
                 .let { JsonSlurper().parse(it) as Map<String, Any?> }["dependencies"]
                 ?.let { it as Map<String, String?> }
                 ?.let { it["kotlin"] } ?: fail("No kotlin found in package.json")
 
-        assertTrue { packageJsonKotlinLocation.startsWith("file://") }
+        assertEquals(kotlinVersion, packageJsonKotlinVersion)
 
         @Suppress("UNCHECKED_CAST")
         assertEquals(expectedKotlinVersion,
@@ -539,7 +539,11 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
             arrayOf("4.4.1", "1.2.21"),
             arrayOf("4.4.1", "1.2.31"),
             arrayOf("4.5", "1.2.31"),
-            arrayOf("4.6", "1.2.31")
+            arrayOf("4.5", "1.2.41"),
+            arrayOf("4.6", "1.2.51"),
+            arrayOf("4.7", "1.2.51"),
+            arrayOf("4.8", "1.2.51"),
+            arrayOf("4.9", "1.2.51")
         )
     }
 }
