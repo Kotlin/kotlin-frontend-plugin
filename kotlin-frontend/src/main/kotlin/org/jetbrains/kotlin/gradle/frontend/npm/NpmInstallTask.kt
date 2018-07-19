@@ -15,7 +15,8 @@ open class NpmInstallTask : DefaultTask() {
     @InputFile
     lateinit var packageJsonFile: File
 
-    val npmDirFile =  project.tasks
+    @Internal
+    private val npmDirFile =  project.tasks
             .filterIsInstance<NodeJsDownloadTask>()
             .map { it.nodePathTextFile }
             .firstOrNull()
