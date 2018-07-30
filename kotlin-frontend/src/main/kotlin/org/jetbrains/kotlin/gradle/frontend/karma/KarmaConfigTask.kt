@@ -56,6 +56,8 @@ open class KarmaConfigTask : DefaultTask() {
                 "client" to clientConfig
             )
 
+            config += extension.extraConfig
+
             if ("junit" in extension.reporters) {
                 config["junitReporter"] = mapOf(
                     "outputFile" to project.buildDir.resolve("reports/karma.xml").absolutePath,
