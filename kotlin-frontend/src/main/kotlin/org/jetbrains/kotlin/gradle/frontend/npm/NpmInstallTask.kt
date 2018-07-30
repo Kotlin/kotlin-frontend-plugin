@@ -2,11 +2,13 @@ package org.jetbrains.kotlin.gradle.frontend.npm
 
 import org.gradle.api.*
 import org.gradle.api.tasks.*
+import org.gradle.process.*
 import org.jetbrains.kotlin.gradle.frontend.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
 import java.io.*
 import java.net.*
 import java.nio.file.*
+import kotlin.io.NoSuchFileException
 
 /**
  * @author Sergey Mashkov
@@ -43,16 +45,10 @@ open class NpmInstallTask : DefaultTask() {
         }).flatten()
 
         unpacked.forEach { dep ->
-            val linkPath = nodeModulesDir.resolve(dep.name).toPath()
-            val target = Paths.get(URI(dep.versionOrUri))
+            val linkPath = nodeModulesDir.resolve(dep.name).toPath().toAbsolutePath()
+            val target = Paths.get(URI(dep.versionOrUri)).toAbsolutePath()
 
-            if (Files.isSymbolicLink(linkPath) && Files.readSymbolicLink(linkPath) != target) {
-                Files.delete(linkPath)
-                Files.createSymbolicLink(linkPath, target)
-            } else if (!Files.isSymbolicLink(linkPath)) {
-                linkPath.toFile().deleteRecursively()
-                Files.createSymbolicLink(linkPath, target)
-            }
+            ensureSymbolicLink(linkPath, target)
         }
 
         ProcessBuilder(npmPath, "install")
@@ -61,6 +57,42 @@ open class NpmInstallTask : DefaultTask() {
                 .redirectErrorStream(true)
                 .startWithRedirectOnFail(project, "npm install")
     }
+
+    private fun ensureSymbolicLink(link: Path, target: Path) {
+        if (Files.isSymbolicLink(link)) {
+            if (Files.readSymbolicLink(link) != target) {
+                Files.delete(link)
+                Files.createSymbolicLink(link, target)
+            }
+            return
+        }
+
+        try {
+            Files.delete(link)
+        } catch (cause: DirectoryNotEmptyException) {
+            link.toFile().deleteRecursively()
+        } catch (ignore: NoSuchFileException) {
+        }
+
+        createSymbolicLink(link, target)
+    }
+
+    private fun createSymbolicLink(link: Path, target: Path) {
+        if (isWindows()) {
+            // always create junction on Windows as it does npm
+            // Java doesn't provide any API to create junctions so we call native tool
+            project.exec { spec: ExecSpec ->
+                spec.apply {
+                    workingDir(project.buildDir)
+                    commandLine("cmd", "/C", "mklink", "/J", link.toString(), target.toString())
+                }
+            }.assertNormalExitValue()
+        } else {
+            Files.createSymbolicLink(link, target)
+        }
+    }
+
+    private fun isWindows() = System.getProperty("os.name")?.contains("windows", ignoreCase = true) == true
 
     private fun ensurePath(env: MutableMap<String, String>, path: String) {
         val sep = File.pathSeparator
