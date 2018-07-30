@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.gradle.frontend.util.*
 import java.io.*
 import java.net.*
 import java.nio.file.*
-import kotlin.io.NoSuchFileException
 
 /**
  * @author Sergey Mashkov
