@@ -517,6 +517,68 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
         assertTrue { "my-special-const-1" in bundleContent }
     }
 
+    @Test
+    fun testYarnOnly() {
+        builder.applyFrontendPlugin()
+
+        buildGradleFile.writeText(builder.build {
+            line("version '1.0'")
+
+            kotlinFrontend {
+                block("yarn") {
+                    line("dependency \"style-loader\"")
+                }
+            }
+        })
+
+        val runner = runner.withArguments("yarn")
+        val result = runner.build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":yarn-preunpack")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":yarn-configure")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":yarn-install")?.outcome)
+        assertNull(result.task(":webpack-bundle"))
+
+        assertTrue { projectDir.root.resolve("build/node_modules/style-loader").isDirectory }
+
+        val expectedProjectVersion = toSemver("1.0")
+        val expectedKotlinVersion = toSemver(kotlinVersion)
+
+        @Suppress("UNCHECKED_CAST")
+        val packageJsonKotlinVersion = projectDir.root.resolve("build/package.json")
+            .let { JsonSlurper().parse(it) as Map<String, Any?> }["dependencies"]
+            ?.let { it as Map<String, String?> }
+            ?.let { it["kotlin"] } ?: fail("No kotlin found in package.json")
+
+        assertEquals(kotlinVersion, packageJsonKotlinVersion)
+
+        @Suppress("UNCHECKED_CAST")
+        assertEquals(expectedKotlinVersion,
+            projectDir.root.resolve("build/node_modules/kotlin/package.json")
+                .let { JsonSlurper().parse(it) as Map<String, Any?> }["version"]
+        )
+
+        @Suppress("UNCHECKED_CAST")
+        assertEquals(expectedProjectVersion,
+            projectDir.root.resolve("build/package.json")
+                .let { JsonSlurper().parse(it) as Map<String, Any?> }["version"]
+        )
+
+        val rerunResult = runner.build()
+
+        assertEquals(TaskOutcome.UP_TO_DATE, rerunResult.task(":yarn-preunpack")?.outcome)
+        assertEquals(TaskOutcome.UP_TO_DATE, rerunResult.task(":yarn-configure")?.outcome)
+        assertEquals(TaskOutcome.UP_TO_DATE, rerunResult.task(":yarn-install")?.outcome)
+
+        buildGradleFile.writeText(buildGradleFile.readText().replace("dependency", "devDependency"))
+
+        val rerunResult2 = runner.build()
+
+        assertEquals(TaskOutcome.UP_TO_DATE, rerunResult2.task(":yarn-preunpack")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, rerunResult2.task(":yarn-configure")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, rerunResult2.task(":yarn-install")?.outcome)
+    }
+
     private fun assertNotExecuted(task: BuildTask?) {
         if (task != null && task.outcome != TaskOutcome.UP_TO_DATE && task.outcome != TaskOutcome.SKIPPED) {
             fail("${task.path} should be skipped or up-to-date for empty project but it is ${task.outcome}")

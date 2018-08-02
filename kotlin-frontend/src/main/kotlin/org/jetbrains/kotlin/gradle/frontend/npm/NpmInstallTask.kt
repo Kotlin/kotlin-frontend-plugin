@@ -4,6 +4,7 @@ import org.gradle.api.*
 import org.gradle.api.tasks.*
 import org.gradle.process.*
 import org.jetbrains.kotlin.gradle.frontend.*
+import org.jetbrains.kotlin.gradle.frontend.dependencies.UnpackGradleDependenciesTask
 import org.jetbrains.kotlin.gradle.frontend.util.*
 import java.io.*
 import java.net.*
