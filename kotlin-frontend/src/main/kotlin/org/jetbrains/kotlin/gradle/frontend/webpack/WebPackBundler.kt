@@ -18,15 +18,17 @@ object WebPackBundler : Bundler<WebPackExtension> {
 
     override fun createConfig(project: Project) = WebPackExtension(project)
 
-    override fun apply(project: Project, packageManager: PackageManager,
+    override fun apply(project: Project, packageManagers: List<PackageManager>,
                        packagesTask: Task, bundleTask: Task, runTask: Task, stopTask: Task) {
 
-        packageManager.require(
+        packageManagers.forEach { packageManager ->
+            packageManager.require(
                 listOf("webpack", "webpack-cli", "webpack-dev-server")
-                        .map { Dependency(it, "*", Dependency.DevelopmentScope) }
-        )
-        if (project.frontendExtension.sourceMaps) {
-            packageManager.require("source-map-loader")
+                    .map { Dependency(it, "*", Dependency.DevelopmentScope) }
+            )
+            if (project.frontendExtension.sourceMaps) {
+                packageManager.require("source-map-loader")
+            }
         }
 
         val config = project.tasks.create("webpack-config", GenerateWebPackConfigTask::class.java)

@@ -2,7 +2,7 @@ package org.jetbrains.kotlin.gradle.frontend
 
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.file.*
+import org.gradle.api.file.FileCollection
 import org.jetbrains.kotlin.gradle.frontend.config.BundleConfig
 import org.jetbrains.kotlin.gradle.frontend.dependencies.PackageManager
 
@@ -14,7 +14,7 @@ interface Bundler<C : BundleConfig> {
     fun createConfig(project: Project): C
 
     fun apply(project: Project,
-              packageManager: PackageManager,
+              packageManagers: List<PackageManager>,
               packagesTask: Task,
               bundleTask: Task,
               runTask: Task,

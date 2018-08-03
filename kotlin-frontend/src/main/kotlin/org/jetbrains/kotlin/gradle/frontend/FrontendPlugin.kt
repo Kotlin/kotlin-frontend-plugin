@@ -65,9 +65,7 @@ class FrontendPlugin : Plugin<Project> {
         for (manager in managers) {
             manager.apply()
         }
-
-        val packageManager = managers.find { it.hasDependencies() } ?: managers.first()
-
+        
         val bundle = project.task("bundle").apply {
             group = "build"
             description = "Bundles all scripts and resources"
@@ -115,7 +113,7 @@ class FrontendPlugin : Plugin<Project> {
                     val bundler = frontend.bundlers[id]
                             ?: throw GradleException("Bundler $id is not supported (or not plugged-in), required for bundles: ${bundles.map { it.bundleName }}")
 
-                    bundler.apply(project, packageManager, packages, bundle, run, stop)
+                    bundler.apply(project, managers, packages, bundle, run, stop)
                 }
 
                 if (frontend.downloadNodeJsVersion.isNotBlank()) {
@@ -132,7 +130,7 @@ class FrontendPlugin : Plugin<Project> {
         }
 
         for (runner in listOf(WebPackLauncher, KtorLauncher, KarmaLauncher)) {
-            runner.apply(packageManager, project, packages, run, stop)
+            runner.apply(managers, project, packages, run, stop)
         }
 
         withKotlinPlugin(project) { kotlin2js, testKotlin2js ->

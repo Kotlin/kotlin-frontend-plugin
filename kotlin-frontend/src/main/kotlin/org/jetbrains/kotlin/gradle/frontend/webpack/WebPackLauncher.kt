@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.gradle.frontend.util.withTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinJsDce
 
 object WebPackLauncher : Launcher {
-    override fun apply(packageManager: PackageManager, project: Project,
+    override fun apply(packageManagers: List<PackageManager>, project: Project,
                        packagesTask: Task, startTask: Task, stopTask: Task) {
         project.afterEvaluate {
             if (project.frontendExtension.bundles().any { it is WebPackExtension }) {

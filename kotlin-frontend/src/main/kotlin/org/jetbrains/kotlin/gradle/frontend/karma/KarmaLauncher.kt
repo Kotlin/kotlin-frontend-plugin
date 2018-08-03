@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
 import java.io.File
 
 object KarmaLauncher : Launcher {
-    override fun apply(packageManager: PackageManager, project: Project,
+    override fun apply(packageManagers: List<PackageManager>, project: Project,
                        packagesTask: Task, startTask: Task, stopTask: Task) {
         val karma = project.extensions.create("karma", KarmaExtension::class.java)
         project.afterEvaluate {
@@ -52,48 +52,49 @@ object KarmaLauncher : Launcher {
                 startTask.dependsOn(karmaStart)
                 stopTask.dependsOn(karmaStop)
 
-                packageManager.apply {
-                    require("karma")
+                packageManagers.forEach { packageManager ->
+                    packageManager.apply {
+                        require("karma")
 
-                    if (karma.frameworks.contains("qunit")) {
-                        require("qunitjs", "1.23.1")
-                        require("karma-qunit", "1.2.1")
-                    }
-
-                    if (karma.frameworks.contains("jasmine")) {
-                        require("karma-jasmine")
-                        require("jasmine-core")
-                    }
-
-                    if (karma.frameworks.contains("mocha")) {
-                        require("karma-mocha")
-                        require("mocha")
-                    }
-
-                    require("karma-junit-reporter")
-                    require("karma-sourcemap-loader")
-
-                    require("karma-phantomjs-launcher")
-                    require("phantomjs-prebuilt")
-
-                    var webPackRequireAdded = false
-                    project.withTask(GenerateWebPackConfigTask::class) { task ->
-                        if (!webPackRequireAdded) {
-                            require("karma-webpack")
-                            webPackRequireAdded = true
+                        if (karma.frameworks.contains("qunit")) {
+                            require("qunitjs", "1.23.1")
+                            require("karma-qunit", "1.2.1")
                         }
 
-                        karma.enableWebPack = true
-                        karmaConfigTask.dependsOn(task)
-                    }
+                        if (karma.frameworks.contains("jasmine")) {
+                            require("karma-jasmine")
+                            require("jasmine-core")
+                        }
 
-                    if (project.extensions.getByType(KotlinFrontendExtension::class.java).sourceMaps) {
+                        if (karma.frameworks.contains("mocha")) {
+                            require("karma-mocha")
+                            require("mocha")
+                        }
+
+                        require("karma-junit-reporter")
                         require("karma-sourcemap-loader")
+
+                        require("karma-phantomjs-launcher")
+                        require("phantomjs-prebuilt")
+
+                        var webPackRequireAdded = false
+                        project.withTask(GenerateWebPackConfigTask::class) { task ->
+                            if (!webPackRequireAdded) {
+                                require("karma-webpack")
+                                webPackRequireAdded = true
+                            }
+
+                            karma.enableWebPack = true
+                            karmaConfigTask.dependsOn(task)
+                        }
+
+                        if (project.extensions.getByType(KotlinFrontendExtension::class.java).sourceMaps) {
+                            require("karma-sourcemap-loader")
+                        }
                     }
                 }
             }
         }
-
     }
 
     private fun checkTestsExist(project: Project): Boolean {

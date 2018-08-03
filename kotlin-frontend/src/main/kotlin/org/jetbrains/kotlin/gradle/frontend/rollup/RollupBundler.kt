@@ -12,12 +12,14 @@ object RollupBundler : Bundler<RollupExtension> {
 
     override fun createConfig(project: Project) = RollupExtension(project)
 
-    override fun apply(project: Project, packageManager: PackageManager,
+    override fun apply(project: Project, packageManagers: List<PackageManager>,
                        packagesTask: Task, bundleTask: Task, runTask: Task, stopTask: Task) {
-        packageManager.require(
+        packageManagers.forEach { packageManager->
+            packageManager.require(
                 listOf("rollup", "rollup-plugin-node-resolve", "rollup-plugin-commonjs")
-                        .map { Dependency(it, "*", Dependency.DevelopmentScope) })
-
+                    .map { Dependency(it, "*", Dependency.DevelopmentScope) })
+        }
+        
         val config = project.tasks.create("rollup-config", GenerateRollupConfigTask::class.java) { task ->
             task.description = "Generate rollup config"
             task.group = RollupGroup

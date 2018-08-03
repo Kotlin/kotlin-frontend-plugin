@@ -8,5 +8,5 @@ import org.jetbrains.kotlin.gradle.frontend.dependencies.PackageManager
  * @author Sergey Mashkov
  */
 interface Launcher {
-    fun apply(packageManager: PackageManager, project: Project, packagesTask: Task, startTask: Task, stopTask: Task)
+    fun apply(packageManagers: List<PackageManager>, project: Project, packagesTask: Task, startTask: Task, stopTask: Task)
 }
