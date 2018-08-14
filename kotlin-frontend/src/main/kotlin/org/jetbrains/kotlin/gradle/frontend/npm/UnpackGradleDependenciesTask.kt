@@ -85,7 +85,7 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
 
                         val existingVersion = existingPackageJson["version"]?.toString() ?: toSemver(null)
 
-                        resultNames?.add(NameVersionsUri(name, artifact.moduleVersion.id.version, existingVersion, artifact.file.toLocalURI()))
+                        resultNames?.add(NameVersionsUri(name, artifact.moduleVersion.id.version, existingVersion, outDir.toLocalURI()))
                     } else {
                         val modules = getJsModuleNames(artifact.file)
                                 .takeIf { it.isNotEmpty() } ?: listOf(
