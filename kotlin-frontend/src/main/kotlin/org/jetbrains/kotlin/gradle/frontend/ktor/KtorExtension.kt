@@ -1,7 +1,5 @@
 package org.jetbrains.kotlin.gradle.frontend.ktor
 
-import java.io.*
-
 /**
  * @author Sergey Mashkov
  */

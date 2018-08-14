@@ -40,5 +40,5 @@ object RollupBundler : Bundler<RollupExtension> {
                 ?.reduce { a, b -> a + b } ?: project.files()
     }
 
-    val RollupGroup = "Rollup"
+    const val RollupGroup = "Rollup"
 }

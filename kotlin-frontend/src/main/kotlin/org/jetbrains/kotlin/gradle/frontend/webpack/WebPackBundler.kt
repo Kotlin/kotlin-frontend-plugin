@@ -57,5 +57,5 @@ object WebPackBundler : Bundler<WebPackExtension> {
                 ?.reduce { a, b -> a + b } ?: project.files()
     }
 
-    val WebPackGroup = "webpack"
+    const val WebPackGroup = "webpack"
 }

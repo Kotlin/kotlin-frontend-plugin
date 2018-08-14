@@ -37,7 +37,7 @@ open class WebPackRunTask : AbstractStartStopTask<WebPackRunTask.State>() {
     val defined = project.frontendExtension.defined
 
     override val identifier = "webpack-dev-server"
-    override fun checkIsRunning(stopInfo: State?) = stopInfo != null && Companion.checkIsRunning(stopInfo.port)
+    override fun checkIsRunning(stopInfo: State?) = stopInfo != null && checkIsRunning(stopInfo.port)
 
     init {
         project.afterEvaluate {

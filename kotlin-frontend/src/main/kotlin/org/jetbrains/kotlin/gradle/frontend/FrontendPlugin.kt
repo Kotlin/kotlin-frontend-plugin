@@ -6,6 +6,7 @@ import org.gradle.api.artifacts.*
 import org.gradle.api.initialization.*
 import org.gradle.api.invocation.*
 import org.gradle.api.plugins.*
+import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.frontend.karma.*
 import org.jetbrains.kotlin.gradle.frontend.ktor.*
@@ -75,12 +76,14 @@ class FrontendPlugin : Plugin<Project> {
         }
 
         withKotlinPlugin(project) { kotlin2js, _ ->
-            project.afterEvaluate {
+            project.afterEvaluate { project ->
                 // TODO this need to be done in kotlin plugin itself
                 (kotlin2js as KotlinJsCompile).kotlinOptions.outputFile?.let { output ->
-                    project.convention.findPlugin(JavaPluginConvention::class.java)?.sourceSets?.let { sourceSets ->
-                        sourceSets.getByName("main").output.dir(File(output).parentFile)
-                    }
+                    project.convention.findPlugin(JavaPluginConvention::class.java)
+                            ?.sourceSets
+                            ?.getByName(SourceSet.MAIN_SOURCE_SET_NAME)
+                            ?.output
+                            ?.dir(File(output).parentFile)
                 }
 
                 if (frontend.sourceMaps) {
@@ -88,16 +91,16 @@ class FrontendPlugin : Plugin<Project> {
 
                     if (kotlinVersion != null && compareVersions(kotlinVersion, "1.1.4") < 0) {
                         project.tasks.withType(KotlinJsCompile::class.java).toList().mapNotNull { compileTask ->
-                            val task = project.tasks.create(compileTask.name + "RelativizeSMAP", RelativizeSourceMapTask::class.java) {
-                                it.compileTask = compileTask
+                            val task = project.tasks.create(compileTask.name + "RelativizeSMAP", RelativizeSourceMapTask::class.java) { task ->
+                                task.compileTask = compileTask
                             }
 
                             task.dependsOn(compileTask)
                         }
                     } else {
-                        project.tasks.withType(KotlinJsCompile::class.java).forEach {
-                            if (!it.kotlinOptions.sourceMap) {
-                                project.logger.warn("Source map generation is not enabled for kotlin task ${it.name}")
+                        project.tasks.withType(KotlinJsCompile::class.java).forEach { task ->
+                            if (!task.kotlinOptions.sourceMap) {
+                                project.logger.warn("Source map generation is not enabled for kotlin task ${task.name}")
                             }
                         }
                     }
