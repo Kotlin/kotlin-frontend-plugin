@@ -63,7 +63,8 @@ open class NpmIndexTask : DefaultTask() {
     }
 
     private fun packageJsonContainsTypes(file: File): Boolean {
-        return (JsonSlurper().parse(file) as Map<*, *>).get("typings") != null
+        val parsedFile = JsonSlurper().parse(file)
+        return (parsedFile is Map<*, *> && parsedFile["typings"] != null)
     }
 
     private fun <T> Iterable<T>.joinToLines(o: Appendable, transform: (T) -> CharSequence) {
