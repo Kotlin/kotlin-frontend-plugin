@@ -9,7 +9,6 @@ import java.io.*
 
 open class KarmaConfigTask : DefaultTask() {
     @get:Internal
-    @get:Optional
     val configsDir: File
         get() = project.projectDir.resolve("karma.config.d")
 
