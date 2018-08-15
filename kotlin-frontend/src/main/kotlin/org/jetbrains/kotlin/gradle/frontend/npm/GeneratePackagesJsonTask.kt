@@ -122,8 +122,11 @@ open class GeneratePackagesJsonTask : DefaultTask() {
         packageJsonFile.writeText(JsonBuilder(resultJson).toPrettyString())
         npmrcFile.writeText("""
         progress=false
+        package-lock=false
         # cache-min=3600
         """.trimIndent())
+
+        npmrcFile.resolveSibling("package-lock.json").delete()
 
         if (buildPackageJsonFile != null) {
             buildPackageJsonFile.parentFile.mkdirsOrFail()
