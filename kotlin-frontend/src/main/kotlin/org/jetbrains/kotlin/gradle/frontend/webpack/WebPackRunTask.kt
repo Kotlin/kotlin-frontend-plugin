@@ -4,6 +4,7 @@ import groovy.json.*
 import org.codehaus.groovy.runtime.*
 import org.gradle.api.*
 import org.gradle.api.tasks.*
+import org.jetbrains.kotlin.gradle.frontend.npm.NpmModuleVersion
 import org.jetbrains.kotlin.gradle.frontend.servers.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
 import java.io.*
@@ -78,7 +79,7 @@ open class WebPackRunTask : AbstractStartStopTask<WebPackRunTask.State>() {
                                 JsonBuilder(GenerateWebpackHelperTask.config(project, config, webPackConfigFile)).toPrettyString()
                         )
                         .replace("\$SetMode\$\n",
-                                if (NodeModuleVersion(project, "webpack").major >= 4) "config.mode = \"${config.mode ?: "development"}\";\n" else ""
+                                if (NpmModuleVersion(project, "webpack").major >= 4) "config.mode = \"${config.mode ?: "development"}\";\n" else ""
                         )
         )
 
