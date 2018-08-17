@@ -130,7 +130,6 @@ open class GenerateWebPackConfigTask : DefaultTask() {
         val resolveRoots = getModuleResolveRoots(false)
 
         val json = linkedMapOf(
-                "mode" to bundle.mode,
                 "context" to getContextDir(false).absolutePath,
                 "entry" to mapOf(
                         bundle.bundleName to kotlinOutput(project).nameWithoutExtension.let { "./$it" }

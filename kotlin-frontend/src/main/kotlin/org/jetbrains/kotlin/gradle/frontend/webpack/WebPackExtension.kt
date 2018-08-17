@@ -41,5 +41,6 @@ open class WebPackExtension(project: Project) : BundleConfig {
     var webpackConfigFile: Any? = null
 
     @Input
-    var mode: String = "development"
+    @Optional
+    var mode: String? = null
 }

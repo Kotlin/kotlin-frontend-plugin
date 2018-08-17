@@ -77,6 +77,9 @@ open class WebPackRunTask : AbstractStartStopTask<WebPackRunTask.State>() {
                         .replace("require('\$RunConfig\$')",
                                 JsonBuilder(GenerateWebpackHelperTask.config(project, config, webPackConfigFile)).toPrettyString()
                         )
+                        .replace("\$SetMode\$\n",
+                                if (NodeModuleVersion(project, "webpack").major >= 4) "config.mode = \"${config.mode ?: "development"}\";\n" else ""
+                        )
         )
 
         try {
