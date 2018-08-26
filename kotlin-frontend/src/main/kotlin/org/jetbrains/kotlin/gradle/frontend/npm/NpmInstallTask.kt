@@ -1,12 +1,18 @@
 package org.jetbrains.kotlin.gradle.frontend.npm
 
-import org.gradle.api.*
-import org.gradle.api.tasks.*
-import org.gradle.process.*
-import org.jetbrains.kotlin.gradle.frontend.*
-import org.jetbrains.kotlin.gradle.frontend.util.*
-import java.io.*
-import java.net.*
+import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.TaskAction
+import org.gradle.process.ExecSpec
+import org.jetbrains.kotlin.gradle.frontend.Dependency
+import org.jetbrains.kotlin.gradle.frontend.util.NodeJsDownloadTask
+import org.jetbrains.kotlin.gradle.frontend.util.nodePath
+import org.jetbrains.kotlin.gradle.frontend.util.readLinesOrEmpty
+import org.jetbrains.kotlin.gradle.frontend.util.startWithRedirectOnFail
+import java.io.File
+import java.net.URI
 import java.nio.file.*
 
 /**
@@ -15,6 +21,9 @@ import java.nio.file.*
 open class NpmInstallTask : DefaultTask() {
     @InputFile
     lateinit var packageJsonFile: File
+
+    @Internal
+    private val npmExt = project.extensions.getByType(NpmExtension::class.java)!!
 
     @Internal
     private val npmDirFile =  project.tasks
@@ -50,7 +59,13 @@ open class NpmInstallTask : DefaultTask() {
             ensureSymbolicLink(linkPath, target)
         }
 
-        ProcessBuilder(npmPath, "install")
+        val command = if (npmExt.binLinks) {
+            arrayOf("install")
+        } else {
+            arrayOf("install", "--no-bin-links")
+        }
+
+        ProcessBuilder(npmPath, *command)
                 .directory(project.buildDir)
                 .apply { ensurePath(environment(), npm.parentFile.absolutePath) }
                 .redirectErrorStream(true)
