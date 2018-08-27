@@ -163,6 +163,24 @@ kotlinFrontend {
 }
 ```
 
+In some cases you need to define a Karma custom launcher configuration. Here an example for Chrome headless:
+
+```
+kotlinFrontend {
+    karma {
+        browsers = ["ChromeHeadless"]
+        plugins = ["karma-chrome-launcher",
+                   ...]
+        customLauncher {
+            name = "ChromeHeadlessNoSandbox"
+            base = "ChromeHeadless"
+            flags = ["--no-sandbox"]
+            displayName = "Chrome headless browser"
+        }
+    }
+}
+```
+
 Your custom config file will be copied to the build folder and renamed to `karma.config.js`.
 
 karma log is located at `build/logs/karma.log`
