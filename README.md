@@ -108,7 +108,7 @@ kotlinFrontend {
         port = 8088   // dev server port
         proxyUrl = "" | "http://...."  // URL to be proxied, useful to proxy backend webserver
         stats = "errors-only"  // log level
-        mode = "production" | "development" | "none" // used for webpack 4+ build-in optimizations
+        mode = "production" | "development" | "none" // used for webpack 4+ built-in optimizations
     }
 }
 ```
