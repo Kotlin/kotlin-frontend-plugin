@@ -13,7 +13,7 @@ First of all you have to apply plugin `org.jetbrains.kotlin.frontend` and setup 
 
 ```gradle
 buildscript {
-    ext.kotlin_version = '1.2.21'
+    ext.kotlin_version = '1.2.61'
 
     repositories {
         jcenter()
@@ -24,7 +24,7 @@ buildscript {
 
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "org.jetbrains.kotlin:kotlin-frontend-plugin:0.0.30"
+        classpath "org.jetbrains.kotlin:kotlin-frontend-plugin:0.0.37"
     }
 }
 
