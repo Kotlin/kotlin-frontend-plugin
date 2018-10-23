@@ -23,22 +23,31 @@ class FrontendPlugin : Plugin<Project> {
     private fun withKotlinPlugin(project: Project, block: (kotlin2js: Task, testKotlin2js: Task) -> Unit) {
         var fired = false
 
-        fun callBlock() {
-            val kotlin2js = project.tasks.getByPath("compileKotlin2Js")
-            val testKotlin2js = project.tasks.getByPath("compileTestKotlin2Js")
-
-            block(kotlin2js, testKotlin2js)
+        fun callBlock(compileTaskName: String, testCompileTaskName: String) {
+            val compileTask = project.tasks.getByName(compileTaskName)
+            val testCompileTask = project.tasks.getByName(testCompileTaskName)
+            block(compileTask, testCompileTask)
         }
 
-        fun tryCallBlock(@Suppress("UNUSED_PARAMETER") appliedPlugin: AppliedPlugin) {
+        fun tryCallBlock(compileTaskName: String, testCompileTaskName: String) {
             if (!fired) {
                 fired = true
-                callBlock()
+                callBlock(compileTaskName, testCompileTaskName)
             }
         }
 
-        project.pluginManager.withPlugin("kotlin2js", ::tryCallBlock)
-        project.pluginManager.withPlugin("kotlin-platform-js", ::tryCallBlock)
+        project.pluginManager.withPlugin("kotlin2js") {
+            tryCallBlock("compileKotlin2Js", "compileTestKotlin2Js")
+        }
+        project.pluginManager.withPlugin("kotlin-platform-js") {
+            tryCallBlock("compileKotlin2Js", "compileTestKotlin2Js")
+        }
+        project.afterEvaluate {
+            // these tasks below are only available after the project has been evaluated
+            project.pluginManager.withPlugin("kotlin-multiplatform") {
+                tryCallBlock("compileKotlinJs", "compileTestKotlinJs")
+            }
+        }
     }
 
     override fun apply(project: Project) {
