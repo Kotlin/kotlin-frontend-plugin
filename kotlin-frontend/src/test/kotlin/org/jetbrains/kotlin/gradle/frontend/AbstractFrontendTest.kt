@@ -2,7 +2,7 @@ package org.jetbrains.kotlin.gradle.frontend
 
 import org.gradle.testkit.runner.*
 import org.gradle.testkit.runner.internal.*
-import org.jetbrains.kotlin.preprocessor.*
+import org.jetbrains.kotlin.gradle.frontend.util.mkdirsOrFail
 import org.junit.*
 import org.junit.rules.*
 import org.junit.runner.*

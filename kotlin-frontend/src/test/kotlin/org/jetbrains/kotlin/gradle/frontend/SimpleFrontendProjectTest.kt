@@ -5,7 +5,7 @@ import org.gradle.testkit.runner.BuildTask
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.jetbrains.kotlin.gradle.frontend.util.toSemver
-import org.jetbrains.kotlin.preprocessor.mkdirsOrFail
+import org.jetbrains.kotlin.gradle.frontend.util.mkdirsOrFail
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized

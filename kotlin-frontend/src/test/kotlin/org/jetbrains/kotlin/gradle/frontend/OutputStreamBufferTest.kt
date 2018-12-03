@@ -2,6 +2,7 @@ package org.jetbrains.kotlin.gradle.frontend
 
 import org.jetbrains.kotlin.gradle.frontend.util.*
 import org.junit.*
+import org.junit.Test
 import java.io.*
 import kotlin.test.*
 
