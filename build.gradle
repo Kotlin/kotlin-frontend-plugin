@@ -1,19 +1,6 @@
-buildscript {
-    repositories {
-        jcenter()
-    }
-
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    }
-}
-
 group = 'org.jetbrains.kotlin'
 
 allprojects {
     group = 'org.jetbrains.kotlin'
-
-    repositories {
-        jcenter()
-    }
+    
 }
