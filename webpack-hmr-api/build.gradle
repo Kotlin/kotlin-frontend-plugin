@@ -38,7 +38,7 @@ publishing {
             artifactId project.name
             version project.version
         }
-        
+
     }
 }
 
@@ -47,7 +47,7 @@ bintray {
     key = System.getProperty('bintray.user.token') ?: ""
     publish = true
 
-    publications = ['hmrJsJars'] 
+    publications = ['hmrJsJars']
 
     pkg {
         repo = 'kotlin-eap'
