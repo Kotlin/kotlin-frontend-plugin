@@ -7,6 +7,7 @@ import org.gradle.api.initialization.*
 import org.gradle.api.invocation.*
 import org.gradle.api.plugins.*
 import org.gradle.api.tasks.*
+import org.jetbrains.kotlin.backend.common.onlyIf
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.frontend.karma.*
 import org.jetbrains.kotlin.gradle.frontend.ktor.*
@@ -54,12 +55,30 @@ class FrontendPlugin : Plugin<Project> {
             testKotlin2js.dependsOn(kotlin2js)
         }
 
+        var resolutionTriggered = false
+        project.gradle.addListener(object : DependencyResolutionListener {
+            override fun beforeResolve(dependencies: ResolvableDependencies?) {
+                resolutionTriggered = true
+            }
+
+            override fun afterResolve(dependencies: ResolvableDependencies?) {
+            }
+        })
+
         val frontend = project.extensions.create("kotlinFrontend", KotlinFrontendExtension::class.java, project)
 
         val packages = project.tasks.create("packages").apply {
             group = "build"
             description = "Gather and install all JS dependencies (npm)"
         }
+
+        val buildTask = project.tasks.getByName("build")
+        val buildNpm = project.tasks.create("build-npm").apply {
+            group = "build"
+            description = "Initialize and install npm dependencies after build"
+        }
+        buildNpm.onlyIf { resolutionTriggered && buildTask.state.failure == null }
+        buildTask.finalizedBy(buildNpm)
 
         val managers = listOf<PackageManager>(NpmPackageManager(project))
         val packageManager: PackageManager = managers.first()
@@ -159,37 +178,6 @@ class FrontendPlugin : Plugin<Project> {
         withTask(project, "assemble") { it.dependsOn(bundle) }
         withTask(project, "clean") { it.dependsOn(stop) }
 
-        var resolutionTriggered = false
-        project.gradle.addListener(object : DependencyResolutionListener {
-            override fun beforeResolve(dependencies: ResolvableDependencies?) {
-                resolutionTriggered = true
-            }
-
-            override fun afterResolve(dependencies: ResolvableDependencies?) {
-            }
-        })
-
-        project.gradle.addBuildListener(object : BuildListener {
-            override fun settingsEvaluated(p0: Settings?) {
-            }
-
-            override fun buildFinished(result: BuildResult) {
-                if (resolutionTriggered && result.failure == null && project.gradle.taskGraph == null) {
-                    managers.forEach { m ->
-                        m.install(project)
-                    }
-                }
-            }
-
-            override fun projectsLoaded(p0: Gradle?) {
-            }
-
-            override fun buildStarted(p0: Gradle?) {
-            }
-
-            override fun projectsEvaluated(p0: Gradle?) {
-            }
-        })
     }
 
     private fun withTask(project: Project, name: String, block: (Task) -> Unit) {

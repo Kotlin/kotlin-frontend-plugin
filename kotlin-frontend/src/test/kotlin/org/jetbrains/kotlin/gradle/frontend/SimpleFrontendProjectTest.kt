@@ -529,7 +529,7 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
 
     companion object {
         @JvmStatic
-        @Parameters(name = "gradle {0}, kotlin {1}")
+        @Parameters
         fun versions() = listOf(
             arrayOf("3.5", "1.1.61"),
             arrayOf("4.1", "1.1.61"),
