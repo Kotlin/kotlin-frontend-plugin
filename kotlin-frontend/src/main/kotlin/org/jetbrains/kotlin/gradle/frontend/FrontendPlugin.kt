@@ -1,21 +1,35 @@
 package org.jetbrains.kotlin.gradle.frontend
 
-import org.gradle.*
-import org.gradle.api.*
-import org.gradle.api.artifacts.*
-import org.gradle.api.initialization.*
-import org.gradle.api.invocation.*
-import org.gradle.api.plugins.*
-import org.gradle.api.tasks.*
-import org.jetbrains.kotlin.gradle.dsl.*
-import org.jetbrains.kotlin.gradle.frontend.karma.*
-import org.jetbrains.kotlin.gradle.frontend.ktor.*
-import org.jetbrains.kotlin.gradle.frontend.npm.*
-import org.jetbrains.kotlin.gradle.frontend.rollup.*
-import org.jetbrains.kotlin.gradle.frontend.util.*
-import org.jetbrains.kotlin.gradle.frontend.webpack.*
-import org.jetbrains.kotlin.gradle.plugin.*
-import java.io.*
+import org.gradle.BuildListener
+import org.gradle.BuildResult
+import org.gradle.api.GradleException
+import org.gradle.api.Plugin
+import org.gradle.api.Project
+import org.gradle.api.Task
+import org.gradle.api.artifacts.DependencyResolutionListener
+import org.gradle.api.artifacts.ResolvableDependencies
+import org.gradle.api.initialization.Settings
+import org.gradle.api.invocation.Gradle
+import org.gradle.api.plugins.AppliedPlugin
+import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.tasks.SourceSet
+import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.dsl.KotlinSingleJavaTargetExtension
+import org.jetbrains.kotlin.gradle.frontend.karma.KarmaLauncher
+import org.jetbrains.kotlin.gradle.frontend.ktor.KtorLauncher
+import org.jetbrains.kotlin.gradle.frontend.npm.NpmPackageManager
+import org.jetbrains.kotlin.gradle.frontend.rollup.RollupBundler
+import org.jetbrains.kotlin.gradle.frontend.util.NodeJsDownloadTask
+import org.jetbrains.kotlin.gradle.frontend.util.kotlinExtension
+import org.jetbrains.kotlin.gradle.frontend.util.multiplatformExtension
+import org.jetbrains.kotlin.gradle.frontend.webpack.WebPackBundler
+import org.jetbrains.kotlin.gradle.frontend.webpack.WebPackLauncher
+import org.jetbrains.kotlin.gradle.plugin.Kotlin2JsPluginWrapper
+import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
+import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
+import java.io.File
 
 class FrontendPlugin : Plugin<Project> {
     val bundlers = mapOf("webpack" to WebPackBundler, "rollup" to RollupBundler)
@@ -42,6 +56,14 @@ class FrontendPlugin : Plugin<Project> {
     }
 
     override fun apply(project: Project) {
+        try {
+            Class.forName("KotlinMultiplatformExtension")
+            println("KotlinMultiplatformExtension found")
+            Kotlin1270Utils().apply2(project)
+        } catch (e: ClassNotFoundException) {
+            println("KotlinMultiplatformExtension NOT found")
+        }
+
         project.plugins.apply("java")
         withKotlinPlugin(project) { kotlin2js, testKotlin2js ->
             testKotlin2js.dependsOn(kotlin2js)
