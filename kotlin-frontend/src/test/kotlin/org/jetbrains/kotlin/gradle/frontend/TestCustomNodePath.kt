@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.gradle.frontend
 import org.apache.tools.ant.taskdefs.condition.*
 import org.jetbrains.kotlin.gradle.frontend.util.*
 import org.junit.*
+import org.junit.Test
 import org.junit.rules.*
 import kotlin.test.*
 
