@@ -15,7 +15,7 @@ open class NodeJsDownloadTask : DefaultTask() {
     var mirror: String = "https://nodejs.org/dist"
 
     @get:Input
-    var version: String = "7.9.0"
+    var version: String = "10.14.1"
 
     @get:OutputFile
     var nodePathTextFile: File = project.buildDir.resolve("nodePath.txt")
