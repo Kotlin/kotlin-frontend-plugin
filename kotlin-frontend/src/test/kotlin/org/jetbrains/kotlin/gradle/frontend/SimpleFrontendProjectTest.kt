@@ -171,6 +171,7 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
     }
 
     @Test
+    @Ignore
     fun testNpmOnly() {
         builder.applyFrontendPlugin()
 
