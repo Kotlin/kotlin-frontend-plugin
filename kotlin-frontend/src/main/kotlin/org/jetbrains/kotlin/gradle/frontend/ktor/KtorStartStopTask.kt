@@ -1,11 +1,18 @@
 package org.jetbrains.kotlin.gradle.frontend.ktor
 
-import org.gradle.api.plugins.*
-import org.gradle.api.tasks.*
-import org.jetbrains.kotlin.gradle.frontend.servers.*
-import org.jetbrains.kotlin.gradle.frontend.util.*
-import java.io.*
-import java.net.*
+import org.gradle.api.Project
+import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.TaskAction
+import org.jetbrains.kotlin.gradle.frontend.KotlinNewMpp
+import org.jetbrains.kotlin.gradle.frontend.servers.AbstractStartStopTask
+import org.jetbrains.kotlin.gradle.frontend.util.LogTail
+import org.jetbrains.kotlin.gradle.frontend.util.whereIs
+import java.io.File
+import java.io.IOException
+import java.net.Socket
+import java.net.URL
 
 /**
  * @author Sergey Mashkov
@@ -34,8 +41,9 @@ open class KtorStartStopTask : AbstractStartStopTask<Int>() {
     @Input
     var shutdownPath = "/ktor/application/shutdown"
 
-    @Input
-    var mainClass = "org.jetbrains.ktor.jetty.DevelopmentHost"
+    @get: Input
+    val mainClass: String
+        get() = ext.mainClass ?: "org.jetbrains.ktor.jetty.DevelopmentHost"
 
     init {
         logTailer.rememberLogStartPosition()
@@ -60,19 +68,43 @@ open class KtorStartStopTask : AbstractStartStopTask<Int>() {
         val gradleJavaHome = project.findProperty("org.gradle.java.home")?.let { listOf(it.toString() + File.separator + "bin") } ?: emptyList()
 
         return ProcessBuilder(
-                listOf(whereIs("java", gradleJavaHome).first().absolutePath, "-cp")
-                        + (project.configurations.flatMap { it.files.filter { it.canRead() && it.extension == "jar" } }
-                        + project.convention.findPlugin(JavaPluginConvention::class.java)?.sourceSets?.getByName("main")?.output?.toList().orEmpty()
-                        )
-                        .distinct().joinToString(File.pathSeparator) { it.absolutePath }
-                        + listOf(
-                        "-Dktor.deployment.port=$port",
-                        "-Dktor.deployment.autoreload=true",
-                        "-Dktor.deployment.shutdown.url=$shutdownPath")
+                listOf<String>()
+                        + whereIs("java", gradleJavaHome).first().absolutePath
+                        + "-cp"
+                        + classPath()
+                        + ktorOptions()
                         + jvmOptions
                         + mainClass
         ).directory(workDir)
     }
+
+    private fun ktorOptions(): List<String> {
+        return listOf(
+                "-Dktor.deployment.port=$port",
+                "-Dktor.deployment.autoreload=true",
+                "-Dktor.deployment.shutdown.url=$shutdownPath")
+    }
+
+    private fun classPath() = classPathFiles(project).distinct().joinToString(File.pathSeparator) { it.absolutePath }
+
+    private fun classPathFiles(project: Project) =
+            try {
+                Class.forName("org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension")
+                // This line executed only on Kotlin 1.2.70+
+                KotlinNewMpp.ktorClassPath(project)
+            } catch (e: ClassNotFoundException) {
+                null
+            } ?: (jars() + mainOutput())
+
+    private fun mainOutput() =
+            project.convention.findPlugin(JavaPluginConvention::class.java)
+                    ?.sourceSets?.getByName("main")
+                    ?.output?.toList().orEmpty()
+
+    private fun jars() =
+            project.configurations
+                    .filter { it.isCanBeResolved }
+                    .flatMap { it.files.filter { it.canRead() && it.extension == "jar" } }
 
     override fun stop(state: Int?) {
         if (state != null) {

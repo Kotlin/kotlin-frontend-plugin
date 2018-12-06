@@ -37,8 +37,15 @@ class FrontendPlugin : Plugin<Project> {
             }
         }
 
-        project.pluginManager.withPlugin("kotlin2js", ::tryCallBlock)
-        project.pluginManager.withPlugin("kotlin-platform-js", ::tryCallBlock)
+        try {
+            Class.forName("org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension")
+            // This line executed only on Kotlin 1.2.70+
+            KotlinNewMpp.forEachJsTargetCompilationTasks(project, block)
+        } catch (e: ClassNotFoundException) {
+            // Fallback for Kotlin before 1.2.70
+            project.pluginManager.withPlugin("kotlin2js", ::tryCallBlock)
+            project.pluginManager.withPlugin("kotlin-platform-js", ::tryCallBlock)
+        }
     }
 
     override fun apply(project: Project) {
@@ -75,6 +82,8 @@ class FrontendPlugin : Plugin<Project> {
             description = "Stops dev-server running in background if running"
         }
 
+        var configured = false
+
         withKotlinPlugin(project) { kotlin2js, _ ->
             project.afterEvaluate { project ->
                 // TODO this need to be done in kotlin plugin itself
@@ -86,41 +95,45 @@ class FrontendPlugin : Plugin<Project> {
                             ?.dir(File(output).parentFile)
                 }
 
-                if (frontend.sourceMaps) {
-                    val kotlinVersion = project.plugins.findPlugin(Kotlin2JsPluginWrapper::class.java)?.kotlinPluginVersion
+                if (!configured) {
+                    configured = true
+                    if (frontend.sourceMaps) {
+                        val kotlinVersion = project.plugins.findPlugin(Kotlin2JsPluginWrapper::class.java)?.kotlinPluginVersion
 
-                    if (kotlinVersion != null && compareVersions(kotlinVersion, "1.1.4") < 0) {
-                        project.tasks.withType(KotlinJsCompile::class.java).toList().mapNotNull { compileTask ->
-                            val task = project.tasks.create(compileTask.name + "RelativizeSMAP", RelativizeSourceMapTask::class.java) { task ->
-                                task.compileTask = compileTask
+                        if (kotlinVersion != null && compareVersions(kotlinVersion, "1.1.4") < 0) {
+                            project.tasks.withType(KotlinJsCompile::class.java).toList().mapNotNull { compileTask ->
+                                val task = project.tasks.create(compileTask.name + "RelativizeSMAP", RelativizeSourceMapTask::class.java) { task ->
+                                    task.compileTask = compileTask
+                                }
+
+                                task.dependsOn(compileTask)
                             }
-
-                            task.dependsOn(compileTask)
-                        }
-                    } else {
-                        project.tasks.withType(KotlinJsCompile::class.java).forEach { task ->
-                            if (!task.kotlinOptions.sourceMap) {
-                                project.logger.warn("Source map generation is not enabled for kotlin task ${task.name}")
+                        } else {
+                            project.tasks.withType(KotlinJsCompile::class.java).forEach { task ->
+                                if (!task.kotlinOptions.sourceMap) {
+                                    project.logger.warn("Source map generation is not enabled for kotlin task ${task.name}")
+                                }
                             }
                         }
                     }
-                }
 
-                for ((id, bundles) in frontend.bundles().groupBy { it.bundlerId }) {
-                    val bundler = frontend.bundlers[id] ?: throw GradleException("Bundler $id is not supported (or not plugged-in), required for bundles: ${bundles.map { it.bundleName }}")
+                    for ((id, bundles) in frontend.bundles().groupBy { it.bundlerId }) {
+                        val bundler = frontend.bundlers[id]
+                                ?: throw GradleException("Bundler $id is not supported (or not plugged-in), required for bundles: ${bundles.map { it.bundleName }}")
 
-                    bundler.apply(project, packageManager, packages, bundle, run, stop)
-                }
-
-                if (frontend.downloadNodeJsVersion.isNotBlank()) {
-                    val downloadTask = project.tasks.create("nodejs-download", NodeJsDownloadTask::class.java) { task ->
-                        task.version = frontend.downloadNodeJsVersion
-                        if (frontend.nodeJsMirror.isNotBlank()) {
-                            task.mirror = frontend.nodeJsMirror
-                        }
+                        bundler.apply(project, packageManager, packages, bundle, run, stop)
                     }
 
-                    packages.dependsOn(downloadTask)
+                    if (frontend.downloadNodeJsVersion.isNotBlank()) {
+                        val downloadTask = project.tasks.create("nodejs-download", NodeJsDownloadTask::class.java) { task ->
+                            task.version = frontend.downloadNodeJsVersion
+                            if (frontend.nodeJsMirror.isNotBlank()) {
+                                task.mirror = frontend.nodeJsMirror
+                            }
+                        }
+
+                        packages.dependsOn(downloadTask)
+                    }
                 }
             }
         }
