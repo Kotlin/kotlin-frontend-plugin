@@ -74,6 +74,13 @@ class NpmPackageManager(val project: Project) : PackageManager {
             if (npm.dependencies.isNotEmpty() || npm.developmentDependencies.isNotEmpty() || project.projectDir.resolve("package.json.d").exists() || requiredDependencies.isNotEmpty()) {
 
                 val unpack = project.tasks.create("npm-preunpack", UnpackGradleDependenciesTask::class.java) { task ->
+
+                    try {
+                        Class.forName("org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension")
+                        // This line executed only on Kotlin 1.2.70+
+                        KotlinNewMpp.configureNpmCompileConfigurations(task)
+                    } catch (e: ClassNotFoundException) {}
+
                     task.dependenciesProvider = { requiredDependencies }
                 }
                 val configure = project.tasks.create("npm-configure", GeneratePackagesJsonTask::class.java) { task ->

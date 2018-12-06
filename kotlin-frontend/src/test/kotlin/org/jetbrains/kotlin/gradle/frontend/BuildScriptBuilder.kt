@@ -27,7 +27,7 @@ class BuildScriptBuilder {
     fun addJsDependency() {
         if (kotlinVersion.startsWith("1.0."))
             compileDependencies += "org.jetbrains.kotlin:kotlin-js-library:$kotlinVersion"
-        else if (kotlinVersion.startsWith("1.1.") || kotlinVersion.startsWith("1.2."))
+        else if (kotlinVersion.startsWith("1.1.") || kotlinVersion.startsWith("1.2.") || kotlinVersion.startsWith("1.3."))
             compileDependencies += "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlinVersion"
         else
             throw IllegalArgumentException("Only 1.0, 1.1 and 1.2 kotlin supported")

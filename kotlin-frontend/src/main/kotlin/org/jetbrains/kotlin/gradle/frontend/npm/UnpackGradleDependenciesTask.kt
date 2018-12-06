@@ -17,13 +17,17 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
     @Internal
     lateinit var dependenciesProvider: () -> List<Dependency>
 
+    var customCompileConfiguration: Configuration? = null
+
+    var customTestCompileConfiguration: Configuration? = null
+
     @get:Input
     val compileConfiguration: Configuration
-        get() = project.configurations.getByName(JavaPlugin.COMPILE_CONFIGURATION_NAME)
+        get() = customCompileConfiguration ?: project.configurations.getByName(JavaPlugin.COMPILE_CONFIGURATION_NAME)
 
     @get:Input
     val testCompileConfiguration: Configuration
-        get() = project.configurations.getByName(JavaPlugin.TEST_COMPILE_CONFIGURATION_NAME)
+        get() = customTestCompileConfiguration ?: project.configurations.getByName(JavaPlugin.TEST_COMPILE_CONFIGURATION_NAME)
 
     @OutputFile
     val resultFile = unpackFile(project)
