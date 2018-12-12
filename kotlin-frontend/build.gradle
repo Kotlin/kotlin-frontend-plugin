@@ -3,8 +3,8 @@ plugins {
     id "java-gradle-plugin"
     id "maven-publish"
     id "org.jetbrains.kotlin.jvm" version "1.3.10"
-    id "com.jfrog.bintray" version "1.8.0"
-    id 'net.researchgate.release' version '2.6.0'
+    id "com.jfrog.bintray"
+    id 'net.researchgate.release'
 }
 
 dependencies {

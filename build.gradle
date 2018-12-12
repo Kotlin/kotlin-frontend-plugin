@@ -5,6 +5,11 @@ buildscript {
     }
 }
 
+plugins {
+    id "com.jfrog.bintray" version "1.8.4" apply false
+    id 'net.researchgate.release' version '2.7.0' apply false
+}
+
 group = 'org.jetbrains.kotlin'
 
 allprojects {
