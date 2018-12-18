@@ -1,6 +1,7 @@
 package org.jetbrains.kotlin.gradle.frontend.npm
 
-import org.jetbrains.kotlin.gradle.frontend.*
+import org.gradle.api.tasks.Input
+import org.jetbrains.kotlin.gradle.frontend.Dependency
 import java.util.*
 
 /**
@@ -12,6 +13,12 @@ open class NpmExtension {
     val versionReplacements: MutableList<Dependency> = ArrayList()
 
     val developmentDependencies: MutableList<Dependency> = ArrayList()
+
+    /**
+     * When [Boolean.false] npm install will avoid symlinks on binaries.
+     */
+    @Input
+    var binLinks: Boolean = true
 
     @JvmOverloads
     fun dependency(name: String, version: String = "*") {
