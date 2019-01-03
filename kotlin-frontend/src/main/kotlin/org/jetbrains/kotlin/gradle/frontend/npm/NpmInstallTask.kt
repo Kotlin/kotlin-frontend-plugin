@@ -50,7 +50,7 @@ open class NpmInstallTask : DefaultTask() {
             ensureSymbolicLink(linkPath, target)
         }
 
-        ProcessBuilder(npmPath, "install")
+        ProcessBuilder(npmPath, "install", "--scripts-prepend-node-path")
                 .directory(project.buildDir)
                 .apply { ensurePath(environment(), npm.parentFile.absolutePath) }
                 .redirectErrorStream(true)
