@@ -13,7 +13,7 @@ object KarmaLauncher : Launcher {
                        packagesTask: Task, startTask: Task, stopTask: Task) {
         val karma = project.extensions.create("karma", KarmaExtension::class.java)
         project.afterEvaluate {
-            val compileTestKotlin = project.tasks.findByPath("compileTestKotlin2Js")
+            val compileTestKotlin = project.tasks.findByPath("compileTestKotlin2Js") ?: project.tasks.findByPath("compileTestKotlinJs")
 
             if (compileTestKotlin != null && (compileTestKotlin as? Kotlin2JsCompile)?.kotlinOptions?.outputFile != null) {
                 val karmaConfigTask = project.tasks.create("karma-config", KarmaConfigTask::class.java) {
