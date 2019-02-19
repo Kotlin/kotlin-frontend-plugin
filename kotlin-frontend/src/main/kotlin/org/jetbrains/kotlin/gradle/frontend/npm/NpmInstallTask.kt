@@ -1,12 +1,18 @@
 package org.jetbrains.kotlin.gradle.frontend.npm
 
-import org.gradle.api.*
-import org.gradle.api.tasks.*
-import org.gradle.process.*
-import org.jetbrains.kotlin.gradle.frontend.*
-import org.jetbrains.kotlin.gradle.frontend.util.*
-import java.io.*
-import java.net.*
+import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.TaskAction
+import org.gradle.process.ExecSpec
+import org.jetbrains.kotlin.gradle.frontend.Dependency
+import org.jetbrains.kotlin.gradle.frontend.util.NodeJsDownloadTask
+import org.jetbrains.kotlin.gradle.frontend.util.nodePath
+import org.jetbrains.kotlin.gradle.frontend.util.readLinesOrEmpty
+import org.jetbrains.kotlin.gradle.frontend.util.startWithRedirectOnFail
+import java.io.File
+import java.net.URI
 import java.nio.file.*
 
 /**
@@ -17,7 +23,7 @@ open class NpmInstallTask : DefaultTask() {
     lateinit var packageJsonFile: File
 
     @Internal
-    private val npmDirFile =  project.tasks
+    private val npmDirFile = project.tasks
             .filterIsInstance<NodeJsDownloadTask>()
             .map { it.nodePathTextFile }
             .firstOrNull()
@@ -36,12 +42,17 @@ open class NpmInstallTask : DefaultTask() {
         val npm = nodePath(project, "npm").first()
         val npmPath = npm.absolutePath
 
-        val unpacked = (project.tasks.filterIsInstance<UnpackGradleDependenciesTask>().map { task ->
-            task.resultNames?.map { Dependency(it.name, it.uri, Dependency.RuntimeScope) } ?: task.resultFile.readLinesOrEmpty()
-                    .map { it.split("/", limit = 4).map(String::trim) }
-                    .filter { it.size == 4 }
-                    .map { Dependency(it[0], it[3], Dependency.RuntimeScope) }
-        }).flatten()
+        val unpacked = project.tasks
+                .filterIsInstance<UnpackGradleDependenciesTask>()
+                .map { task ->
+                    task.resultNames?.map { Dependency(it.name, it.uri, Dependency.RuntimeScope) }
+                            ?: task.resultFile.readLinesOrEmpty()
+                                    .map { it.split("/", limit = 4).map(String::trim) }
+                                    .filter { it.size == 4 }
+                                    .map { Dependency(it[0], it[3], Dependency.RuntimeScope) }
+                }.flatten()
+
+        nodeModulesDir.mkdirs()
 
         unpacked.forEach { dep ->
             val linkPath = nodeModulesDir.resolve(dep.name).toPath().toAbsolutePath()

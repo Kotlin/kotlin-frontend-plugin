@@ -1,13 +1,16 @@
 package org.jetbrains.kotlin.gradle.frontend.npm
 
-import org.gradle.api.*
-import org.gradle.api.artifacts.*
-import org.gradle.api.internal.artifacts.dependencies.*
-import org.gradle.api.internal.file.*
-import org.jetbrains.kotlin.gradle.frontend.*
+import org.gradle.api.Project
+import org.gradle.api.Task
+import org.gradle.api.artifacts.Configuration
+import org.gradle.api.internal.artifacts.dependencies.DefaultSelfResolvingDependency
+import org.gradle.api.internal.file.AbstractFileCollection
+import org.gradle.api.internal.tasks.DefaultTaskDependency
 import org.jetbrains.kotlin.gradle.frontend.Dependency
-import org.jetbrains.kotlin.gradle.frontend.util.*
-import java.io.*
+import org.jetbrains.kotlin.gradle.frontend.KotlinNewMpp
+import org.jetbrains.kotlin.gradle.frontend.PackageManager
+import org.jetbrains.kotlin.gradle.frontend.util.NodeJsDownloadTask
+import java.io.File
 
 class NpmPackageManager(val project: Project) : PackageManager {
     private val packageJsonFile: File
@@ -22,8 +25,9 @@ class NpmPackageManager(val project: Project) : PackageManager {
         defineTasks()
     }
 
-    override fun install(project: Project) {
-        listOf(UnpackGradleDependenciesTask::class.java,
+    override fun onIdeaSync(project: Project) {
+        listOf(
+                UnpackGradleDependenciesTask::class.java,
                 GeneratePackagesJsonTask::class.java,
                 NpmInstallTask::class.java,
                 NpmIndexTask::class.java,
@@ -32,7 +36,9 @@ class NpmPackageManager(val project: Project) : PackageManager {
                 .filterNot { it.state.executed || it.state.skipped || it.state.upToDate }
                 .forEach { t ->
                     t.logger.lifecycle(":${t.name} (configure)")
-                    t.execute()
+                    t.actions.forEach {
+                        it.execute(t)
+                    }
                 }
     }
 
@@ -56,6 +62,8 @@ class NpmPackageManager(val project: Project) : PackageManager {
     private fun injectDependencies() {
         withConfiguration("compile") { configuration ->
             configuration.dependencies.add(DefaultSelfResolvingDependency(object : AbstractFileCollection() {
+                override fun getBuildDependencies() = DefaultTaskDependency()
+
                 override fun getFiles(): MutableSet<File> {
                     return project.tasks.filterIsInstance<NpmDependenciesTask>().flatMap { it.results }.toMutableSet()
                 }
@@ -79,7 +87,8 @@ class NpmPackageManager(val project: Project) : PackageManager {
                         Class.forName("org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension")
                         // This line executed only on Kotlin 1.2.70+
                         KotlinNewMpp.configureNpmCompileConfigurations(task)
-                    } catch (e: ClassNotFoundException) {}
+                    } catch (e: ClassNotFoundException) {
+                    }
 
                     task.dependenciesProvider = { requiredDependencies }
                 }
