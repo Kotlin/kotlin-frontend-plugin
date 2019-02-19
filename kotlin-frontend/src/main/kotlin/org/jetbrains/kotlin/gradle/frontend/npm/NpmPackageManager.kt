@@ -4,6 +4,8 @@ import org.gradle.api.*
 import org.gradle.api.artifacts.*
 import org.gradle.api.internal.artifacts.dependencies.*
 import org.gradle.api.internal.file.*
+import org.gradle.api.internal.tasks.DefaultTaskDependency
+import org.gradle.api.tasks.TaskDependency
 import org.jetbrains.kotlin.gradle.frontend.*
 import org.jetbrains.kotlin.gradle.frontend.Dependency
 import org.jetbrains.kotlin.gradle.frontend.util.*
@@ -32,7 +34,9 @@ class NpmPackageManager(val project: Project) : PackageManager {
                 .filterNot { it.state.executed || it.state.skipped || it.state.upToDate }
                 .forEach { t ->
                     t.logger.lifecycle(":${t.name} (configure)")
-                    t.execute()
+                    t.actions.forEach {
+                        it.execute(t)
+                    }
                 }
     }
 
@@ -56,6 +60,8 @@ class NpmPackageManager(val project: Project) : PackageManager {
     private fun injectDependencies() {
         withConfiguration("compile") { configuration ->
             configuration.dependencies.add(DefaultSelfResolvingDependency(object : AbstractFileCollection() {
+                override fun getBuildDependencies() = DefaultTaskDependency()
+
                 override fun getFiles(): MutableSet<File> {
                     return project.tasks.filterIsInstance<NpmDependenciesTask>().flatMap { it.results }.toMutableSet()
                 }
