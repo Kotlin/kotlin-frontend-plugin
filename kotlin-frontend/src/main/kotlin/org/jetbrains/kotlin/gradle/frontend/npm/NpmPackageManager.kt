@@ -4,8 +4,6 @@ import org.gradle.api.*
 import org.gradle.api.artifacts.*
 import org.gradle.api.internal.artifacts.dependencies.*
 import org.gradle.api.internal.file.*
-import org.gradle.api.internal.tasks.DefaultTaskDependency
-import org.gradle.api.tasks.TaskDependency
 import org.jetbrains.kotlin.gradle.frontend.*
 import org.jetbrains.kotlin.gradle.frontend.Dependency
 import org.jetbrains.kotlin.gradle.frontend.util.*
@@ -24,6 +22,19 @@ class NpmPackageManager(val project: Project) : PackageManager {
         defineTasks()
     }
 
+    override fun install(project: Project) {
+        listOf(UnpackGradleDependenciesTask::class.java,
+                GeneratePackagesJsonTask::class.java,
+                NpmInstallTask::class.java,
+                NpmIndexTask::class.java,
+                NpmDependenciesTask::class.java
+        ).flatMap { project.tasks.withType(it) }
+                .filterNot { it.state.executed || it.state.skipped || it.state.upToDate }
+                .forEach { t ->
+                    t.logger.lifecycle(":${t.name} (configure)")
+                    t.execute()
+                }
+    }
 
     override fun apply(containerTask: Task) {
         project.extensions.create("npm", NpmExtension::class.java)
@@ -51,10 +62,6 @@ class NpmPackageManager(val project: Project) : PackageManager {
 
                 override fun getDisplayName(): String {
                     return "npm-dependencies"
-                }
-
-                override fun getBuildDependencies(): TaskDependency {
-                    return DefaultTaskDependency()
                 }
             }))
         }
@@ -97,7 +104,6 @@ class NpmPackageManager(val project: Project) : PackageManager {
                     task.group = NpmGroup
                 }
 
-
                 project.tasks.withType(NodeJsDownloadTask::class.java)?.let { configure.dependsOn(it) }
                 configure.dependsOn(unpack)
                 install.dependsOn(configure)
@@ -105,7 +111,6 @@ class NpmPackageManager(val project: Project) : PackageManager {
                 setup.dependsOn(index)
                 npmAll.dependsOn(setup)
 
-                project.tasks.getByName("build-npm").dependsOn(npmAll)
                 project.tasks.getByName("packages").dependsOn(npmAll)
                 tasksDefined = true
             }
