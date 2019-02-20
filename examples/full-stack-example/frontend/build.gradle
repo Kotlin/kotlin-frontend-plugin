@@ -1,8 +1,8 @@
 group = 'org.jetbrains.kotlin.examples'
 version = '0.0.1-SNAPSHOT'
 
-apply plugin: 'org.jetbrains.kotlin.frontend'
 apply plugin: 'kotlin2js'
+apply plugin: 'org.jetbrains.kotlin.frontend'
 
 kotlinFrontend {
     downloadNodeJsVersion = 'latest'

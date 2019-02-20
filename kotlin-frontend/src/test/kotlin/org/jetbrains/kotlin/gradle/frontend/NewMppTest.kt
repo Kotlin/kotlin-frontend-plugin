@@ -16,7 +16,7 @@ import kotlin.test.assertTrue
 
 class NewMppTest {
     private val gradleVersion: String = "4.10.3"
-    private val kotlinVersion: String = "1.3.10"
+    private val kotlinVersion: String = "1.3.21"
 
     private val port = 8098
     private val builder = BuildScriptBuilder()
