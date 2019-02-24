@@ -28,12 +28,11 @@ buildscript {
     }
 }
 
+//apply kotlin2js
+apply plugin: 'kotlin2js'
 
 // apply plugin
 apply plugin: 'org.jetbrains.kotlin.frontend'
-
-// apply kotlin2js
-apply plugin: 'kotlin2js'
 
 // configure kotlin compiler
 compileKotlin2Js {
