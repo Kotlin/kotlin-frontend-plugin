@@ -76,7 +76,7 @@ open class KotlinFrontendExtension(val project: Project) : GroovyObjectSupport()
         }
     }
 
-    fun <C : BundleConfig> bundle(id: String, configure: BundleConfig.() -> Unit) {
+    fun <C : BundleConfig> bundle(id: String, configure: C.() -> Unit) {
         bundleBuilders += Pair(id, configure)
     }
 
