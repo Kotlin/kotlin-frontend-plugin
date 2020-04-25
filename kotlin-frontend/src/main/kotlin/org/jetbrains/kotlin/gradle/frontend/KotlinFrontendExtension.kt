@@ -76,8 +76,9 @@ open class KotlinFrontendExtension(val project: Project) : GroovyObjectSupport()
         }
     }
 
-    fun <C : BundleConfig> bundle(id: String, configure: BundleConfig.() -> Unit) {
-        bundleBuilders += Pair(id, configure)
+    fun <C : BundleConfig> bundle(id: String, configure: C.() -> Unit) {
+        @Suppress("UNCHECKED_CAST")
+        bundleBuilders += Pair(id, configure as BundleConfig.() -> Unit)
     }
 
     fun bundle(id: String, closure: Closure<*>) {
