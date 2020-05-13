@@ -70,8 +70,10 @@ object KarmaLauncher : Launcher {
                     require("karma-junit-reporter")
                     require("karma-sourcemap-loader")
 
-                    require("karma-phantomjs-launcher")
-                    require("phantomjs-prebuilt")
+                    if (project.karmaExtension.plugins.contains("karma-phantomjs-launcher")) {
+                        require("karma-phantomjs-launcher")
+                        require("phantomjs-prebuilt")
+                    }
 
                     var webPackRequireAdded = false
                     project.withTask(GenerateWebPackConfigTask::class) { task ->

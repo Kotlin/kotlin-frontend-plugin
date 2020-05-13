@@ -25,7 +25,7 @@ open class KarmaConfigTask : DefaultTask() {
     @TaskAction
     fun main() {
         val prepares = mutableListOf<String>()
-        val plugins = mutableSetOf("karma-phantomjs-launcher").apply { this += extension.plugins }
+        val plugins = if(extension.plugins.isNotEmpty()) { extension.plugins } else { mutableSetOf("karma-phantomjs-launcher") }
         val preprocessors = extension.preprocessors.toMutableSet()
         val clientConfig = mutableMapOf<String, Any>()
 
