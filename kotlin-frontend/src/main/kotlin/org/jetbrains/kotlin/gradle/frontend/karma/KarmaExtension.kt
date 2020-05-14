@@ -1,5 +1,7 @@
 package org.jetbrains.kotlin.gradle.frontend.karma
 
+import groovy.lang.Closure
+import org.gradle.api.Action
 import org.gradle.api.tasks.*
 
 open class KarmaExtension {
@@ -22,6 +24,9 @@ open class KarmaExtension {
     var browsers = mutableListOf("PhantomJS")
 
     @Input
+    var customLauncherConfig: CustomLauncher = CustomLauncher()
+
+    @Input
     var plugins: MutableList<String> = mutableListOf()
 
     @Input
@@ -35,4 +40,8 @@ open class KarmaExtension {
 
     @Input
     var captureTimeout: Int = 60000
+
+    fun customLauncher(config: Action<in CustomLauncher>) {
+        config.execute(customLauncherConfig)
+    }
 }

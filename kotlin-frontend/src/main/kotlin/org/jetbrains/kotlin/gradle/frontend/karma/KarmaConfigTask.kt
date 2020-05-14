@@ -29,6 +29,17 @@ open class KarmaConfigTask : DefaultTask() {
         val preprocessors = extension.preprocessors.toMutableSet()
         val clientConfig = mutableMapOf<String, Any>()
 
+        val customLauncher = if (extension.customLauncherConfig.isConfigured()) {
+            val launcher = extension.customLauncherConfig
+            mapOf(launcher.name to mutableMapOf("base" to launcher.base, "flags" to launcher.flags).apply {
+                if (!launcher.displayName.isNullOrBlank()) {
+                    put("displayName", launcher.displayName)
+                }
+            })
+        } else {
+            null
+        }
+
         if (extension.customConfigFile.isNotBlank()) {
             val file = project.projectDir.resolve(extension.customConfigFile)
             file.copyTo(project.buildDir.resolve("karma.conf.js"), true)
@@ -46,6 +57,7 @@ open class KarmaConfigTask : DefaultTask() {
                 "colors" to false,
                 "autoWatch" to true,
                 "browsers" to extension.browsers,
+                "customLaunchers" to customLauncher,
                 "captureTimeout" to extension.captureTimeout,
                 "singleRun" to false,
                 "preprocessors" to mapOf(
