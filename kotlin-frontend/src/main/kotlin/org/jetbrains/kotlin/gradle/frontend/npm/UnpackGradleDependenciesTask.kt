@@ -65,7 +65,7 @@ open class UnpackGradleDependenciesTask : DefaultTask() {
         (compileConfiguration.resolvedConfiguration.resolvedArtifacts +
                 testCompileConfiguration.resolvedConfiguration.resolvedArtifacts
                 )
-                .filter { it.file.canonicalFile.absolutePath !in projectArtifacts }
+//                .filter { it.file.canonicalFile.absolutePath !in projectArtifacts }
                 .filter { it.file.exists() && LibraryUtils.isKotlinJavascriptLibrary(it.file) }
                 .forEach { artifact ->
                     @Suppress("UNCHECKED_CAST")
