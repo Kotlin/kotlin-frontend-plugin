@@ -63,6 +63,7 @@ open class NpmIndexTask : DefaultTask() {
     }
 
     private fun packageJsonContainsTypes(file: File): Boolean {
+        if (file.length == 0) return false
         val parsedFile = JsonSlurper().parse(file)
         return (parsedFile is Map<*, *> && parsedFile["typings"] != null)
     }
