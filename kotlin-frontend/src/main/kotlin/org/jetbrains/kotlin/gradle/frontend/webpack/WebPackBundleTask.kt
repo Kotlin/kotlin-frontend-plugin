@@ -1,8 +1,8 @@
 package org.jetbrains.kotlin.gradle.frontend.webpack
 
-import groovy.json.JsonSlurper
 import org.gradle.api.*
 import org.gradle.api.tasks.*
+import org.jetbrains.kotlin.gradle.frontend.npm.NpmModuleVersion
 import org.jetbrains.kotlin.gradle.frontend.util.*
 
 /**
@@ -29,23 +29,15 @@ open class WebPackBundleTask : DefaultTask() {
 
     @TaskAction
     fun buildBundle() {
-        @Suppress("UNCHECKED_CAST")
-        val webpackVersion = project.buildDir.resolve("node_modules/webpack/package.json")
-                .let { JsonSlurper().parse(it) as Map<String, Any?> }["version"]
-                ?.let { it as String }
-
         val processBuilderCommands = arrayListOf(
                 nodePath(project, "node").first().absolutePath,
                 project.buildDir.resolve("node_modules/webpack/bin/webpack.js").absolutePath,
                 "--config", webPackConfigFile.absolutePath
         )
-        val webpackMajorVersion = webpackVersion
-                ?.split('.')
-                ?.firstOrNull()
-                ?.toInt()
-        if (webpackMajorVersion != null && webpackMajorVersion >= 4) {
+
+        if (NpmModuleVersion(project, "webpack").major >= 4) {
             processBuilderCommands.addAll(arrayOf(
-                    "--mode", config.mode
+                    "--mode", config.mode ?: "production"
             ))
         }
         ProcessBuilder(processBuilderCommands)

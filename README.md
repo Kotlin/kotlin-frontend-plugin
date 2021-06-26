@@ -114,6 +114,7 @@ kotlinFrontend {
         port = 8088   // dev server port
         proxyUrl = "" | "http://...."  // URL to be proxied, useful to proxy backend webserver
         stats = "errors-only"  // log level
+        mode = "production" | "development" | "none" // used for webpack 4+ built-in optimizations
     }
 }
 ```
@@ -121,6 +122,8 @@ kotlinFrontend {
 dev server log is located at `build/logs/webpack-dev-server.log`
 
 config file is generated at `build/webpack.config.js`
+
+If mode is not specified, the default behavior is to use development mode for running the dev server, and production mode for creating the final bundle. See [webpack documentation](https://webpack.js.org/concepts/mode/) for more information about modes.
 
 ## webpack configuration customization
 

@@ -97,6 +97,7 @@ class SimpleFrontendProjectTest(gradleVersion: String, kotlinVersion: String) : 
                 block("webpackBundle") {
                     line("port = $port")
                     line("bundleName = \"main\"")
+                    line("mode = \"development\"")
                 }
             }
 

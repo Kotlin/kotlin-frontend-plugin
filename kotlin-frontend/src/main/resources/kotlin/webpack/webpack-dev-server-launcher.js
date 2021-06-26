@@ -11,6 +11,7 @@ var devServerVersion = require(__dirname + '/node_modules/webpack-dev-server/pac
 var RunConfig = require('$RunConfig$');
 
 var config = require(RunConfig.webPackConfig);
+$SetMode$
 
 for (var name in config.entry) {
     if (config.entry.hasOwnProperty(name)) {
